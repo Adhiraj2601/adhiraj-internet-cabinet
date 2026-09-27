@@ -2,7 +2,6 @@ import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { SectionLabel } from '../ui/SectionLabel'
-import { Arrow } from '../ui/Arrow'
 import { stagger, fadeUp } from '../../lib/animations'
 
 import { scrapItems } from '../../content/scraps'
@@ -49,17 +48,10 @@ export function Scrapbook() {
                 Visual scraps
               </h2>
             </div>
-            <div className="flex flex-col md:items-end gap-2">
-              <p className="mt-4 text-[0.9rem] text-muted max-w-sm md:text-right">
+            <div>
+              <p className="text-[0.9rem] text-muted max-w-sm md:text-right">
                 drawings, photos, screenshots. things I wanted to keep.
               </p>
-              <Link
-                to="/sketches"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase text-accent hover:underline group"
-              >
-                <span>Full Sketchbook ({scrapItems.length})</span>
-                <Arrow size={12} direction="up-right" className="transform transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
             </div>
           </motion.div>
 
