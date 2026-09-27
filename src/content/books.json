@@ -54,5 +54,29 @@
     "note": "small. warm. a reminder that books are about more than reading.",
     "status": "read",
     "cover": "/images/books/days.jpg"
+  },
+  {
+    "id": "08",
+    "title": "Ready Player One",
+    "author": "Ernest Cline",
+    "note": "The book that got me into sci-fi",
+    "status": "read",
+    "cover": "/images/books/Ready_Player_One_cover.jpg"
+  },
+  {
+    "id": "09",
+    "title": "Artemis",
+    "author": "Andy Weir",
+    "note": "A heist...set on the moon ",
+    "status": "read",
+    "cover": "/images/books/Artemis-Andy_Weir_(2017).jpg"
+  },
+  {
+    "id": "10",
+    "title": "Project Hail Mary",
+    "author": "Andy Weir",
+    "note": "Rocky Rocks",
+    "status": "read",
+    "cover": "/images/books/Screenshot 2026-09-28 002254.png"
   }
 ]
