@@ -62,5 +62,21 @@
     "rotation": 0,
     "size": "square",
     "note": "crazy how humans can turn rocks into devices that freeze light in time"
+  },
+  {
+    "id": "09",
+    "src": "/images/scrapbook/aot.jpg",
+    "alt": "aot concept art",
+    "rotation": 0,
+    "size": "tall",
+    "note": "Finished watching A.O.T "
+  },
+  {
+    "id": "10",
+    "src": "/images/scrapbook/hen.jpg",
+    "alt": "hen?",
+    "rotation": 0,
+    "size": "tall",
+    "note": "trying out new markers"
   }
 ]
