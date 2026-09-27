@@ -78,5 +78,21 @@
     "note": "Rocky Rocks",
     "status": "read",
     "cover": "/images/books/Screenshot 2026-09-28 002254.png"
+  },
+  {
+    "id": "11",
+    "title": "Ready Player Two",
+    "author": "Ernest Cline",
+    "note": "not what I expected (after ready player 1)",
+    "status": "read",
+    "cover": "/images/books/Ready_Player_Two_-_book_cover.jpg"
+  },
+  {
+    "id": "12",
+    "title": "Armada",
+    "author": "Ernest Cline",
+    "note": "A treat for gamer readers",
+    "status": "read",
+    "cover": "/images/books/Armada_novel_cover.jpg"
   }
 ]
