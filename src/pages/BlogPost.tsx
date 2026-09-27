@@ -193,22 +193,7 @@ export function BlogPost() {
               </p>
             ))}
 
-            {/* Optional embedded illustration at bottom like in Image 2 */}
-            <div className="pt-6 pb-4 flex justify-center">
-              <div
-                className="max-w-xs w-full bg-[#f4f7ee] p-4 rounded-xs text-center overflow-hidden"
-                style={{ border: `2px solid ${BORDER_DARK}` }}
-              >
-                <img
-                  src="/images/blog/cat-doodle.jpg"
-                  alt="Doodle sketch"
-                  className="w-36 h-36 object-contain mx-auto"
-                />
-                <p className="font-handwritten text-sm text-neutral-600 mt-2">
-                  ~ scribbled while thinking about this ~
-                </p>
-              </div>
-            </div>
+
           </div>
 
           {/* ===================== PREV / NEXT NAVIGATION ===================== */}
