@@ -71,8 +71,14 @@ export function Admin() {
   const [isNewProject, setIsNewProject] = useState(false)
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+
   const [editingBook, setEditingBook] = useState<Book | null>(null)
   const [isNewBook, setIsNewBook] = useState(false)
+  const [selectedBookCoverFile, setSelectedBookCoverFile] = useState<File | null>(null)
+  const [bookCoverPreviewUrl, setBookCoverPreviewUrl] = useState<string | null>(null)
+
+  // Queued image uploads to publish
+  const [queuedImages, setQueuedImages] = useState<{ path: string; file: File; label: string }[]>([])
 
   // Verify token on mount if stored
   useEffect(() => {
@@ -127,15 +133,14 @@ export function Admin() {
     setPublishMessage(null)
 
     try {
-      // 1. If there's an image file queued from project editing, upload it
-      if (selectedImageFile && editingProject) {
-        const imageBase64 = await fileToBase64(selectedImageFile)
-        const imagePath = `public/images/projects/${selectedImageFile.name}`
+      // 1. Upload any queued images (project screenshots and book covers)
+      for (const item of queuedImages) {
+        const imageBase64 = await fileToBase64(item.file)
         await commitFileToGitHub(
           token,
-          imagePath,
+          item.path,
           imageBase64,
-          `media: upload screenshot for ${editingProject.title}`
+          `media: upload image for ${item.label}`
         )
       }
 
@@ -184,6 +189,8 @@ export function Admin() {
 
       setHasChanges(false)
       setSelectedImageFile(null)
+      setSelectedBookCoverFile(null)
+      setQueuedImages([])
       setPublishMessage({
         type: 'success',
         text: 'Published successfully! Vercel is now deploying your updates (~30s).',
@@ -227,6 +234,14 @@ export function Admin() {
     let imagePath = editingProject.image
     if (selectedImageFile) {
       imagePath = `/images/projects/${selectedImageFile.name}`
+      setQueuedImages((prev) => [
+        ...prev.filter((img) => img.path !== `public/images/projects/${selectedImageFile.name}`),
+        {
+          path: `public/images/projects/${selectedImageFile.name}`,
+          file: selectedImageFile,
+          label: editingProject.title,
+        },
+      ])
     }
 
     const projectToSave: Project = {
@@ -269,16 +284,36 @@ export function Admin() {
     e.preventDefault()
     if (!editingBook) return
 
+    let coverPath = editingBook.cover
+    if (selectedBookCoverFile) {
+      coverPath = `/images/books/${selectedBookCoverFile.name}`
+      setQueuedImages((prev) => [
+        ...prev.filter((img) => img.path !== `public/images/books/${selectedBookCoverFile.name}`),
+        {
+          path: `public/images/books/${selectedBookCoverFile.name}`,
+          file: selectedBookCoverFile,
+          label: editingBook.title,
+        },
+      ])
+    }
+
+    const bookToSave: Book = {
+      ...editingBook,
+      cover: coverPath,
+    }
+
     let updated: Book[]
     if (isNewBook) {
-      updated = [...booksData, editingBook]
+      updated = [...booksData, bookToSave]
     } else {
-      updated = booksData.map((b) => (b.id === editingBook.id ? editingBook : b))
+      updated = booksData.map((b) => (b.id === bookToSave.id ? bookToSave : b))
     }
     setBooksData(updated)
     setHasChanges(true)
     setEditingBook(null)
     setIsNewBook(false)
+    setSelectedBookCoverFile(null)
+    setBookCoverPreviewUrl(null)
   }
 
   const handleDeleteBook = (id: string) => {
@@ -828,40 +863,60 @@ export function Admin() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {booksData.map((book) => (
-                <div key={book.id} className="p-4 border border-token rounded-sm flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-sm">{book.title}</h3>
-                      <span className="text-[10px] uppercase font-bold text-muted">by {book.author}</span>
+                <div key={book.id} className="p-4 border border-token rounded-sm flex items-start justify-between gap-4 bg-[rgba(23,23,23,0.015)] hover:border-foreground/30 transition-colors">
+                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                    {/* Book Cover Thumbnail */}
+                    <div className="w-12 h-16 bg-neutral-100 border border-token rounded-xs overflow-hidden shrink-0 flex items-center justify-center shadow-2xs">
+                      {book.cover ? (
+                        <img
+                          src={book.cover}
+                          alt={book.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-[8px] text-muted uppercase text-center px-1">No cover</span>
+                      )}
                     </div>
-                    <span
-                      className={`inline-block text-[10px] uppercase font-bold px-1.5 py-0.5 rounded mt-1.5 ${
-                        book.status === 'reading'
-                          ? 'bg-blue-100 text-accent border border-blue-200'
-                          : 'bg-neutral-100 text-muted'
-                      }`}
-                    >
-                      {book.status}
-                    </span>
-                    {book.note && (
-                      <p className="font-handwritten text-sm text-muted mt-2">"{book.note}"</p>
-                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-sm truncate">{book.title}</h3>
+                        <span className="text-[10px] uppercase font-bold text-muted">by {book.author}</span>
+                      </div>
+                      <span
+                        className={`inline-block text-[10px] uppercase font-bold px-1.5 py-0.5 rounded mt-1.5 ${
+                          book.status === 'reading'
+                            ? 'bg-blue-100 text-accent border border-blue-200'
+                            : 'bg-neutral-100 text-muted'
+                        }`}
+                      >
+                        {book.status}
+                      </span>
+                      {book.note && (
+                        <p className="font-handwritten text-sm text-muted mt-2 truncate">"{book.note}"</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => {
                         setEditingBook(book)
                         setIsNewBook(false)
+                        setSelectedBookCoverFile(null)
+                        setBookCoverPreviewUrl(book.cover || null)
                       }}
-                      className="p-1 text-muted hover:text-foreground"
+                      className="p-1.5 border border-token hover:bg-neutral-100 rounded-xs text-muted hover:text-foreground"
+                      title="Edit Book"
                     >
-                      <Edit3 size={14} />
+                      <Edit3 size={13} />
                     </button>
                     <button
                       onClick={() => handleDeleteBook(book.id)}
-                      className="p-1 text-muted hover:text-red-600"
+                      className="p-1.5 text-red-600 hover:bg-red-50 border border-red-200 rounded-xs"
+                      title="Delete Book"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 </div>
@@ -870,8 +925,8 @@ export function Admin() {
 
             {/* Edit Book Modal */}
             {editingBook && (
-              <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-                <div className="bg-[var(--background)] border border-token max-w-md w-full p-6 rounded-sm shadow-xl">
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <div className="bg-[var(--background)] border border-token max-w-md w-full p-6 rounded-sm shadow-xl max-h-[90vh] overflow-y-auto">
                   <h3 className="font-bold text-base mb-4">
                     {isNewBook ? 'Add New Book' : `Edit "${editingBook.title}"`}
                   </h3>
@@ -917,6 +972,48 @@ export function Admin() {
                         className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-handwritten text-base"
                         placeholder="short personal thought..."
                       />
+                    </div>
+
+                    {/* Book Cover Image Uploader */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Book Cover Image</label>
+                      <div className="border border-dashed border-token p-4 rounded-xs bg-[rgba(23,23,23,0.015)] text-center">
+                        {bookCoverPreviewUrl ? (
+                          <div className="mb-3">
+                            <img
+                              src={bookCoverPreviewUrl}
+                              alt="Book cover preview"
+                              className="max-h-36 mx-auto object-contain rounded-xs border border-token shadow-xs"
+                            />
+                            <p className="text-[10px] text-muted mt-1 font-mono">
+                              {editingBook.cover || selectedBookCoverFile?.name}
+                            </p>
+                          </div>
+                        ) : (
+                          <Upload size={24} className="mx-auto text-muted mb-2" />
+                        )}
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="book-cover-upload"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              setSelectedBookCoverFile(file)
+                              setBookCoverPreviewUrl(URL.createObjectURL(file))
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="book-cover-upload"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-token bg-background hover:bg-neutral-100 rounded-xs cursor-pointer"
+                        >
+                          <Upload size={12} />
+                          <span>{bookCoverPreviewUrl ? 'Change Cover' : 'Choose Cover Image'}</span>
+                        </label>
+                      </div>
                     </div>
                     <div className="flex justify-end gap-3 pt-3 border-t border-token">
                       <button
