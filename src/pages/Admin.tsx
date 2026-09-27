@@ -5,6 +5,7 @@ import {
   Clock,
   FileText,
   FlaskConical,
+  Palette,
   Save,
   Plus,
   Trash2,
@@ -26,6 +27,7 @@ import { Link } from 'react-router-dom'
 // Initial content imports
 import initialProjects from '../content/projects.json'
 import initialBooks from '../content/books.json'
+import initialScraps from '../content/scraps.json'
 import initialCurrently from '../content/currently.json'
 import initialPosts from '../content/posts.json'
 import initialExperiments from '../content/experiments.json'
@@ -38,10 +40,11 @@ import {
 } from '../lib/github'
 import type { Project } from '../content/projects'
 import type { Book } from '../content/books'
+import type { ScrapItem } from '../content/scraps'
 import type { Post } from '../content/posts'
 import type { Experiment } from '../content/experiments'
 
-type Tab = 'projects' | 'books' | 'currently' | 'notes' | 'lab'
+type Tab = 'projects' | 'books' | 'scraps' | 'currently' | 'notes' | 'lab'
 
 export function Admin() {
   // Token & Authentication
@@ -57,6 +60,7 @@ export function Admin() {
   // Editable data states
   const [projectsData, setProjectsData] = useState<Project[]>(initialProjects as Project[])
   const [booksData, setBooksData] = useState<Book[]>(initialBooks as Book[])
+  const [scrapsData, setScrapsData] = useState<ScrapItem[]>(initialScraps as ScrapItem[])
   const [currentlyData, setCurrentlyData] = useState(initialCurrently)
   const [postsData, setPostsData] = useState<Post[]>(initialPosts as Post[])
   const [experimentsData, setExperimentsData] = useState<Experiment[]>(initialExperiments as Experiment[])
@@ -76,6 +80,11 @@ export function Admin() {
   const [isNewBook, setIsNewBook] = useState(false)
   const [selectedBookCoverFile, setSelectedBookCoverFile] = useState<File | null>(null)
   const [bookCoverPreviewUrl, setBookCoverPreviewUrl] = useState<string | null>(null)
+
+  const [editingScrap, setEditingScrap] = useState<ScrapItem | null>(null)
+  const [isNewScrap, setIsNewScrap] = useState(false)
+  const [selectedScrapFile, setSelectedScrapFile] = useState<File | null>(null)
+  const [scrapPreviewUrl, setScrapPreviewUrl] = useState<string | null>(null)
 
   // Queued image uploads to publish
   const [queuedImages, setQueuedImages] = useState<{ path: string; file: File; label: string }[]>([])
@@ -133,7 +142,7 @@ export function Admin() {
     setPublishMessage(null)
 
     try {
-      // 1. Upload any queued images (project screenshots and book covers)
+      // 1. Upload any queued images (project screenshots, book covers, visual scraps)
       for (const item of queuedImages) {
         const imageBase64 = await fileToBase64(item.file)
         await commitFileToGitHub(
@@ -155,6 +164,11 @@ export function Admin() {
           path: 'src/content/books.json',
           data: booksData,
           msg: 'cms: update reading list',
+        },
+        {
+          path: 'src/content/scraps.json',
+          data: scrapsData,
+          msg: 'cms: update visual scraps / sketches',
         },
         {
           path: 'src/content/currently.json',
@@ -190,6 +204,8 @@ export function Admin() {
       setHasChanges(false)
       setSelectedImageFile(null)
       setSelectedBookCoverFile(null)
+      setSelectedScrapFile(null)
+      setScrapPreviewUrl(null)
       setQueuedImages([])
       setPublishMessage({
         type: 'success',
@@ -211,6 +227,7 @@ export function Admin() {
     const backup = {
       projects: projectsData,
       books: booksData,
+      scraps: scrapsData,
       currently: currentlyData,
       posts: postsData,
       experiments: experimentsData,
@@ -319,6 +336,50 @@ export function Admin() {
   const handleDeleteBook = (id: string) => {
     if (window.confirm('Delete this book?')) {
       setBooksData(booksData.filter((b) => b.id !== id))
+      setHasChanges(true)
+    }
+  }
+
+  // Visual Scraps / Sketches Handlers
+  const handleSaveScrap = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingScrap) return
+
+    let scrapSrc = editingScrap.src
+    if (selectedScrapFile) {
+      scrapSrc = `/images/scrapbook/${selectedScrapFile.name}`
+      setQueuedImages((prev) => [
+        ...prev.filter((img) => img.path !== `public/images/scrapbook/${selectedScrapFile.name}`),
+        {
+          path: `public/images/scrapbook/${selectedScrapFile.name}`,
+          file: selectedScrapFile,
+          label: editingScrap.note || editingScrap.alt || selectedScrapFile.name,
+        },
+      ])
+    }
+
+    const scrapToSave: ScrapItem = {
+      ...editingScrap,
+      src: scrapSrc,
+    }
+
+    let updated: ScrapItem[]
+    if (isNewScrap) {
+      updated = [...scrapsData, scrapToSave]
+    } else {
+      updated = scrapsData.map((s) => (s.id === scrapToSave.id ? scrapToSave : s))
+    }
+    setScrapsData(updated)
+    setHasChanges(true)
+    setEditingScrap(null)
+    setIsNewScrap(false)
+    setSelectedScrapFile(null)
+    setScrapPreviewUrl(null)
+  }
+
+  const handleDeleteScrap = (id: string) => {
+    if (window.confirm('Delete this visual scrap / sketch?')) {
+      setScrapsData(scrapsData.filter((s) => s.id !== id))
       setHasChanges(true)
     }
   }
@@ -528,6 +589,18 @@ export function Admin() {
           >
             <BookOpen size={15} />
             <span>Books ({booksData.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('scraps')}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold uppercase tracking-wider border-b-2 transition-all shrink-0 ${
+              activeTab === 'scraps'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-muted hover:text-foreground'
+            }`}
+          >
+            <Palette size={15} />
+            <span>Visual Scraps ({scrapsData.length})</span>
           </button>
 
           <button
@@ -1028,6 +1101,315 @@ export function Admin() {
                         className="px-5 py-2 text-xs font-bold bg-foreground text-background rounded-xs"
                       >
                         Save Book
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ===================== TAB: VISUAL SCRAPS / SKETCHES ===================== */}
+        {activeTab === 'scraps' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold tracking-tight">Visual Scraps & Sketches</h2>
+                <p className="text-xs text-muted mt-1">
+                  Upload sketches, photos, and doodles displayed in "05 / Random things — Visual scraps".
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingScrap({
+                    id: String(scrapsData.length + 1).padStart(2, '0'),
+                    src: '',
+                    alt: '',
+                    rotation: 0,
+                    size: 'square',
+                    note: '',
+                  })
+                  setIsNewScrap(true)
+                  setSelectedScrapFile(null)
+                  setScrapPreviewUrl(null)
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90"
+              >
+                <Plus size={14} />
+                <span>Add Scrap / Sketch</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {scrapsData.map((scrap) => {
+                const ratio = scrap.size === 'tall' ? '2/3' : scrap.size === 'wide' ? '3/2' : '1/1'
+                return (
+                  <div
+                    key={scrap.id}
+                    className="p-4 border border-token rounded-sm flex flex-col justify-between bg-[rgba(23,23,23,0.015)] hover:border-foreground/30 transition-colors"
+                  >
+                    <div>
+                      {/* Image Preview Box with rotation and ratio */}
+                      <div className="relative mb-3 bg-neutral-100/70 border border-token/60 rounded-xs overflow-hidden flex items-center justify-center p-3">
+                        <div
+                          className="w-full overflow-hidden bg-neutral-200/80 shadow-xs flex items-center justify-center transition-transform duration-300 hover:rotate-0"
+                          style={{
+                            aspectRatio: ratio,
+                            transform: `rotate(${scrap.rotation || 0}deg)`,
+                          }}
+                        >
+                          {scrap.src ? (
+                            <img
+                              src={scrap.src}
+                              alt={scrap.alt}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.currentTarget
+                                target.style.display = 'none'
+                                const parent = target.parentElement
+                                if (parent && !parent.querySelector('.img-fallback')) {
+                                  const span = document.createElement('span')
+                                  span.className = 'img-fallback text-[11px] text-muted text-center p-2'
+                                  span.textContent = scrap.alt || 'Image not found'
+                                  parent.appendChild(span)
+                                }
+                              }}
+                            />
+                          ) : (
+                            <span className="text-xs text-muted font-mono">No image</span>
+                          )}
+                        </div>
+
+                        {/* Badges */}
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 pointer-events-none">
+                          <span className="text-[9px] font-bold uppercase tracking-wider bg-background/90 backdrop-blur-xs px-1.5 py-0.5 rounded border border-token">
+                            {scrap.size}
+                          </span>
+                          <span className="text-[9px] font-mono text-muted bg-background/90 backdrop-blur-xs px-1.5 py-0.5 rounded border border-token">
+                            {scrap.rotation > 0 ? `+${scrap.rotation}°` : `${scrap.rotation}°`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Handwritten Note */}
+                      <div className="space-y-1">
+                        <p className="font-handwritten text-lg text-foreground leading-tight">
+                          "{scrap.note || 'Untitled scrap'}"
+                        </p>
+                        <p className="text-[11px] text-muted line-clamp-2">
+                          {scrap.alt || 'No alt description'}
+                        </p>
+                        <p className="text-[10px] font-mono text-muted/70 truncate">
+                          {scrap.src || 'No image source'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-token">
+                      <span className="text-[10px] font-mono font-bold text-muted">#{scrap.id}</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingScrap(scrap)
+                            setIsNewScrap(false)
+                            setSelectedScrapFile(null)
+                            setScrapPreviewUrl(scrap.src || null)
+                          }}
+                          className="p-1.5 border border-token hover:bg-neutral-100 rounded-xs text-muted hover:text-foreground"
+                          title="Edit Scrap"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteScrap(scrap.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 border border-red-200 rounded-xs"
+                          title="Delete Scrap"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Edit / Add Scrap Modal */}
+            {editingScrap && (
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <div className="bg-[var(--background)] border border-token max-w-lg w-full p-6 rounded-sm shadow-xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between pb-3 border-b border-token mb-4">
+                    <h3 className="font-bold text-base">
+                      {isNewScrap ? 'Add New Scrap / Sketch' : `Edit Scrap #${editingScrap.id}`}
+                    </h3>
+                    <button onClick={() => setEditingScrap(null)} className="text-muted hover:text-foreground">
+                      ✕
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSaveScrap} className="space-y-4">
+                    {/* Image Uploader */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                        Sketch / Image File
+                      </label>
+                      <div className="border border-dashed border-token p-4 rounded-xs bg-[rgba(23,23,23,0.015)] text-center">
+                        {scrapPreviewUrl ? (
+                          <div className="mb-3 flex flex-col items-center">
+                            <div
+                              className="overflow-hidden max-h-48 max-w-xs border border-token rounded-xs bg-neutral-100 shadow-xs transition-transform"
+                              style={{
+                                transform: `rotate(${editingScrap.rotation || 0}deg)`,
+                              }}
+                            >
+                              <img
+                                src={scrapPreviewUrl}
+                                alt="Preview"
+                                className="max-h-44 object-contain mx-auto"
+                              />
+                            </div>
+                            <p className="text-[10px] text-muted mt-2 font-mono">
+                              {editingScrap.src || selectedScrapFile?.name}
+                            </p>
+                          </div>
+                        ) : (
+                          <Upload size={24} className="mx-auto text-muted mb-2" />
+                        )}
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="scrap-image-upload"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              setSelectedScrapFile(file)
+                              setScrapPreviewUrl(URL.createObjectURL(file))
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="scrap-image-upload"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-token bg-background hover:bg-neutral-100 rounded-xs cursor-pointer"
+                        >
+                          <Upload size={12} />
+                          <span>{scrapPreviewUrl ? 'Change Image File' : 'Upload Sketch / Drawing'}</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Image Source Fallback */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                        Or Image URL / Path
+                      </label>
+                      <input
+                        type="text"
+                        value={editingScrap.src}
+                        onChange={(e) => {
+                          setEditingScrap({ ...editingScrap, src: e.target.value })
+                          if (!selectedScrapFile) {
+                            setScrapPreviewUrl(e.target.value || null)
+                          }
+                        }}
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                        placeholder="/images/scrapbook/my-sketch.jpg"
+                      />
+                    </div>
+
+                    {/* Handwritten Note / Caption */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                        Handwritten Note / Caption
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editingScrap.note}
+                        onChange={(e) => setEditingScrap({ ...editingScrap, note: e.target.value })}
+                        className="w-full px-3 py-2 text-sm bg-background border border-token rounded-xs focus:outline-accent font-handwritten"
+                        placeholder="e.g. robot sketch, march"
+                      />
+                    </div>
+
+                    {/* Alt Text */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                        Alt Text & Description
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={editingScrap.alt}
+                        onChange={(e) => setEditingScrap({ ...editingScrap, alt: e.target.value })}
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                        placeholder="e.g. A pencil sketch of a robot with too many arms"
+                      />
+                    </div>
+
+                    {/* Size / Aspect Ratio & Rotation */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                          Aspect Ratio (Size)
+                        </label>
+                        <select
+                          value={editingScrap.size}
+                          onChange={(e) =>
+                            setEditingScrap({
+                              ...editingScrap,
+                              size: e.target.value as 'tall' | 'wide' | 'square',
+                            })
+                          }
+                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                        >
+                          <option value="tall">Tall / Portrait (2:3)</option>
+                          <option value="wide">Wide / Landscape (3:2)</option>
+                          <option value="square">Square (1:1)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-xs font-bold uppercase tracking-wider">
+                            Rotation Angle
+                          </label>
+                          <span className="text-xs font-mono font-bold text-accent">
+                            {editingScrap.rotation > 0 ? `+${editingScrap.rotation}°` : `${editingScrap.rotation}°`}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-5"
+                          max="5"
+                          step="0.5"
+                          value={editingScrap.rotation}
+                          onChange={(e) =>
+                            setEditingScrap({
+                              ...editingScrap,
+                              rotation: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          className="w-full accent-foreground cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-token">
+                      <button
+                        type="button"
+                        onClick={() => setEditingScrap(null)}
+                        className="px-4 py-2 text-xs border border-token rounded-xs hover:bg-neutral-100"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-5 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90"
+                      >
+                        Save Scrap
                       </button>
                     </div>
                   </form>

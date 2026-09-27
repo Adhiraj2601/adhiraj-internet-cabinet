@@ -1,0 +1,50 @@
+[
+  {
+    "id": "01",
+    "src": "/images/scrapbook/sketch-01.jpg",
+    "alt": "A sketch of a robot with too many arms",
+    "rotation": -2,
+    "size": "tall",
+    "note": "robot sketch, march"
+  },
+  {
+    "id": "02",
+    "src": "/images/scrapbook/notes-01.jpg",
+    "alt": "Handwritten notes about graph theory",
+    "rotation": 1.5,
+    "size": "wide",
+    "note": "notes from a rabbit hole"
+  },
+  {
+    "id": "03",
+    "src": "/images/scrapbook/photo-01.jpg",
+    "alt": "A blurry photograph of a screen at night",
+    "rotation": -1,
+    "size": "square",
+    "note": "2am debugging session"
+  },
+  {
+    "id": "04",
+    "src": "/images/scrapbook/doodle-01.jpg",
+    "alt": "A small doodle of a city skyline",
+    "rotation": 2,
+    "size": "square",
+    "note": "city doodle"
+  },
+  {
+    "id": "05",
+    "src": "/images/scrapbook/screen-01.jpg",
+    "alt": "Screenshot of an interesting terminal output",
+    "rotation": -1.5,
+    "size": "wide",
+    "note": "something worked"
+  },
+  {
+    "id": "06",
+    "src": "/images/scrapbook/sketch-02.jpg",
+    "alt": "Character sketch from a story concept",
+    "rotation": 0.8,
+    "size": "tall",
+    "note": "character concept"
+  }
+]
