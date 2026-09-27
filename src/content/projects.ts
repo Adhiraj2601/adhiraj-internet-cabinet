@@ -30,7 +30,7 @@ export const projects: Project[] = [
     title: 'PyCasso',
     slug: 'pycasso',
     category: 'Creative Coding',
-    description: 'A lightweight digital drawing application built in Python, created as a space to explore graphics programming through a simple and intuitive interface.'
+    description: 'A lightweight digital drawing application built in Python, created as a space to explore graphics programming through a simple and intuitive interface.',
     year: '2025',
     image: '/images/projects/pycasso.png',
     github: 'https://github.com/adhirajsengar/pycasso',
