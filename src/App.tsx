@@ -34,8 +34,9 @@ function PageFallback() {
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const isAdmin = location.pathname.startsWith('/admin')
+  const isBlogPost = location.pathname.startsWith('/blog/') || location.pathname.startsWith('/notes/')
 
-  if (isAdmin) {
+  if (isAdmin || isBlogPost) {
     return <>{children}</>
   }
 

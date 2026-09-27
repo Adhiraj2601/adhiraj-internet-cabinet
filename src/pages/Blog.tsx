@@ -1,23 +1,12 @@
-import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { posts, type Post } from '../content/posts'
 
 // Pastel green theme tokens matching the reference image exactly
 const BG_GREEN = '#c4d9ad' // Soft pastel green
 const ACCENT_ORANGE = '#e08b58' // Warm orange button accent
 const BORDER_DARK = '#1a1a1a' // Chunky dark outline
-
-const CATEGORIES = [
-  'All',
-  'Observations',
-  'Thoughts',
-  'Projects',
-  'Programming',
-  'Books',
-  'Writing',
-  'Learning',
-]
+const INSTAGRAM_URL = 'https://www.instagram.com/adhirajsengar/'
 
 // Playful procedural cat doodle for posts that don't have an image
 function DefaultDoodle({ index }: { index: number }) {
@@ -44,7 +33,6 @@ function DefaultDoodle({ index }: { index: number }) {
         <circle cx="36" cy="38" r="2.5" fill="currentColor" />
         <circle cx="56" cy="38" r="2.5" fill="currentColor" />
         <path d="M44 42q2 3 4 0" />
-        {/* Laptop */}
         <path d="M68 55l16-6v16l-16 4z" fill="#f0ede6" />
         <path d="M54 68h28l-8-12H48z" fill="#e5e5e5" />
       </svg>
@@ -59,10 +47,8 @@ function DefaultDoodle({ index }: { index: number }) {
         <circle cx="42" cy="46" r="2" fill="currentColor" />
         <circle cx="58" cy="46" r="2" fill="currentColor" />
         <path d="M48 52q2 2 4 0" />
-        {/* Paintbrush */}
         <path d="M24 72l14-22" stroke="#8b5a2b" strokeWidth="4" />
         <path d="M38 50l6-8c3-3 6-1 5 3l-3 7z" fill="#f687b3" stroke="currentColor" strokeWidth="1.5" />
-        {/* Beret */}
         <ellipse cx="50" cy="28" rx="14" ry="7" fill="#b794f4" />
       </svg>
     )
@@ -78,7 +64,6 @@ function DefaultDoodle({ index }: { index: number }) {
       <circle cx="30" cy="52" r="3" fill="#fbb6ce" stroke="none" />
       <circle cx="70" cy="52" r="3" fill="#fbb6ce" stroke="none" />
       <path d="M46 54q4 5 8 0" />
-      {/* Stripes on head */}
       <path d="M42 28v8M50 26v10M58 28v8" stroke="#a0aec0" strokeWidth="2.5" />
       <path d="M20 50h-8M20 56h-6M80 50h8M80 56h6" strokeWidth="1.5" />
     </svg>
@@ -132,29 +117,11 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
         )}
       </div>
 
-      {/* Card Footer: Date, Read time, & Orange Arrow Button */}
+      {/* Card Footer: ONLY Date & Orange Arrow Button (removed read time and category badge) */}
       <div className="flex items-center justify-between mt-3 pt-2">
-        <div className="flex flex-col">
-          <span className="font-mono text-[10px] text-neutral-700 font-medium">
-            {post.date}
-          </span>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            {post.readTime && (
-              <span className="font-mono text-[9px] text-neutral-600">
-                {post.readTime}
-              </span>
-            )}
-            <span
-              className="font-mono text-[8px] uppercase tracking-wider px-1 py-0.2 rounded-[2px]"
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.7)',
-                border: `1px solid ${BORDER_DARK}`,
-              }}
-            >
-              {post.category}
-            </span>
-          </div>
-        </div>
+        <span className="font-mono text-[10px] text-neutral-700 font-medium">
+          {post.date}
+        </span>
 
         {/* Warm Orange Action Button */}
         <Link
@@ -175,32 +142,6 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
 }
 
 export function Blog() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('All')
-  const [searchQuery, setSearchQuery] = useState<string>('')
-
-  // Filter posts based on category and search query
-  const filteredPosts = useMemo(() => {
-    return posts.filter((post) => {
-      const matchesCategory =
-        selectedCategory === 'All' ||
-        post.category.toLowerCase() === selectedCategory.toLowerCase()
-
-      const q = searchQuery.toLowerCase().trim()
-      const matchesSearch =
-        !q ||
-        post.title.toLowerCase().includes(q) ||
-        post.excerpt?.toLowerCase().includes(q) ||
-        post.tags?.some((t) => t.toLowerCase().includes(q))
-
-      return matchesCategory && matchesSearch
-    })
-  }, [selectedCategory, searchQuery])
-
-  const scrollToGrid = () => {
-    const el = document.getElementById('blog-grid')
-    if (el) el.scrollIntoView({ behavior: 'smooth' })
-  }
-
   return (
     <div
       className="min-h-screen pt-24 pb-20 px-3 sm:px-6 lg:px-8"
@@ -213,18 +154,26 @@ export function Blog() {
       <div className="max-w-6xl mx-auto">
         {/* ===================== HERO CARD ===================== */}
         <div
-          className="rounded-md p-4 sm:p-6 mb-6 relative overflow-hidden"
+          className="rounded-md p-4 sm:p-6 mb-8 relative overflow-hidden"
           style={{
             backgroundColor: BG_GREEN,
             border: `2px solid ${BORDER_DARK}`,
             boxShadow: `3px 3px 0px ${BORDER_DARK}`,
           }}
         >
-          {/* Top-Right Camera/Snap icon badge */}
+          {/* Top-Right Instagram icon badge */}
           <div className="absolute top-4 right-4">
-            <div
-              className="w-7 h-7 rounded-xs flex items-center justify-center bg-white/80"
-              style={{ border: `1.5px solid ${BORDER_DARK}` }}
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-7 h-7 rounded-xs flex items-center justify-center bg-white/90 hover:bg-white transition-all hover:scale-105"
+              style={{
+                border: `1.5px solid ${BORDER_DARK}`,
+                boxShadow: `1px 1px 0px ${BORDER_DARK}`,
+              }}
+              title="Instagram Profile"
+              aria-label="Instagram Profile"
             >
               <svg
                 width="14"
@@ -235,11 +184,13 @@ export function Blog() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                className="text-[#1a1a1a]"
               >
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
               </svg>
-            </div>
+            </a>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-7">
@@ -268,10 +219,10 @@ export function Blog() {
                 I am Adhiraj (Adi)
               </p>
               <p className="text-xs sm:text-sm text-neutral-800">
-                Welcome to my Blog :&gt;
+                Welcome to my Space :&gt;
               </p>
               <p className="text-xs sm:text-sm text-neutral-800">
-                Thoughts, project logs, book reflections & discoveries.
+                I love to learn something DAILY.
               </p>
 
               {/* Status input box */}
@@ -284,131 +235,26 @@ export function Blog() {
                     boxShadow: `1px 1px 0px ${BORDER_DARK}`,
                   }}
                 >
-                  Building LoreGraph & drawing daily
+                  Trying to find a job
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ===================== CONTROL BAR: TABS & BUTTONS ===================== */}
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-6">
-          {/* Category Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {CATEGORIES.map((cat) => {
-              const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase()
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className="px-3 py-1.5 rounded-xs font-mono font-bold text-xs uppercase tracking-wider transition-all duration-150 shrink-0 cursor-pointer"
-                  style={{
-                    backgroundColor: isSelected ? ACCENT_ORANGE : '#ffffff',
-                    border: `2px solid ${BORDER_DARK}`,
-                    boxShadow: `2px 2px 0px ${BORDER_DARK}`,
-                    color: '#1a1a1a',
-                    transform: isSelected ? 'translateY(1px)' : 'none',
-                  }}
-                >
-                  {cat === 'All' && '📁 '}
-                  {cat === 'Observations' && '✏ '}
-                  {cat === 'Projects' && '💡 '}
-                  {cat === 'Programming' && '⚡ '}
-                  {cat === 'Books' && '📚 '}
-                  {cat === 'Thoughts' && '💭 '}
-                  {cat}
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Right Controls: Search & Scroll Button */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Search Input */}
-            <div className="relative flex-1 md:w-56">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="search notes..."
-                className="w-full font-mono text-xs px-3 py-1.5 bg-white text-neutral-900 rounded-xs focus:outline-none placeholder:text-neutral-500"
-                style={{
-                  border: `2px solid ${BORDER_DARK}`,
-                  boxShadow: `2px 2px 0px ${BORDER_DARK}`,
-                }}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-xs text-neutral-500 hover:text-black"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {/* Scroll Down Button */}
-            <button
-              onClick={scrollToGrid}
-              className="px-3 py-1.5 bg-white font-mono text-xs font-bold text-[#1a1a1a] rounded-xs shrink-0 hover:bg-neutral-100 transition-colors hidden sm:flex items-center gap-1 cursor-pointer"
-              style={{
-                border: `2px solid ${BORDER_DARK}`,
-                boxShadow: `2px 2px 0px ${BORDER_DARK}`,
-              }}
-            >
-              <span>Scroll Down</span>
-              <span>↓</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ===================== BLOG POST GRID ===================== */}
+        {/* ===================== BLOG POST GRID (directly follows Hero) ===================== */}
         <div id="blog-grid">
-          {filteredPosts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <AnimatePresence mode="popLayout">
-                {filteredPosts.map((post, idx) => (
-                  <BlogCard key={post.id || post.slug} post={post} index={idx} />
-                ))}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <div
-              className="p-12 text-center rounded-md font-mono"
-              style={{
-                backgroundColor: BG_GREEN,
-                border: `2px solid ${BORDER_DARK}`,
-                boxShadow: `3px 3px 0px ${BORDER_DARK}`,
-              }}
-            >
-              <p className="font-bold text-sm text-[#1a1a1a]">
-                No notes found in "{selectedCategory}"
-              </p>
-              <p className="text-xs text-neutral-700 mt-1">
-                Try searching for something else or reset your filter.
-              </p>
-              <button
-                onClick={() => {
-                  setSelectedCategory('All')
-                  setSearchQuery('')
-                }}
-                className="mt-4 px-4 py-1.5 font-mono text-xs font-bold uppercase rounded-xs cursor-pointer"
-                style={{
-                  backgroundColor: ACCENT_ORANGE,
-                  border: `2px solid ${BORDER_DARK}`,
-                  boxShadow: `2px 2px 0px ${BORDER_DARK}`,
-                }}
-              >
-                Reset Filters
-              </button>
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {posts.map((post, idx) => (
+              <BlogCard key={post.id || post.slug} post={post} index={idx} />
+            ))}
+          </div>
         </div>
 
         {/* ===================== FOOTER BAR ===================== */}
         <div className="mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-neutral-700 font-mono text-xs border-t-2 border-[#1a1a1a]/20">
           <span>
-            {filteredPosts.length} of {posts.length} entries shown
+            {posts.length} entries published
           </span>
           <div className="flex items-center gap-4">
             <Link to="/" className="hover:text-black font-semibold hover:underline">

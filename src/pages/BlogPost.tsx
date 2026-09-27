@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { posts, type Post } from '../content/posts'
 
@@ -16,6 +16,17 @@ interface CommentItem {
 export function BlogPost() {
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
+
+  // Press ESC to close and return to /blog
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        navigate('/blog')
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [navigate])
 
   // Find post by slug or fallback
   const postIndex = useMemo(() => {
