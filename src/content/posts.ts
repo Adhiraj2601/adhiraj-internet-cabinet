@@ -9,6 +9,9 @@ export type Post = {
   date: string
   excerpt: string
   image?: string
+  readTime?: string
+  content?: string
+  tags?: string[]
 }
 
 export const posts: Post[] = postsData as Post[]

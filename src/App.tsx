@@ -8,6 +8,8 @@ import './styles/globals.css'
 const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })))
 const BooksPage = lazy(() => import('./pages/Books').then((m) => ({ default: m.BooksPage })))
 const SketchesPage = lazy(() => import('./pages/Sketches').then((m) => ({ default: m.SketchesPage })))
+const Blog = lazy(() => import('./pages/Blog').then((m) => ({ default: m.Blog })))
+const BlogPost = lazy(() => import('./pages/BlogPost').then((m) => ({ default: m.BlogPost })))
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -23,7 +25,7 @@ function PageFallback() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center">
       <span className="text-xs font-mono text-muted uppercase tracking-widest animate-pulse">
-        Loading Archive...
+        Loading...
       </span>
     </div>
   )
@@ -66,6 +68,9 @@ function App() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/books" element={<BooksPage />} />
             <Route path="/sketches" element={<SketchesPage />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/notes/:slug" element={<BlogPost />} />
             {/* Section anchor fallbacks */}
             <Route path="/work" element={<Home />} />
             <Route path="/notes" element={<Home />} />

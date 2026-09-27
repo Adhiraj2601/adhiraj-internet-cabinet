@@ -6,8 +6,9 @@ import { MobileMenu } from './MobileMenu'
 const navLinks = [
   { label: 'ABOUT', href: '#about' },
   { label: 'WORK', href: '#work' },
-  { label: 'NOTES', href: '#notes' },
-  { label: 'BOOKS', href: '#books' },
+  { label: 'BOOKS', href: '/books' },
+  { label: 'SKETCHES', href: '/sketches' },
+  { label: 'BLOG', href: '/blog' },
   { label: 'LAB', href: '#lab' },
 ]
 
@@ -49,7 +50,9 @@ export function Navbar() {
 
   const handleNavClick = (href: string) => {
     setMenuOpen(false)
-    if (!isHome) {
+    if (href.startsWith('/')) {
+      navigate(href)
+    } else if (!isHome) {
       navigate('/' + href)
     } else {
       const target = document.querySelector(href)
