@@ -6,7 +6,7 @@ import { posts, type Post } from '../content/posts'
 const BG_GREEN = '#c4d9ad' // Soft pastel green
 const ACCENT_ORANGE = '#e08b58' // Warm orange button accent
 const BORDER_DARK = '#1a1a1a' // Chunky dark outline
-const INSTAGRAM_URL = 'https://www.instagram.com/adhirajsengar/'
+const INSTAGRAM_URL = 'https://www.instagram.com/_adhiraj_sengar_/'
 
 // Playful procedural cat doodle for posts that don't have an image
 function DefaultDoodle({ index }: { index: number }) {

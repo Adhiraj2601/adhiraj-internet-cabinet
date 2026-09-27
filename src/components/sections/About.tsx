@@ -93,6 +93,15 @@ export function About() {
                   <span className="group-hover:translate-x-1 transition-transform duration-200">↗</span>
                 </a>
                 <a
+                  href="https://www.instagram.com/_adhiraj_sengar_/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-center gap-2 text-[0.8rem] font-semibold tracking-widest uppercase hover:text-accent transition-colors duration-200"
+                >
+                  <span>Instagram</span>
+                  <span className="group-hover:translate-x-1 transition-transform duration-200">↗</span>
+                </a>
+                <a
                   href="mailto:adhirajsengar2601@gmail.com"
                   className="group flex items-center gap-2 text-[0.8rem] font-semibold tracking-widest uppercase hover:text-accent transition-colors duration-200"
                 >
