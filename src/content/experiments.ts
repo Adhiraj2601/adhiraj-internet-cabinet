@@ -1,0 +1,59 @@
+export type ExperimentStatus = 'EXPERIMENT' | 'WIP' | 'IDEA' | 'ABANDONED' | 'PLAYING'
+
+export type Experiment = {
+  id: string
+  title: string
+  description: string
+  status: ExperimentStatus
+  year: string
+  github?: string
+  link?: string
+}
+
+export const experiments: Experiment[] = [
+  {
+    id: '01',
+    title: 'Procedural City Generator',
+    description: 'Generating cities with noise functions. Very slow. Very pretty.',
+    status: 'WIP',
+    year: '2026',
+  },
+  {
+    id: '02',
+    title: 'Text-to-Dungeon',
+    description: 'Describe a dungeon in words. The algorithm draws it. Mostly.',
+    status: 'EXPERIMENT',
+    year: '2026',
+    github: 'https://github.com/adhirajsengar/text-dungeon',
+  },
+  {
+    id: '03',
+    title: 'Musical Grid',
+    description: 'A grid where each cell plays a note. You make music by filling cells. Maybe.',
+    status: 'IDEA',
+    year: '2026',
+  },
+  {
+    id: '04',
+    title: 'Pixel Weather App',
+    description: 'Weather data rendered as pixel art. API integration worked. Art looked terrible.',
+    status: 'ABANDONED',
+    year: '2025',
+    github: 'https://github.com/adhirajsengar/pixel-weather',
+  },
+  {
+    id: '05',
+    title: 'Conway Variations',
+    description: "Game of Life but the rules change every 10 generations. Chaos, mostly.",
+    status: 'PLAYING',
+    year: '2025',
+    github: 'https://github.com/adhirajsengar/conway-variations',
+  },
+  {
+    id: '06',
+    title: 'Font Pairing Tool',
+    description: 'Upload two fonts, see them together across multiple type scales. A tool I actually want.',
+    status: 'IDEA',
+    year: '2026',
+  },
+]

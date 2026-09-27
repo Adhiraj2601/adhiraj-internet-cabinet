@@ -1,0 +1,155 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #F4F1EA;
+    --foreground: #171717;
+    --muted: #77736B;
+    --border: rgba(23, 23, 23, 0.15);
+    --accent: #315CFF;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: #fff;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  button {
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: inherit;
+  }
+}
+
+@layer utilities {
+  .font-handwritten {
+    font-family: 'Caveat', cursive;
+  }
+
+  .text-muted {
+    color: var(--muted);
+  }
+
+  .text-accent {
+    color: var(--accent);
+  }
+
+  .bg-accent {
+    background-color: var(--accent);
+  }
+
+  .border-token {
+    border-color: var(--border);
+  }
+
+  .grid-main {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  @media (max-width: 1024px) {
+    .grid-main {
+      grid-template-columns: repeat(8, 1fr);
+      padding: 0 1.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .grid-main {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      padding: 0 1.25rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .grid-main {
+      padding: 0 1rem;
+    }
+  }
+
+  .container-main {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .container-main {
+      padding: 0 1.25rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container-main {
+      padding: 0 1rem;
+    }
+  }
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
