@@ -1,6 +1,8 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { SectionLabel } from '../ui/SectionLabel'
+import { Arrow } from '../ui/Arrow'
 import { stagger, fadeUp } from '../../lib/animations'
 
 import { scrapItems } from '../../content/scraps'
@@ -14,6 +16,9 @@ const aspectRatios: Record<string, string> = {
 export function Scrapbook() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
+
+  // Curated 6 visual scraps for the homepage exhibition room
+  const curatedScraps = scrapItems.slice(0, 6)
 
   return (
     <section
@@ -29,75 +34,107 @@ export function Scrapbook() {
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
         >
-          <motion.div variants={fadeUp} className="mb-10 md:mb-14">
-            <SectionLabel>05 / Random things</SectionLabel>
-            <h2
-              id="scrapbook-heading"
-              className="mt-3 font-bold leading-none tracking-tight"
-              style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' }}
-            >
-              Visual scraps
-            </h2>
-            <p className="mt-4 text-[0.9rem] text-muted max-w-sm">
-              drawings, photos, screenshots. things I wanted to keep.
-            </p>
+          {/* Header */}
+          <motion.div
+            variants={fadeUp}
+            className="mb-10 md:mb-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6"
+          >
+            <div>
+              <SectionLabel>05 / Random things</SectionLabel>
+              <h2
+                id="scrapbook-heading"
+                className="mt-3 font-bold leading-none tracking-tight"
+                style={{ fontSize: 'clamp(2.5rem, 5vw, 5rem)' }}
+              >
+                Visual scraps
+              </h2>
+            </div>
+            <div className="flex flex-col md:items-end gap-2">
+              <p className="mt-4 text-[0.9rem] text-muted max-w-sm md:text-right">
+                drawings, photos, screenshots. things I wanted to keep.
+              </p>
+              <Link
+                to="/sketches"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase text-accent hover:underline group"
+              >
+                <span>Full Sketchbook ({scrapItems.length})</span>
+                <Arrow size={12} direction="up-right" className="transform transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </Link>
+            </div>
           </motion.div>
 
-          {/* Scrapbook grid */}
+          {/* Scrapbook grid (curated exhibition selection) */}
           <motion.div
             variants={stagger}
-            className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
+            className="grid grid-cols-2 md:grid-cols-3 gap-5 md:gap-6"
           >
-            {scrapItems.map((item, index) => (
+            {curatedScraps.map((item, index) => (
               <motion.figure
                 key={item.id}
                 variants={fadeUp}
                 custom={index}
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-2 group"
               >
-                <motion.div
-                  className="overflow-hidden"
-                  style={{
-                    aspectRatio: aspectRatios[item.size],
-                    background: 'rgba(23,23,23,0.06)',
-                    rotate: item.rotation,
-                  }}
-                  whileHover={{
-                    rotate: 0,
-                    scale: 1.03,
-                    boxShadow: '0 10px 30px rgba(23,23,23,0.12)',
-                    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
-                  }}
-                >
-                  <img
-                    src={item.src}
-                    alt={item.alt}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      const target = e.currentTarget
-                      target.style.display = 'none'
-                      const parent = target.parentElement
-                      if (parent) {
-                        parent.style.display = 'flex'
-                        parent.style.alignItems = 'center'
-                        parent.style.justifyContent = 'center'
-                        const span = document.createElement('span')
-                        span.textContent = item.alt.substring(0, 30)
-                        span.style.cssText = 'font-size:0.65rem;color:var(--muted);text-align:center;padding:8px;font-family:Manrope,sans-serif'
-                        parent.appendChild(span)
-                      }
+                <Link to="/sketches" className="block overflow-hidden focus:outline-none" title="View in sketchbook gallery">
+                  <motion.div
+                    className="overflow-hidden relative"
+                    style={{
+                      aspectRatio: aspectRatios[item.size] || '1/1',
+                      background: 'rgba(23,23,23,0.06)',
+                      rotate: item.rotation,
                     }}
-                  />
-                </motion.div>
+                    whileHover={{
+                      rotate: 0,
+                      scale: 1.03,
+                      boxShadow: '0 10px 30px rgba(23,23,23,0.12)',
+                      transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] },
+                    }}
+                  >
+                    <img
+                      src={item.src}
+                      alt={item.alt}
+                      className="w-full h-full object-cover select-none"
+                      loading="lazy"
+                      onError={(e) => {
+                        const target = e.currentTarget
+                        target.style.display = 'none'
+                        const parent = target.parentElement
+                        if (parent && !parent.querySelector('.img-fallback')) {
+                          const span = document.createElement('span')
+                          span.className = 'img-fallback text-[11px] text-muted text-center p-3 font-mono'
+                          span.textContent = item.alt.substring(0, 30)
+                          parent.appendChild(span)
+                        }
+                      }}
+                    />
+                  </motion.div>
+                </Link>
                 <figcaption
-                  className="font-handwritten text-[0.85rem]"
+                  className="font-handwritten text-[0.85rem] flex items-center justify-between"
                   style={{ color: 'var(--muted)', paddingLeft: '2px' }}
                 >
-                  {item.note}
+                  <span className="truncate">{item.note}</span>
+                  <span className="text-[0.65rem] font-mono text-muted/60 shrink-0">#{item.id}</span>
                 </figcaption>
               </motion.figure>
             ))}
+          </motion.div>
+
+          {/* Subtle contextual link below */}
+          <motion.div
+            variants={fadeUp}
+            className="mt-12 md:mt-16 pt-6 border-t border-token/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+          >
+            <span className="text-xs font-mono text-muted">
+              Curated snapshot • {curatedScraps.length} of {scrapItems.length} scraps
+            </span>
+            <Link
+              to="/sketches"
+              className="group inline-flex items-center gap-2 text-xs font-bold tracking-[0.15em] uppercase text-muted hover:text-foreground transition-colors"
+            >
+              <span>View Full Gallery ({scrapItems.length})</span>
+              <span className="transform transition-transform duration-200 group-hover:translate-x-1">→</span>
+            </Link>
           </motion.div>
         </motion.div>
       </div>

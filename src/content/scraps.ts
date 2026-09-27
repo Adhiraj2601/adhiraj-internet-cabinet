@@ -7,6 +7,8 @@ export type ScrapItem = {
   rotation: number
   size: 'tall' | 'wide' | 'square'
   note: string
+  date?: string
+  description?: string
 }
 
 export const scrapItems: ScrapItem[] = scrapsData as ScrapItem[]

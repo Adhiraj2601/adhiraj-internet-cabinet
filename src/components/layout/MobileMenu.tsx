@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 
 interface MobileMenuProps {
   links: { label: string; href: string }[]
@@ -53,7 +54,13 @@ export function MobileMenu({ links, onClose, onLinkClick }: MobileMenuProps) {
         style={{ borderBottom: '1px solid var(--border)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-sm font-bold tracking-[0.15em] uppercase">ADHIRAJ SENGAR</span>
+        <Link
+          to="/"
+          onClick={onClose}
+          className="text-sm font-bold tracking-[0.15em] uppercase hover:text-accent transition-colors"
+        >
+          ADHIRAJ SENGAR
+        </Link>
         <button
           onClick={onClose}
           className="text-[0.7rem] font-semibold tracking-[0.15em] text-muted hover:text-foreground transition-colors"

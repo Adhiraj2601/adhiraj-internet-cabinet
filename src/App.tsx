@@ -1,9 +1,33 @@
+import { useEffect, Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { Home } from './pages/Home'
-import { Admin } from './pages/Admin'
 import './styles/globals.css'
+
+const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })))
+const BooksPage = lazy(() => import('./pages/Books').then((m) => ({ default: m.BooksPage })))
+const SketchesPage = lazy(() => import('./pages/Sketches').then((m) => ({ default: m.SketchesPage })))
+
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
+
+  return null
+}
+
+function PageFallback() {
+  return (
+    <div className="min-h-[70vh] flex items-center justify-center">
+      <span className="text-xs font-mono text-muted uppercase tracking-widest animate-pulse">
+        Loading Archive...
+      </span>
+    </div>
+  )
+}
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
@@ -34,16 +58,21 @@ function Layout({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Layout>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/work" element={<Home />} />
-          <Route path="/notes" element={<Home />} />
-          <Route path="/books" element={<Home />} />
-          <Route path="/lab" element={<Home />} />
-          <Route path="/about" element={<Home />} />
-        </Routes>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/books" element={<BooksPage />} />
+            <Route path="/sketches" element={<SketchesPage />} />
+            {/* Section anchor fallbacks */}
+            <Route path="/work" element={<Home />} />
+            <Route path="/notes" element={<Home />} />
+            <Route path="/lab" element={<Home />} />
+            <Route path="/about" element={<Home />} />
+          </Routes>
+        </Suspense>
       </Layout>
     </BrowserRouter>
   )

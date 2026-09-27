@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { MobileMenu } from './MobileMenu'
 
 const navLinks = [
@@ -13,12 +14,28 @@ const navLinks = [
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const isHome = location.pathname === '/'
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40)
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Handle hash scrolling when arriving at home with a hash (e.g. /#work)
+  useEffect(() => {
+    if (isHome && location.hash) {
+      const target = document.querySelector(location.hash)
+      if (target) {
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth' })
+        }, 150)
+      }
+    }
+  }, [isHome, location.hash])
 
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -32,11 +49,22 @@ export function Navbar() {
 
   const handleNavClick = (href: string) => {
     setMenuOpen(false)
-    const target = document.querySelector(href)
-    if (target) {
-      setTimeout(() => {
+    if (!isHome) {
+      navigate('/' + href)
+    } else {
+      const target = document.querySelector(href)
+      if (target) {
         target.scrollIntoView({ behavior: 'smooth' })
-      }, 100)
+      }
+    }
+  }
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (isHome) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      navigate('/')
     }
   }
 
@@ -60,14 +88,14 @@ export function Navbar() {
             aria-label="Main navigation"
           >
             {/* Logo */}
-            <a
-              href="#"
-              onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            <Link
+              to="/"
+              onClick={handleLogoClick}
               className="text-sm font-bold tracking-[0.15em] uppercase hover:text-accent transition-colors duration-200"
               aria-label="ADHIRAJ SENGAR — go to top"
             >
               ADHIRAJ SENGAR
-            </a>
+            </Link>
 
             {/* Desktop nav */}
             <ul className="hidden md:flex items-center gap-8" role="list">

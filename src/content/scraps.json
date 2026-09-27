@@ -5,7 +5,9 @@
     "alt": "the beginning of everything",
     "rotation": -2,
     "size": "tall",
-    "note": "radhe radhe"
+    "note": "radhe radhe",
+    "date": "March 2026",
+    "description": "A sketch capturing the beginning of everything."
   },
   {
     "id": "02",
@@ -13,7 +15,9 @@
     "alt": "inspired by a manga",
     "rotation": 1.5,
     "size": "tall",
-    "note": "Winged helmets look so cool."
+    "note": "Winged helmets look so cool.",
+    "date": "February 2026",
+    "description": "Character study inspired by manga aesthetics and dynamic winged headpieces."
   },
   {
     "id": "03",
@@ -21,7 +25,9 @@
     "alt": "Sunny eye",
     "rotation": -1,
     "size": "square",
-    "note": "and when the heart loves something, the eyes see it as paradise"
+    "note": "and when the heart loves something, the eyes see it as paradise",
+    "date": "January 2026",
+    "description": "Pencil study focused on light, warmth, and intense gaze."
   },
   {
     "id": "04",
@@ -29,7 +35,9 @@
     "alt": "character sketch for the 'cat-world'",
     "rotation": 2,
     "size": "square",
-    "note": "gangsta kitty"
+    "note": "gangsta kitty",
+    "date": "March 2026",
+    "description": "Character concept exploration for an ongoing cat-world series."
   },
   {
     "id": "05",
@@ -37,7 +45,9 @@
     "alt": "overgrown lizard",
     "rotation": -1.5,
     "size": "wide",
-    "note": "world \"building\""
+    "note": "world \"building\"",
+    "date": "February 2026",
+    "description": "An overgrown lizard doodle experimenting with scales and silhouette."
   },
   {
     "id": "06",
@@ -45,7 +55,9 @@
     "alt": "skulls are cool",
     "rotation": 0.8,
     "size": "tall",
-    "note": "Death : the wish of some, the relief of many, and the end of all"
+    "note": "Death : the wish of some, the relief of many, and the end of all",
+    "date": "March 2026",
+    "description": "An ink and graphite sketch meditating on stillness, form, and contrast."
   },
   {
     "id": "07",
@@ -53,7 +65,9 @@
     "alt": "hands are OP",
     "rotation": 0,
     "size": "tall",
-    "note": "hands-on learning"
+    "note": "hands-on learning",
+    "date": "March 2026",
+    "description": "Hand anatomy sketch studying complex perspective, joint articulation, and foreshortening."
   },
   {
     "id": "08",
@@ -61,7 +75,9 @@
     "alt": "a camera",
     "rotation": 0,
     "size": "square",
-    "note": "crazy how humans can turn rocks into devices that freeze light in time"
+    "note": "crazy how humans can turn rocks into devices that freeze light in time",
+    "date": "March 2026",
+    "description": "An illustration appreciating industrial design, lenses, and capturing time."
   },
   {
     "id": "09",
@@ -69,7 +85,9 @@
     "alt": "aot concept art",
     "rotation": 0,
     "size": "tall",
-    "note": "Finished watching A.O.T "
+    "note": "Finished watching A.O.T ",
+    "date": "March 2026",
+    "description": "Concept art tribute inspired by the conclusion of Attack on Titan."
   },
   {
     "id": "10",
@@ -77,7 +95,9 @@
     "alt": "hen?",
     "rotation": 0,
     "size": "tall",
-    "note": "trying out new markers"
+    "note": "trying out new markers",
+    "date": "March 2026",
+    "description": "Loose exploration with fresh markers experimenting with feather texture and rhythm."
   },
   {
     "id": "12",
@@ -85,6 +105,8 @@
     "alt": "combo",
     "rotation": 2.5,
     "size": "tall",
-    "note": "random scribbles"
+    "note": "random scribbles",
+    "date": "March 2026",
+    "description": "Compilation of spontaneous doodles, quick character sketches, and daily notes."
   }
 ]
