@@ -123,8 +123,40 @@
     "id": "16",
     "title": "Midnight in Chernobyl",
     "author": "Adam Higginbotham",
-    "note": "Goosebumps",
+    "note": "Unlike thermal burns caused by heat alone, which heal slowly over time, radiation burns grow gradually worse—Goosebumps",
     "status": "read",
     "cover": "/images/books/40538681.jpg"
+  },
+  {
+    "id": "17",
+    "title": "Diary of a Wimpy Kid",
+    "author": "Jeff Kinney",
+    "note": "my first ever comic",
+    "status": "read",
+    "cover": "/images/books/389627.jpg"
+  },
+  {
+    "id": "18",
+    "title": "Illuminae",
+    "author": "Amie Kaufman",
+    "note": "romantic space opera ",
+    "status": "read",
+    "cover": "/images/books/23395680.jpg"
+  },
+  {
+    "id": "19",
+    "title": "Wildcard",
+    "author": "Marie Lu",
+    "note": "Young adult may not be up for me",
+    "status": "read",
+    "cover": "/images/books/29386918.jpg"
+  },
+  {
+    "id": "20",
+    "title": "The Three-Body Problem",
+    "author": "Liu Cixin",
+    "note": "the detailing in worldbuilding is way too good ",
+    "status": "read",
+    "cover": "/images/books/20518872.jpg"
   }
 ]
