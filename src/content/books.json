@@ -29,7 +29,7 @@
     "author": "Neal Stephenson",
     "note": "invented the metaverse. very chaotic. very fun.",
     "status": "read",
-    "cover": "/images/books/snow-crash.jpg"
+    "cover": "/images/books/snow crash.png"
   },
   {
     "id": "05",
@@ -37,7 +37,7 @@
     "author": "George Orwell",
     "note": "you already know what it's about.",
     "status": "read",
-    "cover": "/images/books/animal-farm.jpg"
+    "cover": "/images/books/animal farm.jpg"
   },
   {
     "id": "06",
@@ -45,7 +45,7 @@
     "author": "Paulo Coelho",
     "note": "everyone has read this. there is a reason.",
     "status": "read",
-    "cover": "/images/books/alchemist.jpg"
+    "cover": "/images/books/alchemist.png"
   },
   {
     "id": "07",
@@ -53,6 +53,6 @@
     "author": "Satoshi Yagisawa",
     "note": "small. warm. a reminder that books are about more than reading.",
     "status": "read",
-    "cover": "/images/books/morisaki.jpg"
+    "cover": "/images/books/days.jpg"
   }
 ]
