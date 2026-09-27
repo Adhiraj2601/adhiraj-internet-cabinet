@@ -1,7 +1,7 @@
 [
   {
     "id": "01",
-    "src": "/images/scrapbook/sketch-01.jpg",
+    "src": "/images/scrapbook/warrior.jpg",
     "alt": "A sketch of a robot with too many arms",
     "rotation": -2,
     "size": "tall",
@@ -17,11 +17,11 @@
   },
   {
     "id": "03",
-    "src": "/images/scrapbook/photo-01.jpg",
-    "alt": "A blurry photograph of a screen at night",
+    "src": "/images/scrapbook/eye.jpg",
+    "alt": "Sunny eye",
     "rotation": -1,
     "size": "square",
-    "note": "2am debugging session"
+    "note": "and when the heart loves something, the eyes see it as paradise"
   },
   {
     "id": "04",
