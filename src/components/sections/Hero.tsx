@@ -6,7 +6,7 @@ import { SectionLabel } from '../ui/SectionLabel'
 // Drop your video file in public/media/ and set the path here.
 // e.g. '/media/my-video.mp4'
 // Leave empty ('') to fall back to the YouTube embed below.
-const LOCAL_VIDEO_SRC = ''
+const LOCAL_VIDEO_SRC = '/media/video.mp4'
 const YOUTUBE_ID = 'IxX_QHay02M'
 // YouTube embed with controls/branding minimised (still shows logo on hover)
 const YT_SRC = `https://www.youtube-nocookie.com/embed/${YOUTUBE_ID}?autoplay=1&controls=0&rel=0&modestbranding=1&playsinline=1`
