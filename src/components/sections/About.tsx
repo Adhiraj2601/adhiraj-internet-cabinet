@@ -55,7 +55,7 @@ export function About() {
                   Sometimes I build things just because I want to know if I can.
                 </p>
                 <p className="text-[1rem] leading-relaxed" style={{ color: 'var(--muted)' }}>
-                  I tend to get obsessed with things — graphs, worldbuilding, chess engines, procedural generation, whatever book I'm reading — and then build something because of it.
+                  I tend to get obsessed with things — worldbuilding, art, creative coding, manga, whatever book I'm reading — and then build something because of it.
                 </p>
                 <p className="text-[1rem] leading-relaxed" style={{ color: 'var(--muted)' }}>
                   This website is a collection of those obsessions.
@@ -75,7 +75,7 @@ export function About() {
               {/* Contact links */}
               <motion.div variants={fadeUp} className="mt-10 flex flex-wrap gap-6">
                 <a
-                  href="https://github.com/adhirajsengar"
+                  href="https://github.com/Adhiraj2601"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 text-[0.8rem] font-semibold tracking-widest uppercase hover:text-accent transition-colors duration-200"
@@ -84,7 +84,7 @@ export function About() {
                   <span className="group-hover:translate-x-1 transition-transform duration-200">↗</span>
                 </a>
                 <a
-                  href="https://linkedin.com/in/adhirajsengar"
+                  href="https://www.linkedin.com/in/adhiraj-sengar/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group flex items-center gap-2 text-[0.8rem] font-semibold tracking-widest uppercase hover:text-accent transition-colors duration-200"
@@ -93,7 +93,7 @@ export function About() {
                   <span className="group-hover:translate-x-1 transition-transform duration-200">↗</span>
                 </a>
                 <a
-                  href="mailto:adhiraj@example.com"
+                  href="mailto:adhirajsengar2601@gmail.com"
                   className="group flex items-center gap-2 text-[0.8rem] font-semibold tracking-widest uppercase hover:text-accent transition-colors duration-200"
                 >
                   <span>Email</span>
