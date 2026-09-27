@@ -5,7 +5,7 @@
     "alt": "the beginning of everything",
     "rotation": -2,
     "size": "tall",
-    "note": "राधे राधे"
+    "note": "radhe radhe"
   },
   {
     "id": "02",
@@ -33,11 +33,11 @@
   },
   {
     "id": "05",
-    "src": "/images/scrapbook/screen-01.jpg",
-    "alt": "Screenshot of an interesting terminal output",
+    "src": "/images/scrapbook/dragon.jpg",
+    "alt": "overgrown lizard",
     "rotation": -1.5,
     "size": "wide",
-    "note": "something worked"
+    "note": "world \"building\""
   },
   {
     "id": "06",
