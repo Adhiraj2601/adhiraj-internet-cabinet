@@ -2,10 +2,10 @@
   {
     "id": "01",
     "src": "/images/scrapbook/warrior.jpg",
-    "alt": "A sketch of a robot with too many arms",
+    "alt": "Bravery",
     "rotation": -2,
     "size": "tall",
-    "note": "robot sketch, march"
+    "note": "Only the dead have seen the end of war"
   },
   {
     "id": "02",
@@ -25,11 +25,11 @@
   },
   {
     "id": "04",
-    "src": "/images/scrapbook/doodle-01.jpg",
-    "alt": "A small doodle of a city skyline",
+    "src": "/images/scrapbook/cat.jpg",
+    "alt": "character sketch for the 'cat-world'",
     "rotation": 2,
     "size": "square",
-    "note": "city doodle"
+    "note": "gangsta kitty"
   },
   {
     "id": "05",
