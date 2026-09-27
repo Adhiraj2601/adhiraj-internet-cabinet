@@ -53,7 +53,7 @@ export function MobileMenu({ links, onClose, onLinkClick }: MobileMenuProps) {
         style={{ borderBottom: '1px solid var(--border)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span className="text-sm font-bold tracking-[0.15em] uppercase">ADI</span>
+        <span className="text-sm font-bold tracking-[0.15em] uppercase">ADHIRAJ SENGAR</span>
         <button
           onClick={onClose}
           className="text-[0.7rem] font-semibold tracking-[0.15em] text-muted hover:text-foreground transition-colors"

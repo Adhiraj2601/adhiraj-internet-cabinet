@@ -14,7 +14,7 @@ export function Footer() {
             >
               that's enough internet for today.
             </p>
-            <p className="mt-4 text-[1.6rem] md:text-[2rem] font-bold tracking-tight">ADI</p>
+            <p className="mt-4 text-[1.6rem] md:text-[2rem] font-bold tracking-tight">ADHIRAJ SENGAR</p>
           </div>
 
           {/* Links + copyright */}

@@ -24,7 +24,7 @@ export function About() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-16 items-start">
             {/* Left: heading */}
             <motion.div variants={fadeUp} className="md:col-span-4">
-              <SectionLabel>07 / About</SectionLabel>
+              <SectionLabel>01 / About</SectionLabel>
               <h2
                 id="about-heading"
                 className="mt-3 font-bold leading-none tracking-tight"

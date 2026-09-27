@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MobileMenu } from './MobileMenu'
 
 const navLinks = [
+  { label: 'ABOUT', href: '#about' },
   { label: 'WORK', href: '#work' },
   { label: 'NOTES', href: '#notes' },
   { label: 'BOOKS', href: '#books' },
   { label: 'LAB', href: '#lab' },
-  { label: 'ABOUT', href: '#about' },
 ]
 
 export function Navbar() {
@@ -64,9 +64,9 @@ export function Navbar() {
               href="#"
               onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               className="text-sm font-bold tracking-[0.15em] uppercase hover:text-accent transition-colors duration-200"
-              aria-label="ADI — go to top"
+              aria-label="ADHIRAJ SENGAR — go to top"
             >
-              ADI
+              ADHIRAJ SENGAR
             </a>
 
             {/* Desktop nav */}
