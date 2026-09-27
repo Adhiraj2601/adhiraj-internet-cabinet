@@ -9,11 +9,11 @@
   },
   {
     "id": "02",
-    "src": "/images/scrapbook/notes-01.jpg",
-    "alt": "Handwritten notes about graph theory",
+    "src": "/images/scrapbook/angel.jpg",
+    "alt": "inspired by a manga",
     "rotation": 1.5,
-    "size": "wide",
-    "note": "notes from a rabbit hole"
+    "size": "tall",
+    "note": "Winged helmets look so cool."
   },
   {
     "id": "03",
@@ -46,5 +46,21 @@
     "rotation": 0.8,
     "size": "tall",
     "note": "Death : the wish of some, the relief of many, and the end of all"
+  },
+  {
+    "id": "07",
+    "src": "/images/scrapbook/hand.jpg",
+    "alt": "hands are OP",
+    "rotation": 0,
+    "size": "tall",
+    "note": "hands-on learning"
+  },
+  {
+    "id": "08",
+    "src": "/images/scrapbook/camera.jpg",
+    "alt": "a camera",
+    "rotation": 0,
+    "size": "square",
+    "note": "crazy how humans can turn rocks into devices that freeze light in time"
   }
 ]
