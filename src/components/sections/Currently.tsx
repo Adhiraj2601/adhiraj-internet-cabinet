@@ -3,24 +3,7 @@ import { useRef } from 'react'
 import { SectionLabel } from '../ui/SectionLabel'
 import { stagger, fadeUp } from '../../lib/animations'
 
-const currentlyData = [
-  {
-    label: 'Learning',
-    items: ['AI / ML', 'GenAI', 'Graph theory'],
-  },
-  {
-    label: 'Building',
-    items: ['LoreGraph', 'UNOchess', 'PyCasso'],
-  },
-  {
-    label: 'Reading',
-    items: ['The Three-Body Problem', 'Children of Time', 'Mistborn'],
-  },
-  {
-    label: 'Exploring',
-    items: ['Games', 'Worldbuilding', 'Creative coding'],
-  },
-]
+import currentlyData from '../../content/currently.json'
 
 export function Currently() {
   const ref = useRef<HTMLElement>(null)

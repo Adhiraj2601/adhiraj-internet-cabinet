@@ -1,3 +1,5 @@
+import booksData from './books.json'
+
 export type Book = {
   id: string
   title: string
@@ -8,61 +10,4 @@ export type Book = {
   cover?: string
 }
 
-export const books: Book[] = [
-  {
-    id: '01',
-    title: 'Children of Time',
-    author: 'Adrian Tchaikovsky',
-    note: 'currently making me rethink spiders.',
-    status: 'reading',
-    cover: '/images/books/children-of-time.jpg',
-  },
-  {
-    id: '02',
-    title: 'Maus',
-    author: 'Art Spiegelman',
-    note: "graphic novel. history. mice. more devastating than it has any right to be.",
-    status: 'read',
-    cover: '/images/books/maus.jpg',
-  },
-  {
-    id: '03',
-    title: 'Orbital',
-    author: 'Samantha Harvey',
-    note: 'sixteen sunrises a day from orbit. makes earth feel very small.',
-    status: 'reading',
-    cover: '/images/books/orbital.jpg',
-  },
-  {
-    id: '04',
-    title: 'Snow Crash',
-    author: 'Neal Stephenson',
-    note: 'invented the metaverse. very chaotic. very fun.',
-    status: 'read',
-    cover: '/images/books/snow-crash.jpg',
-  },
-  {
-    id: '05',
-    title: 'Animal Farm',
-    author: 'George Orwell',
-    note: "you already know what it's about.",
-    status: 'read',
-    cover: '/images/books/animal-farm.jpg',
-  },
-  {
-    id: '06',
-    title: 'The Alchemist',
-    author: 'Paulo Coelho',
-    note: 'everyone has read this. there is a reason.',
-    status: 'read',
-    cover: '/images/books/alchemist.jpg',
-  },
-  {
-    id: '07',
-    title: 'Days at the Morisaki Bookshop',
-    author: 'Satoshi Yagisawa',
-    note: 'small. warm. a reminder that books are about more than reading.',
-    status: 'read',
-    cover: '/images/books/morisaki.jpg',
-  },
-]
+export const books: Book[] = booksData as Book[]

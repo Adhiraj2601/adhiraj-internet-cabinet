@@ -1,3 +1,5 @@
+import projectsData from './projects.json'
+
 export type Project = {
   id: string
   number: string
@@ -12,39 +14,4 @@ export type Project = {
   tags?: string[]
 }
 
-export const projects: Project[] = [
-  {
-    id: '01',
-    number: '01',
-    title: 'LoreGraph',
-    slug: 'loregraph',
-    category: 'World Building',
-    description: 'A visual space for connecting ideas, characters and worlds. Built to keep my thoughts, stories, and inspirations in one place.',
-    year: '2026',
-    image: '/images/projects/loregraph.png',
-    github: 'https://github.com/adhirajsengar/loregraph',
-  },
-  {
-    id: '02',
-    number: '02',
-    title: 'PyCasso',
-    slug: 'pycasso',
-    category: 'Creative Coding',
-    description: 'A lightweight digital drawing application built in Python, created as a space to explore graphics programming through a simple and intuitive interface.',
-    year: '2025',
-    image: '/images/projects/pycasso.png',
-    github: 'https://github.com/adhirajsengar/pycasso',
-  },
-
-  {
-    id: '03',
-    number: '03',
-    title: 'JS Chess',
-    slug: 'js-chess',
-    category: 'Game',
-    description: 'A JavaScript chess game I built to learn and better understand JavaScript through a hands-on project. I’m now experimenting with incorporating UNO mechanics into the chess game to create a unique chess-UNO hybrid.',
-    year: '2024',
-    image: '/images/projects/chess.png',
-    github: 'https://github.com/adhirajsengar/js-chess',
-  }
-]
+export const projects: Project[] = projectsData as Project[]

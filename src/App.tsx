@@ -1,12 +1,20 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { Home } from './pages/Home'
+import { Admin } from './pages/Admin'
 import './styles/globals.css'
 
-function App() {
+function Layout({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  const isAdmin = location.pathname.startsWith('/admin')
+
+  if (isAdmin) {
+    return <>{children}</>
+  }
+
   return (
-    <BrowserRouter>
+    <>
       {/* Skip to main content for accessibility */}
       <a
         href="#main-content"
@@ -17,18 +25,26 @@ function App() {
       </a>
 
       <Navbar />
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-        {/* Placeholder routes for future content */}
-        <Route path="/work" element={<Home />} />
-        <Route path="/notes" element={<Home />} />
-        <Route path="/books" element={<Home />} />
-        <Route path="/lab" element={<Home />} />
-        <Route path="/about" element={<Home />} />
-      </Routes>
-
+      {children}
       <Footer />
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/work" element={<Home />} />
+          <Route path="/notes" element={<Home />} />
+          <Route path="/books" element={<Home />} />
+          <Route path="/lab" element={<Home />} />
+          <Route path="/about" element={<Home />} />
+        </Routes>
+      </Layout>
     </BrowserRouter>
   )
 }

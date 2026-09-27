@@ -51,7 +51,13 @@ export function Footer() {
                 </li>
               </ul>
             </nav>
-            <p className="text-[0.7rem] tracking-widest text-muted">© 2026</p>
+            <div className="flex items-center gap-3 text-[0.7rem] tracking-widest text-muted">
+              <span>© 2026</span>
+              <span>•</span>
+              <a href="/admin" className="hover:text-foreground transition-colors" title="Manage content via Admin Dashboard">
+                Admin ↗
+              </a>
+            </div>
           </div>
         </div>
       </div>
