@@ -21,6 +21,8 @@ import {
   ArrowUp,
   ArrowDown,
   RefreshCw,
+  Settings,
+  Rocket,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -93,6 +95,13 @@ export function Admin() {
 
   // Queued image uploads to publish
   const [queuedImages, setQueuedImages] = useState<{ path: string; file: File; label: string }[]>([])
+
+  // Vercel Deploy Hook integration
+  const [deployHookUrl, setDeployHookUrl] = useState(() => localStorage.getItem('admin_vercel_deploy_hook') || '')
+  const [deployHookInput, setDeployHookInput] = useState(() => localStorage.getItem('admin_vercel_deploy_hook') || '')
+  const [showDeploySettings, setShowDeploySettings] = useState(false)
+  const [isDeployingHook, setIsDeployingHook] = useState(false)
+  const [hookSavedMessage, setHookSavedMessage] = useState('')
 
   // Verify token on mount if stored
   useEffect(() => {
@@ -206,6 +215,16 @@ export function Admin() {
         }
       }
 
+      let deployTriggered = false
+      if (deployHookUrl.trim()) {
+        try {
+          await fetch(deployHookUrl.trim(), { method: 'POST' })
+          deployTriggered = true
+        } catch {
+          deployTriggered = false
+        }
+      }
+
       setHasChanges(false)
       setSelectedImageFile(null)
       setSelectedBookCoverFile(null)
@@ -216,7 +235,11 @@ export function Admin() {
       setQueuedImages([])
       setPublishMessage({
         type: 'success',
-        text: 'Published successfully! Vercel is now deploying your updates (~30s).',
+        text: deployTriggered
+          ? 'Published successfully! Committed to GitHub and triggered Vercel rebuild via Deploy Hook (~30s).'
+          : deployHookUrl.trim()
+            ? 'Committed to GitHub! (Note: Deploy Hook ping failed; check your Vercel Deploy URL in settings).'
+            : 'Committed to GitHub! Tip: Add a Vercel Deploy Hook in settings (top bar) so Vercel rebuilds automatically on publish.',
         url: lastCommitUrl,
       })
     } catch (err: unknown) {
@@ -226,6 +249,40 @@ export function Admin() {
       })
     } finally {
       setIsPublishing(false)
+    }
+  }
+
+  // Vercel Deploy Hook Handlers
+  const handleSaveDeployHook = (e: React.FormEvent) => {
+    e.preventDefault()
+    const cleaned = deployHookInput.trim()
+    if (cleaned) {
+      localStorage.setItem('admin_vercel_deploy_hook', cleaned)
+      setDeployHookUrl(cleaned)
+    } else {
+      localStorage.removeItem('admin_vercel_deploy_hook')
+      setDeployHookUrl('')
+    }
+    setHookSavedMessage('Deploy hook settings saved!')
+    setTimeout(() => setHookSavedMessage(''), 2500)
+  }
+
+  const handleTriggerDeployOnly = async () => {
+    if (!deployHookUrl.trim()) return
+    setIsDeployingHook(true)
+    try {
+      await fetch(deployHookUrl.trim(), { method: 'POST' })
+      setPublishMessage({
+        type: 'success',
+        text: 'Vercel rebuild triggered! Your site is currently building and deploying (~30s).',
+      })
+    } catch {
+      setPublishMessage({
+        type: 'error',
+        text: 'Failed to trigger Vercel Deploy Hook. Please check the URL.',
+      })
+    } finally {
+      setIsDeployingHook(false)
     }
   }
 
@@ -510,6 +567,29 @@ export function Admin() {
             </button>
 
             <button
+              onClick={() => setShowDeploySettings((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-token rounded transition-colors ${
+                showDeploySettings ? 'bg-neutral-200 text-foreground font-semibold' : 'hover:bg-neutral-100 text-muted hover:text-foreground'
+              }`}
+              title="Configure Vercel Deploy Hook"
+            >
+              <Settings size={13} />
+              <span className="hidden sm:inline">Vercel Deploy</span>
+            </button>
+
+            {deployHookUrl && (
+              <button
+                onClick={handleTriggerDeployOnly}
+                disabled={isDeployingHook}
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-token hover:bg-neutral-100 rounded transition-colors text-muted hover:text-foreground disabled:opacity-50"
+                title="Trigger a Vercel rebuild right now"
+              >
+                <Rocket size={13} className={isDeployingHook ? 'animate-bounce text-emerald-600' : ''} />
+                <span>{isDeployingHook ? 'Deploying...' : 'Redeploy'}</span>
+              </button>
+            )}
+
+            <button
               onClick={handlePublishAll}
               disabled={isPublishing || !authenticatedUser}
               className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider bg-foreground text-background hover:opacity-90 disabled:opacity-50 rounded transition-all shadow-xs"
@@ -532,6 +612,77 @@ export function Admin() {
 
       {/* Main Content Area */}
       <main className="container-main pt-8">
+        {/* Vercel Deploy Settings Panel */}
+        {showDeploySettings && (
+          <div className="mb-6 p-5 bg-background border-2 border-foreground/20 rounded-sm shadow-xs font-mono">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-token">
+              <div className="flex items-center gap-2">
+                <Rocket size={16} className="text-accent" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Vercel Auto-Deploy Settings
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowDeploySettings(false)}
+                className="text-xs text-muted hover:text-foreground px-2 py-1 cursor-pointer"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <p className="text-xs text-muted leading-relaxed mb-3">
+              Because updates are committed to GitHub via the REST API, Vercel needs a <strong>Deploy Hook</strong> to rebuild automatically when you publish. Once added, every time you click &ldquo;Publish to GitHub&rdquo; Vercel will immediately build and deploy your changes.
+            </p>
+
+            <form onSubmit={handleSaveDeployHook} className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold text-foreground mb-1 uppercase tracking-wider">
+                  Vercel Deploy Hook URL
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://api.vercel.com/v1/integrations/deploy/prj_.../..."
+                    value={deployHookInput}
+                    onChange={(e) => setDeployHookInput(e.target.value)}
+                    className="flex-1 px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-foreground text-background text-xs font-bold uppercase tracking-wider rounded-xs hover:opacity-90 whitespace-nowrap cursor-pointer"
+                  >
+                    Save Hook
+                  </button>
+                  {deployHookUrl && (
+                    <button
+                      type="button"
+                      onClick={handleTriggerDeployOnly}
+                      disabled={isDeployingHook}
+                      className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold uppercase tracking-wider rounded-xs hover:bg-emerald-700 whitespace-nowrap cursor-pointer disabled:opacity-50"
+                    >
+                      {isDeployingHook ? 'Deploying...' : 'Deploy Now'}
+                    </button>
+                  )}
+                </div>
+                {hookSavedMessage && (
+                  <p className="text-xs text-emerald-600 mt-1 font-bold">{hookSavedMessage}</p>
+                )}
+              </div>
+
+              <div className="p-3 bg-neutral-50 rounded-xs border border-neutral-200 text-[11px] text-neutral-600 space-y-1">
+                <p className="font-bold text-neutral-800">How to get your Vercel Deploy Hook (takes 1 minute):</p>
+                <ol className="list-decimal list-inside space-y-0.5 ml-1">
+                  <li>Go to your <strong>Vercel Dashboard</strong> → select your portfolio project.</li>
+                  <li>Click <strong>Settings</strong> → <strong>Git</strong>.</li>
+                  <li>Scroll down to <strong>Deploy Hooks</strong>.</li>
+                  <li>Give it a name (e.g. <code>Admin CMS</code>), set Branch to <code>master</code>, and click <strong>Create</strong>.</li>
+                  <li>Copy the generated URL and paste it into the field above!</li>
+                </ol>
+              </div>
+            </form>
+          </div>
+        )}
+
         {/* Banner notification */}
         {publishMessage && (
           <div

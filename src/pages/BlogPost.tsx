@@ -165,8 +165,12 @@ export function BlogPost() {
               </h1>
               <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-neutral-600">
                 <span>{post.date}</span>
-                <span>•</span>
-                {post.readTime && <span>{post.readTime}</span>}
+                {post.readTime && (
+                  <>
+                    <span>•</span>
+                    <span>{post.readTime}</span>
+                  </>
+                )}
                 <span>•</span>
                 <span
                   className="px-1.5 py-0.5 rounded-[2px] text-[10px] uppercase font-bold text-neutral-800"
