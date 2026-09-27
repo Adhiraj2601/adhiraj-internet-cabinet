@@ -6,15 +6,15 @@ import { stagger, fadeUp } from '../../lib/animations'
 const currentlyData = [
   {
     label: 'Learning',
-    items: ['AI / ML', 'GenAI', 'Systems'],
+    items: ['AI / ML', 'GenAI', 'Graph theory'],
   },
   {
     label: 'Building',
-    items: ['LoreGraph', 'UNOCHESS', 'PyCasso'],
+    items: ['LoreGraph', 'UNOchess', 'PyCasso'],
   },
   {
     label: 'Reading',
-    items: ['Children of Time', 'Maus', 'Orbital'],
+    items: ['The Three-Body Problem', 'Children of Time', 'Mistborn'],
   },
   {
     label: 'Exploring',
