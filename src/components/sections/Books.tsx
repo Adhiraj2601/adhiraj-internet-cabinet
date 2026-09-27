@@ -3,7 +3,6 @@ import { motion, useInView } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { books } from '../../content/books'
 import { SectionLabel } from '../ui/SectionLabel'
-import { Arrow } from '../ui/Arrow'
 import { stagger, fadeUp } from '../../lib/animations'
 
 function BookItem({ book, index }: { book: typeof books[0]; index: number }) {
@@ -77,8 +76,8 @@ export function Books() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 
-  // Curated 8 books for the homepage exhibition room
-  const curatedBooks = books.slice(0, 8)
+  // Exactly 7 books to neatly occupy a single row on desktop full screen
+  const curatedBooks = books.slice(0, 7)
 
   return (
     <section
@@ -109,21 +108,14 @@ export function Books() {
                 Things I've read
               </h2>
             </div>
-            <div className="flex flex-col md:items-end gap-2">
+            <div>
               <p className="text-[0.85rem] text-muted max-w-xs leading-relaxed md:text-right">
                 a loose collection. not a reading list. not a review. just the books that live on my desk.
               </p>
-              <Link
-                to="/books"
-                className="inline-flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase text-accent hover:underline group"
-              >
-                <span>Browse Library ({books.length})</span>
-                <Arrow size={12} direction="up-right" className="transform transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
             </div>
           </motion.div>
 
-          {/* Books grid (curated exhibition selection) */}
+          {/* Books grid (single row on lg screens) */}
           <motion.div
             variants={stagger}
             className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-6 md:gap-5"
