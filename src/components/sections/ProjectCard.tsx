@@ -15,7 +15,7 @@ function ProjectCardTextLeft({ project }: { project: Project }) {
 
   return (
     <article
-      className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 items-center py-10 md:py-14"
+      className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center py-10 md:py-16"
       style={{ borderTop: '1px solid var(--border)' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -59,23 +59,23 @@ function ProjectCardTextLeft({ project }: { project: Project }) {
           )}
         </div>
       </div>
-      {/* Image */}
+
+      {/* Image — fully visible, uncropped */}
       <div className="order-1 md:order-2">
         <motion.div
-          className="overflow-hidden"
-          style={{ aspectRatio: '4/3', background: 'rgba(23,23,23,0.06)' }}
-          animate={{ scale: hovered ? 1.02 : 1 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          className="overflow-hidden border border-token/60 bg-[rgba(23,23,23,0.02)] p-2 sm:p-3 rounded-sm flex items-center justify-center shadow-xs"
+          animate={{ scale: hovered ? 1.015 : 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
         >
           {project.image ? (
             <img
               src={project.image}
               alt={project.title}
-              className="w-full h-full object-cover"
+              className="w-full h-auto max-h-[500px] object-contain rounded-xs"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-64 flex items-center justify-center">
               <span className="text-muted text-[0.7rem] tracking-widest uppercase font-medium">{project.category}</span>
             </div>
           )}
@@ -90,33 +90,33 @@ function ProjectCardTextRight({ project }: { project: Project }) {
 
   return (
     <article
-      className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 items-center py-10 md:py-14"
+      className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center py-10 md:py-16"
       style={{ borderTop: '1px solid var(--border)' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Image */}
+      {/* Image — fully visible, uncropped */}
       <div>
         <motion.div
-          className="overflow-hidden"
-          style={{ aspectRatio: '4/3', background: 'rgba(23,23,23,0.06)' }}
-          animate={{ scale: hovered ? 1.02 : 1 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          className="overflow-hidden border border-token/60 bg-[rgba(23,23,23,0.02)] p-2 sm:p-3 rounded-sm flex items-center justify-center shadow-xs"
+          animate={{ scale: hovered ? 1.015 : 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
         >
           {project.image ? (
             <img
               src={project.image}
               alt={project.title}
-              className="w-full h-full object-cover"
+              className="w-full h-auto max-h-[500px] object-contain rounded-xs"
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-64 flex items-center justify-center">
               <span className="text-muted text-[0.7rem] tracking-widest uppercase font-medium">{project.category}</span>
             </div>
           )}
         </motion.div>
       </div>
+
       {/* Text */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
@@ -157,7 +157,7 @@ function ProjectCardFullWidth({ project }: { project: Project }) {
 
   return (
     <article
-      className="py-10 md:py-14"
+      className="py-10 md:py-16"
       style={{ borderTop: '1px solid var(--border)' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -177,20 +177,27 @@ function ProjectCardFullWidth({ project }: { project: Project }) {
           )}
         </div>
       </div>
+
+      {/* Image — fully visible, uncropped */}
       <motion.div
-        className="overflow-hidden mb-6"
-        style={{ aspectRatio: '16/7', background: 'rgba(23,23,23,0.06)' }}
+        className="overflow-hidden mb-6 border border-token/60 bg-[rgba(23,23,23,0.02)] p-2 sm:p-4 rounded-sm flex items-center justify-center shadow-xs"
         animate={{ scale: hovered ? 1.01 : 1 }}
-        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
       >
         {project.image ? (
-          <img src={project.image} alt={project.title} className="w-full h-full object-cover" loading="lazy" />
+          <img
+            src={project.image}
+            alt={project.title}
+            className="w-full h-auto max-h-[750px] object-contain rounded-xs"
+            loading="lazy"
+          />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-64 flex items-center justify-center">
             <span className="text-muted text-[0.7rem] tracking-widest uppercase font-medium">{project.category}</span>
           </div>
         )}
       </motion.div>
+
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <h3 className="font-bold tracking-tight leading-tight" style={{ fontSize: 'clamp(2rem, 5vw, 4rem)' }}>
           {project.title}
@@ -208,30 +215,35 @@ function ProjectCardLargeText({ project }: { project: Project }) {
 
   return (
     <article
-      className="py-10 md:py-14 grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 items-center"
+      className="py-10 md:py-16 grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 items-center"
       style={{ borderTop: '1px solid var(--border)' }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Small image */}
-      <div className="md:col-span-4 lg:col-span-3">
+      {/* Image — fully visible, uncropped */}
+      <div className="md:col-span-5 lg:col-span-4">
         <motion.div
-          className="overflow-hidden"
-          style={{ aspectRatio: '1/1', background: 'rgba(23,23,23,0.06)' }}
-          animate={{ scale: hovered ? 1.04 : 1 }}
-          transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          className="overflow-hidden border border-token/60 bg-[rgba(23,23,23,0.02)] p-2 rounded-sm flex items-center justify-center shadow-xs"
+          animate={{ scale: hovered ? 1.02 : 1 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
         >
           {project.image ? (
-            <img src={project.image} alt={project.title} className="w-full h-full object-cover" loading="lazy" />
+            <img
+              src={project.image}
+              alt={project.title}
+              className="w-full h-auto max-h-[420px] object-contain rounded-xs"
+              loading="lazy"
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-48 flex items-center justify-center">
               <span className="text-muted text-[0.65rem] tracking-widest uppercase font-medium text-center px-2">{project.category}</span>
             </div>
           )}
         </motion.div>
       </div>
+
       {/* Oversized text */}
-      <div className="md:col-span-8 lg:col-span-9 flex flex-col gap-3">
+      <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-3">
         <div className="flex items-center gap-4 mb-1">
           <span className="text-[0.7rem] font-semibold tracking-[0.2em] text-muted">{project.number}</span>
           <SectionLabel>{project.category}</SectionLabel>
