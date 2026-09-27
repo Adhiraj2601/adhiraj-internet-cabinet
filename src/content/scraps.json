@@ -80,19 +80,11 @@
     "note": "trying out new markers"
   },
   {
-    "id": "11",
-    "src": "/images/scrapbook/Screenshot 2026-09-28 001053.png",
-    "alt": "scooter",
-    "rotation": 0,
-    "size": "square",
-    "note": "Vintage always looks better"
-  },
-  {
     "id": "12",
     "src": "/images/scrapbook/7618e6cc-62e8-4fa6-939a-92f5878f720e.jpg",
     "alt": "combo",
     "rotation": 2.5,
-    "size": "square",
+    "size": "tall",
     "note": "random scribbles"
   }
 ]
