@@ -76,7 +76,7 @@ export function Books() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
 
-  // Exactly 7 books to neatly occupy a single row on desktop full screen
+  // Curate exactly 7 books so they occupy a single seamless row on desktop (lg:grid-cols-7)
   const curatedBooks = books.slice(0, 7)
 
   return (
