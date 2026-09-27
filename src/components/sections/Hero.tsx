@@ -101,7 +101,7 @@ export function Hero() {
               {/* Handwritten tape note on top */}
               <div className="flex justify-between items-center mb-2 px-1">
                 <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
-                  welcome to my little corner ↗
+                  welcome to my little corner 
                 </span>
                 <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
                   FIG. 01 / ARTIFACT
