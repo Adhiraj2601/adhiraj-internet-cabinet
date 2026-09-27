@@ -167,43 +167,62 @@ export function Admin() {
         )
       }
 
-      // 2. Commit all active JSON data files
+      // 2. Commit only modified JSON data files to save deployment quotas
       const updates = [
         {
           path: 'src/content/projects.json',
           data: projectsData,
+          initial: initialProjects,
           msg: 'cms: update projects',
         },
         {
           path: 'src/content/books.json',
           data: booksData,
+          initial: initialBooks,
           msg: 'cms: update reading list',
         },
         {
           path: 'src/content/scraps.json',
           data: scrapsData,
+          initial: initialScraps,
           msg: 'cms: update visual scraps / sketches',
         },
         {
           path: 'src/content/currently.json',
           data: currentlyData,
+          initial: initialCurrently,
           msg: 'cms: update currently section',
         },
         {
           path: 'src/content/posts.json',
           data: postsData,
+          initial: initialPosts,
           msg: 'cms: update journal notes',
         },
         {
           path: 'src/content/experiments.json',
           data: experimentsData,
+          initial: initialExperiments,
           msg: 'cms: update lab experiments',
         },
       ]
 
+      const changedUpdates = updates.filter(
+        (item) => JSON.stringify(item.data) !== JSON.stringify(item.initial)
+      )
+
+      if (changedUpdates.length === 0 && queuedImages.length === 0) {
+        setPublishMessage({
+          type: 'success',
+          text: 'No modified content to publish.',
+        })
+        setIsPublishing(false)
+        return
+      }
+
       let lastCommitUrl = ''
 
-      for (const item of updates) {
+      for (const item of changedUpdates) {
         const jsonString = JSON.stringify(item.data, null, 2)
         const base64 = utf8ToBase64(jsonString)
         const res = await commitFileToGitHub(token, item.path, base64, item.msg)
