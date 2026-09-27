@@ -15,7 +15,18 @@ const supportingLines = [
 ]
 
 export function Hero() {
+  const [heroSrc, setHeroSrc] = useState('/images/hero.jpg')
   const [imgError, setImgError] = useState(false)
+
+  const handleImgError = () => {
+    if (heroSrc === '/images/hero.jpg') {
+      setHeroSrc('/images/hero.jpg.png')
+    } else if (heroSrc === '/images/hero.jpg.png') {
+      setHeroSrc('/images/hero.png')
+    } else {
+      setImgError(true)
+    }
+  }
 
   return (
     <section
@@ -111,10 +122,10 @@ export function Hero() {
               >
                 {!imgError ? (
                   <img
-                    src="/images/hero.jpg"
+                    src={heroSrc}
                     alt="Adhiraj Sengar"
                     className="w-full h-full object-cover"
-                    onError={() => setImgError(true)}
+                    onError={handleImgError}
                   />
                 ) : (
                   <div className="w-full h-full border border-dashed border-token flex flex-col items-center justify-center p-6 text-center transition-colors group-hover:border-[rgba(23,23,23,0.35)]">
