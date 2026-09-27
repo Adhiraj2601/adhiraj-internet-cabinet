@@ -8,10 +8,11 @@ const heroLines = [
 ]
 
 const supportingLines = [
-  { text: "i build things,", delay: 0.9 },
-  { text: "collect ideas,", delay: 1.0 },
-  { text: "read too many books", delay: 1.1 },
-  { text: "and occasionally draw.", delay: 1.2 },
+  { text: "welcome to my Space :>", delay: 0.9 },
+  { text: "i build things,", delay: 1.0 },
+  { text: "collect ideas,", delay: 1.1 },
+  { text: "read too many books", delay: 1.2 },
+  { text: "and occasionally draw.", delay: 1.3 },
 ]
 
 export function Hero() {
