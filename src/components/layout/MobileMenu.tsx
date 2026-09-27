@@ -72,8 +72,10 @@ export function MobileMenu({ links, onClose, onLinkClick }: MobileMenuProps) {
           {links.map((link, i) => (
             <motion.li
               key={link.href}
+              initial="hidden"
+              animate="visible"
               variants={itemVariants}
-              transition={{ duration: 0.4, delay: i * 0.06 + 0.1, ease: 'easeOut' as const }}
+              transition={{ duration: 0.4, delay: i * 0.07 + 0.15, ease: 'easeOut' as const }}
             >
               <a
                 href={link.href}
