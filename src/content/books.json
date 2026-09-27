@@ -94,5 +94,29 @@
     "note": "A treat for gamer readers",
     "status": "read",
     "cover": "/images/books/Armada_novel_cover.jpg"
+  },
+  {
+    "id": "13",
+    "title": "Aurora Rising ",
+    "author": "Amie Kaufman",
+    "note": "My intro to YA fiction ",
+    "status": "read",
+    "cover": "/images/books/30075662.jpg"
+  },
+  {
+    "id": "14",
+    "title": "The War of the Worlds",
+    "author": "H.G. Wells",
+    "note": "Now I know why it's a classic",
+    "status": "read",
+    "cover": ""
+  },
+  {
+    "id": "15",
+    "title": "What If?",
+    "author": "Randall Munroe",
+    "note": "How do people even come up with some of these questions...",
+    "status": "read",
+    "cover": "/images/books/21413662.jpg"
   }
 ]
