@@ -86,6 +86,11 @@ export function Admin() {
   const [selectedScrapFile, setSelectedScrapFile] = useState<File | null>(null)
   const [scrapPreviewUrl, setScrapPreviewUrl] = useState<string | null>(null)
 
+  const [editingPost, setEditingPost] = useState<Post | null>(null)
+  const [isNewPost, setIsNewPost] = useState(false)
+  const [selectedPostImageFile, setSelectedPostImageFile] = useState<File | null>(null)
+  const [postImagePreviewUrl, setPostImagePreviewUrl] = useState<string | null>(null)
+
   // Queued image uploads to publish
   const [queuedImages, setQueuedImages] = useState<{ path: string; file: File; label: string }[]>([])
 
@@ -206,6 +211,8 @@ export function Admin() {
       setSelectedBookCoverFile(null)
       setSelectedScrapFile(null)
       setScrapPreviewUrl(null)
+      setSelectedPostImageFile(null)
+      setPostImagePreviewUrl(null)
       setQueuedImages([])
       setPublishMessage({
         type: 'success',
@@ -380,6 +387,51 @@ export function Admin() {
   const handleDeleteScrap = (id: string) => {
     if (window.confirm('Delete this visual scrap / sketch?')) {
       setScrapsData(scrapsData.filter((s) => s.id !== id))
+      setHasChanges(true)
+    }
+  }
+
+  // Blog / Notes Handlers
+  const handleSavePost = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingPost) return
+
+    let postImg = editingPost.image || ''
+    if (selectedPostImageFile) {
+      postImg = `/images/blog/${selectedPostImageFile.name}`
+      setQueuedImages((prev) => [
+        ...prev.filter((img) => img.path !== `public/images/blog/${selectedPostImageFile.name}`),
+        {
+          path: `public/images/blog/${selectedPostImageFile.name}`,
+          file: selectedPostImageFile,
+          label: editingPost.title || selectedPostImageFile.name,
+        },
+      ])
+    }
+
+    const postToSave: Post = {
+      ...editingPost,
+      image: postImg || undefined,
+    }
+
+    let updated: Post[]
+    if (isNewPost) {
+      updated = [postToSave, ...postsData]
+    } else {
+      updated = postsData.map((p) => (p.id === postToSave.id ? postToSave : p))
+    }
+
+    setPostsData(updated)
+    setHasChanges(true)
+    setEditingPost(null)
+    setIsNewPost(false)
+    setSelectedPostImageFile(null)
+    setPostImagePreviewUrl(null)
+  }
+
+  const handleDeletePost = (id: string) => {
+    if (window.confirm('Delete this blog post?')) {
+      setPostsData(postsData.filter((p) => p.id !== id))
       setHasChanges(true)
     }
   }
@@ -624,7 +676,7 @@ export function Admin() {
             }`}
           >
             <FileText size={15} />
-            <span>Notes ({postsData.length})</span>
+            <span>Blog / Notes ({postsData.length})</span>
           </button>
 
           <button
@@ -1482,59 +1534,324 @@ export function Admin() {
           </div>
         )}
 
-        {/* ===================== TAB 4: NOTES ===================== */}
+        {/* ===================== TAB 4: BLOG POSTS & NOTES ===================== */}
         {activeTab === 'notes' && (
           <div>
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold tracking-tight">Notes & Thoughts</h2>
-                <p className="text-xs text-muted mt-1">Articles and journal entries.</p>
+                <h2 className="text-xl font-bold tracking-tight">Blog Posts & Notes</h2>
+                <p className="text-xs text-muted mt-1">
+                  Create, edit, and publish articles and notes for your /blog page.
+                </p>
               </div>
               <button
                 onClick={() => {
-                  const newPost = {
-                    id: String(postsData.length + 1).padStart(2, '0'),
+                  setIsNewPost(true)
+                  setEditingPost({
+                    id: String(Date.now()),
                     number: String(postsData.length + 1).padStart(2, '0'),
-                    title: 'New note title',
-                    slug: `note-${postsData.length + 1}`,
-                    category: 'Thought',
+                    title: '',
+                    slug: '',
+                    category: 'Thoughts',
                     date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                    excerpt: 'Brief excerpt...',
-                  }
-                  setPostsData([...postsData, newPost])
-                  setHasChanges(true)
+                    excerpt: '',
+                    readTime: '3 min read',
+                    content: '',
+                  })
+                  setSelectedPostImageFile(null)
+                  setPostImagePreviewUrl(null)
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90 transition-opacity shrink-0"
               >
                 <Plus size={14} />
-                <span>Add Note</span>
+                <span>Write New Post</span>
               </button>
             </div>
 
-            <div className="space-y-3">
-              {postsData.map((post, idx) => (
-                <div key={post.id} className="p-4 border border-token rounded-sm flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-muted">{post.number}</span>
-                      <h3 className="font-bold text-sm truncate">{post.title}</h3>
-                      <span className="text-[10px] uppercase font-semibold text-muted">[{post.category}]</span>
-                      <span className="text-[10px] text-muted">{post.date}</span>
-                    </div>
-                    <p className="text-xs text-muted truncate mt-1">{post.excerpt}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setPostsData(postsData.filter((_, i) => i !== idx))
-                      setHasChanges(true)
-                    }}
-                    className="p-1 text-muted hover:text-red-600 shrink-0"
+            {/* Posts Grid / List */}
+            {postsData.length === 0 ? (
+              <div className="p-12 border border-dashed border-token rounded-sm text-center">
+                <FileText size={32} className="mx-auto text-muted mb-3 opacity-60" />
+                <h3 className="font-bold text-sm">No blog posts yet</h3>
+                <p className="text-xs text-muted mt-1 max-w-sm mx-auto">
+                  Start sharing your thoughts, project write-ups, or notes. Click the button above to write your first entry.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {postsData.map((post) => (
+                  <div
+                    key={post.id}
+                    className="p-4 border border-token rounded-sm flex flex-col justify-between bg-[rgba(23,23,23,0.01)]"
                   >
-                    <Trash2 size={14} />
-                  </button>
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-2xs bg-neutral-200/60 text-foreground">
+                          {post.category}
+                        </span>
+                        <span className="text-[10px] text-muted font-mono">{post.date}</span>
+                      </div>
+
+                      <div className="flex gap-3 items-start">
+                        {post.image && (
+                          <img
+                            src={post.image}
+                            alt={post.title}
+                            className="w-14 h-14 object-cover rounded-xs border border-token shrink-0"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-bold text-sm leading-snug line-clamp-1">{post.title}</h3>
+                          <p className="text-[11px] text-muted font-mono mt-0.5">/blog/{post.slug}</p>
+                          <p className="text-xs text-muted mt-2 line-clamp-2 leading-relaxed">
+                            {post.excerpt || post.content}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-token text-xs">
+                      <Link
+                        to={`/blog/${post.slug}`}
+                        target="_blank"
+                        className="flex items-center gap-1 text-[11px] text-muted hover:text-foreground font-medium"
+                      >
+                        <span>Preview</span>
+                        <ExternalLink size={12} />
+                      </Link>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setIsNewPost(false)
+                            setEditingPost(post)
+                            setSelectedPostImageFile(null)
+                            setPostImagePreviewUrl(post.image || null)
+                          }}
+                          className="p-1.5 border border-token hover:bg-neutral-100 rounded-xs text-muted hover:text-foreground"
+                          title="Edit Post"
+                        >
+                          <Edit3 size={13} />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 border border-red-200 rounded-xs"
+                          title="Delete Post"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ===================== EDIT/CREATE BLOG POST MODAL ===================== */}
+            {editingPost && (
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <div className="bg-[var(--background)] border border-token max-w-xl w-full p-6 rounded-sm shadow-xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-token">
+                    <h3 className="font-bold text-base">
+                      {isNewPost ? 'Write New Blog Post' : `Edit "${editingPost.title}"`}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingPost(null)
+                        setIsNewPost(false)
+                        setSelectedPostImageFile(null)
+                        setPostImagePreviewUrl(null)
+                      }}
+                      className="text-xs text-muted hover:text-foreground font-mono"
+                    >
+                      ✕ Close
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSavePost} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Title</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingPost.title}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          const autoSlug = isNewPost
+                            ? val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                            : editingPost.slug
+                          setEditingPost({
+                            ...editingPost,
+                            title: val,
+                            slug: autoSlug,
+                          })
+                        }}
+                        placeholder="e.g. Why I Built LoreGraph"
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">URL Slug</label>
+                        <input
+                          type="text"
+                          required
+                          value={editingPost.slug}
+                          onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
+                          placeholder="e.g. why-i-built-loregraph"
+                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Category</label>
+                        <select
+                          value={editingPost.category}
+                          onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
+                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                        >
+                          <option value="Thoughts">Thoughts</option>
+                          <option value="Observations">Observations</option>
+                          <option value="Projects">Projects</option>
+                          <option value="Programming">Programming</option>
+                          <option value="Books">Books</option>
+                          <option value="Writing">Writing</option>
+                          <option value="Learning">Learning</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Date</label>
+                        <input
+                          type="text"
+                          required
+                          value={editingPost.date}
+                          onChange={(e) => setEditingPost({ ...editingPost, date: e.target.value })}
+                          placeholder="e.g. 28 Sep 2026"
+                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Reading Time (optional)</label>
+                        <input
+                          type="text"
+                          value={editingPost.readTime || ''}
+                          onChange={(e) => setEditingPost({ ...editingPost, readTime: e.target.value })}
+                          placeholder="e.g. 4 min read"
+                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Excerpt */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Card Excerpt</label>
+                      <textarea
+                        rows={2}
+                        required
+                        value={editingPost.excerpt}
+                        onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                        placeholder="Brief 1-2 sentence overview shown on the blog card..."
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Thumbnail Image Uploader */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Thumbnail / Illustration</label>
+                      <div className="border border-dashed border-token p-4 rounded-xs bg-[rgba(23,23,23,0.015)] text-center">
+                        {postImagePreviewUrl ? (
+                          <div className="mb-3">
+                            <img
+                              src={postImagePreviewUrl}
+                              alt="Thumbnail preview"
+                              className="max-h-32 mx-auto object-contain rounded-xs border border-token shadow-xs"
+                            />
+                            <p className="text-[10px] text-muted mt-1 font-mono">
+                              {editingPost.image || selectedPostImageFile?.name}
+                            </p>
+                          </div>
+                        ) : (
+                          <Upload size={24} className="mx-auto text-muted mb-2" />
+                        )}
+
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="post-image-upload"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              setSelectedPostImageFile(file)
+                              setPostImagePreviewUrl(URL.createObjectURL(file))
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="post-image-upload"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100 cursor-pointer"
+                        >
+                          <Upload size={12} />
+                          <span>{postImagePreviewUrl ? 'Change Image' : 'Upload Illustration'}</span>
+                        </label>
+                        {postImagePreviewUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPostImageFile(null)
+                              setPostImagePreviewUrl(null)
+                              setEditingPost({ ...editingPost, image: undefined })
+                            }}
+                            className="block mx-auto mt-2 text-[10px] text-red-600 hover:underline"
+                          >
+                            Remove image (use default cat doodle)
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Full Article Content */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                        Article Content
+                      </label>
+                      <textarea
+                        rows={10}
+                        value={editingPost.content || ''}
+                        onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                        placeholder="Write your full note here. Use paragraphs, linebreaks, and ideas..."
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-token">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingPost(null)
+                          setIsNewPost(false)
+                          setSelectedPostImageFile(null)
+                          setPostImagePreviewUrl(null)
+                        }}
+                        className="px-4 py-2 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90"
+                      >
+                        Save Post
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
 

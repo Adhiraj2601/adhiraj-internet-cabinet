@@ -117,7 +117,7 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
         )}
       </div>
 
-      {/* Card Footer: ONLY Date & Orange Arrow Button (removed read time and category badge) */}
+      {/* Card Footer: ONLY Date & Orange Arrow Button */}
       <div className="flex items-center justify-between mt-3 pt-2">
         <span className="font-mono text-[10px] text-neutral-700 font-medium">
           {post.date}
@@ -244,11 +244,41 @@ export function Blog() {
 
         {/* ===================== BLOG POST GRID (directly follows Hero) ===================== */}
         <div id="blog-grid">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {posts.map((post, idx) => (
-              <BlogCard key={post.id || post.slug} post={post} index={idx} />
-            ))}
-          </div>
+          {posts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {posts.map((post, idx) => (
+                <BlogCard key={post.id || post.slug} post={post} index={idx} />
+              ))}
+            </div>
+          ) : (
+            <div
+              className="p-12 text-center rounded-md font-mono"
+              style={{
+                backgroundColor: BG_GREEN,
+                border: `2px solid ${BORDER_DARK}`,
+                boxShadow: `3px 3px 0px ${BORDER_DARK}`,
+              }}
+            >
+              <p className="font-bold text-sm text-[#1a1a1a]">
+                No notes published yet :&gt;
+              </p>
+              <p className="text-xs text-neutral-700 mt-1">
+                You can write and publish your first entry from the Admin dashboard.
+              </p>
+              <Link
+                to="/admin"
+                className="inline-block mt-4 px-4 py-1.5 font-mono text-xs font-bold uppercase rounded-xs"
+                style={{
+                  backgroundColor: ACCENT_ORANGE,
+                  border: `2px solid ${BORDER_DARK}`,
+                  boxShadow: `2px 2px 0px ${BORDER_DARK}`,
+                  color: '#1a1a1a',
+                }}
+              >
+                Open Admin Dashboard →
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* ===================== FOOTER BAR ===================== */}
@@ -259,10 +289,6 @@ export function Blog() {
           <div className="flex items-center gap-4">
             <Link to="/" className="hover:text-black font-semibold hover:underline">
               ← Return Home
-            </Link>
-            <span className="text-neutral-400">•</span>
-            <Link to="/sketches" className="hover:text-black hover:underline">
-              Sketches Archive →
             </Link>
           </div>
         </div>
