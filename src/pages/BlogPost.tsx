@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { posts, type Post } from '../content/posts'
 
-const BG_GREEN = '#c4d9ad' // Soft pastel green matching reference
+const BG_GREEN = '#ADD890' // Bright pastel green page background
 const ACCENT_ORANGE = '#e08b58' // Warm orange button accent
 const BORDER_DARK = '#1a1a1a' // Dark chunky outlines
 
@@ -64,7 +64,7 @@ export function BlogPost() {
     return (
       <div
         className="min-h-screen pt-28 pb-20 px-4 flex items-center justify-center font-mono"
-        style={{ backgroundColor: '#ebf1df' }}
+        style={{ backgroundColor: BG_GREEN }}
       >
         <div
           className="max-w-md w-full p-8 text-center bg-white rounded-sm"
@@ -98,14 +98,48 @@ export function BlogPost() {
 
   return (
     <div
-      className="min-h-screen pt-20 pb-24 px-3 sm:px-6 relative"
+      className="min-h-screen pb-24 px-3 sm:px-6 relative"
       style={{
-        backgroundColor: '#ebf1df', // Soft pastel green page frame
-        backgroundImage: 'radial-gradient(#1a1a1a 0.5px, transparent 0.5px)',
-        backgroundSize: '24px 24px',
+        backgroundColor: BG_GREEN,
       }}
     >
-      {/* Floating Top-Left Close Button [ ✕ ] matching Image 2 */}
+      {/* Floating cat sticker animation keyframes */}
+      <style>{`
+        @keyframes float-across {
+          from { transform: translateX(-60px); }
+          to   { transform: translateX(100vw); }
+        }
+        @keyframes tumble {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        @keyframes bob {
+          0%, 100% { transform: translateY(0); }
+          50%      { transform: translateY(-6px); }
+        }
+        .floating-cat-track {
+          animation: float-across 8s linear infinite;
+          will-change: transform;
+        }
+        .floating-cat-bob {
+          animation: bob 1.5s ease-in-out infinite;
+        }
+        .floating-cat-spin {
+          animation: tumble 3s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .floating-cat-track,
+          .floating-cat-bob,
+          .floating-cat-spin {
+            animation: none !important;
+          }
+          .floating-cat-track {
+            transform: translateX(calc(50vw - 20px)) !important;
+          }
+        }
+      `}</style>
+
+      {/* Floating Top-Left Close Button [ ✕ ] */}
       <div className="fixed top-5 left-5 z-40">
         <button
           onClick={() => navigate('/blog')}
@@ -121,79 +155,94 @@ export function BlogPost() {
         </button>
       </div>
 
-      {/* Main Centered White Paper Sheet Container */}
-      <div className="max-w-2xl mx-auto relative pt-4">
-        {/* Little top center paper clip / folded badge from Image 2 */}
-        <div className="flex justify-center -mb-3 relative z-10">
-          <div
-            className="w-7 h-7 bg-white rounded-xs flex items-center justify-center rotate-12"
-            style={{
-              border: `1.5px solid ${BORDER_DARK}`,
-              boxShadow: `1px 1px 0px ${BORDER_DARK}`,
-            }}
-          >
-            <span className="text-xs">📎</span>
+      {/* Floating Cat Sticker — loops across top of the page */}
+      <div
+        className="absolute left-0 w-full pointer-events-none overflow-hidden z-30"
+        style={{ top: 32, height: 60 }}
+      >
+        <div className="floating-cat-track">
+          <div className="floating-cat-bob">
+            <div className="floating-cat-spin">
+              <img
+                src="/images/blog/floating-cat.png"
+                alt=""
+                aria-hidden="true"
+                style={{ width: 48, height: 'auto' }}
+                className="select-none"
+              />
+            </div>
           </div>
         </div>
+      </div>
 
+      {/* Main Centered Card Container */}
+      <div
+        className="mx-auto relative w-full md:w-[65%] md:max-w-[1250px] px-0 md:px-0"
+        style={{ paddingTop: 80 }}
+      >
         {/* Paper Article Canvas */}
         <article
-          className="bg-white rounded-sm p-6 sm:p-10 font-mono"
+          className="rounded-sm p-3 md:p-[12px]"
           style={{
-            border: `2px solid ${BORDER_DARK}`,
-            boxShadow: `4px 4px 0px ${BORDER_DARK}`,
+            backgroundColor: '#F9F9FB',
+            border: `1px solid ${BORDER_DARK}`,
+            boxShadow: `5px 5px 0px ${BORDER_DARK}`,
           }}
         >
-          {/* Header area matching Image 2: Illustration box on left + Title/Date on right */}
-          <header className="flex flex-col sm:flex-row items-start gap-5 sm:gap-6 pb-6 border-b border-[#1a1a1a]/15">
-            {/* Illustration Frame */}
+          {/* Header: Image left, Title right */}
+          <header className="flex flex-col md:flex-row items-start gap-6 pb-0">
+            {/* Thumbnail */}
             <div
-              className="w-28 h-28 sm:w-32 sm:h-32 shrink-0 bg-white rounded-xs overflow-hidden flex items-center justify-center p-2 self-center sm:self-start"
-              style={{ border: `2px solid ${BORDER_DARK}` }}
+              className="w-full md:w-[490px] shrink-0 overflow-hidden"
+              style={{
+                aspectRatio: '3 / 2',
+                border: `2px solid ${BORDER_DARK}`,
+                boxShadow: `3px 3px 0px ${BORDER_DARK}`,
+              }}
             >
               <img
                 src={post.image || '/images/blog/cat-doodle.jpg'}
                 alt={post.title}
-                className="w-full h-full object-contain select-none"
+                className="w-full h-full object-cover select-none"
               />
             </div>
 
-            {/* Title, Date & Metadata */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold leading-tight text-[#1a1a1a] tracking-tight">
+            {/* Title & Date */}
+            <div className="flex-1 min-w-0 pt-1">
+              <h1
+                className="font-mono font-light leading-tight text-[#1a1a1a] tracking-normal"
+                style={{ fontSize: 'clamp(2rem, 4vw, 4rem)' }}
+              >
                 {post.title}
               </h1>
-              <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-neutral-600">
-                <span>{post.date}</span>
-                {post.readTime && (
-                  <>
-                    <span>•</span>
-                    <span>{post.readTime}</span>
-                  </>
-                )}
-                <span>•</span>
-                <span
-                  className="px-1.5 py-0.5 rounded-[2px] text-[10px] uppercase font-bold text-neutral-800"
-                  style={{
-                    backgroundColor: BG_GREEN,
-                    border: `1px solid ${BORDER_DARK}`,
-                  }}
-                >
-                  {post.category}
+              <div className="mt-3">
+                <span className="font-mono text-[13px] text-neutral-700">
+                  {post.date}
+                  {post.readTime && <> · {post.readTime}</>}
                 </span>
               </div>
             </div>
           </header>
 
           {/* Article Text Content */}
-          <div className="py-8 text-[13px] sm:text-[14px] leading-[1.8] text-neutral-800 space-y-5">
+          <div
+            className="pt-7 pb-4"
+            style={{
+              fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+              fontSize: 20,
+              lineHeight: 1.6,
+              color: '#6b6b6b',
+            }}
+          >
             {paragraphs.map((p, idx) => (
-              <p key={idx} className="whitespace-pre-line">
+              <p
+                key={idx}
+                className="whitespace-pre-line"
+                style={{ marginBottom: 40 }}
+              >
                 {p}
               </p>
             ))}
-
-
           </div>
 
           {/* ===================== PREV / NEXT NAVIGATION ===================== */}
@@ -230,7 +279,7 @@ export function BlogPost() {
             )}
           </div>
 
-          {/* ===================== COMMENTS BOX (MATCHING IMAGE 2) ===================== */}
+          {/* ===================== COMMENTS BOX ===================== */}
           <section
             className="mt-8 p-4 rounded-xs bg-[#fbfbfa]"
             style={{ border: `2px solid ${BORDER_DARK}` }}
