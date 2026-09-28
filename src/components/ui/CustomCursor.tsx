@@ -50,12 +50,12 @@ export function CustomCursor() {
         x: e.clientX,
         y: e.clientY,
       }
-      setBursts((prev) => [...prev.slice(-6), newBurst])
+      setBursts((prev) => [...prev.slice(-8), newBurst])
 
-      // Fallback cleanup in case onAnimationEnd is missed
+      // Fallback cleanup after animation finishes
       setTimeout(() => {
         setBursts((prev) => prev.filter((b) => b.id !== id))
-      }, 420)
+      }, 500)
     }
 
     const onMouseUp = () => {
@@ -71,16 +71,16 @@ export function CustomCursor() {
     }
 
     window.addEventListener('mousemove', onMouseMove, { passive: true })
-    window.addEventListener('mousedown', onMouseDown)
-    window.addEventListener('mouseup', onMouseUp)
+    window.addEventListener('mousedown', onMouseDown, true) // Capture phase ensures it triggers on all clicks
+    window.addEventListener('mouseup', onMouseUp, true)
     document.addEventListener('mouseleave', onMouseLeave)
     document.addEventListener('mouseenter', onMouseEnter)
 
     return () => {
       mediaQuery.removeEventListener('change', handleMediaChange)
       window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mousedown', onMouseDown)
-      window.removeEventListener('mouseup', onMouseUp)
+      window.removeEventListener('mousedown', onMouseDown, true)
+      window.removeEventListener('mouseup', onMouseUp, true)
       document.removeEventListener('mouseleave', onMouseLeave)
       document.removeEventListener('mouseenter', onMouseEnter)
     }
@@ -116,18 +116,22 @@ export function CustomCursor() {
           }
           100% {
             opacity: 0;
-            transform: scale(1.4) translate(-3px, -5px);
+            transform: scale(1.45) translate(-3px, -5px);
           }
         }
 
-        .custom-click-burst {
+        .custom-click-burst-wrap {
           position: fixed;
           top: 0;
           left: 0;
           pointer-events: none;
           z-index: 999999;
-          transform-origin: 0 0;
-          animation: clickRayBurst 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          will-change: transform;
+        }
+
+        .custom-click-burst-rays {
+          transform-origin: 0px 0px;
+          animation: clickRayBurst 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           will-change: transform, opacity;
         }
       `}</style>
@@ -136,51 +140,55 @@ export function CustomCursor() {
       {bursts.map((b) => (
         <div
           key={b.id}
-          className="custom-click-burst"
+          className="custom-click-burst-wrap"
           style={{
             transform: `translate3d(${b.x}px, ${b.y}px, 0)`,
           }}
-          onAnimationEnd={() => removeBurst(b.id)}
         >
-          <svg
-            style={{ overflow: 'visible' }}
-            width="1"
-            height="1"
-            viewBox="0 0 1 1"
+          <div
+            className="custom-click-burst-rays"
+            onAnimationEnd={() => removeBurst(b.id)}
           >
-            <g style={{ transformOrigin: '0px 0px' }}>
-              {/* Ray 1: Left ray */}
-              <line
-                x1="-6"
-                y1="-3"
-                x2="-28"
-                y2="-14"
-                stroke="#da6443"
-                strokeWidth="3.2"
-                strokeLinecap="round"
-              />
-              {/* Ray 2: Center ray */}
-              <line
-                x1="-2"
-                y1="-6"
-                x2="-13"
-                y2="-30"
-                stroke="#da6443"
-                strokeWidth="3.2"
-                strokeLinecap="round"
-              />
-              {/* Ray 3: Right ray */}
-              <line
-                x1="4"
-                y1="-6"
-                x2="13"
-                y2="-30"
-                stroke="#da6443"
-                strokeWidth="3.2"
-                strokeLinecap="round"
-              />
-            </g>
-          </svg>
+            <svg
+              style={{ overflow: 'visible', display: 'block' }}
+              width="1"
+              height="1"
+              viewBox="0 0 1 1"
+            >
+              <g style={{ transformOrigin: '0px 0px' }}>
+                {/* Ray 1: Left ray */}
+                <line
+                  x1="-7"
+                  y1="-4"
+                  x2="-28"
+                  y2="-14"
+                  stroke="#da6443"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                />
+                {/* Ray 2: Center ray */}
+                <line
+                  x1="-3"
+                  y1="-7"
+                  x2="-14"
+                  y2="-31"
+                  stroke="#da6443"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                />
+                {/* Ray 3: Right ray */}
+                <line
+                  x1="5"
+                  y1="-7"
+                  x2="14"
+                  y2="-31"
+                  stroke="#da6443"
+                  strokeWidth="3.5"
+                  strokeLinecap="round"
+                />
+              </g>
+            </svg>
+          </div>
         </div>
       ))}
 
