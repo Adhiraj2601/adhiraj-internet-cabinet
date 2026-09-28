@@ -28,6 +28,15 @@ export function BlogPost() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [navigate])
 
+  // Sync body background to matching pastel green
+  useEffect(() => {
+    const prevBg = document.body.style.backgroundColor
+    document.body.style.backgroundColor = BG_GREEN
+    return () => {
+      document.body.style.backgroundColor = prevBg
+    }
+  }, [])
+
   // Find post by slug or fallback
   const postIndex = useMemo(() => {
     return posts.findIndex((p) => p.slug === slug)
@@ -101,6 +110,7 @@ export function BlogPost() {
       className="min-h-screen pb-24 px-3 sm:px-6 relative"
       style={{
         backgroundColor: BG_GREEN,
+        paddingTop: '110px',
       }}
     >
       {/* Floating cat sticker animation & card styling */}
@@ -126,7 +136,7 @@ export function BlogPost() {
 
         .blog-card-container {
           width: min(72vw, 1200px);
-          margin: 80px auto 0;
+          margin: 0 auto;
         }
         .blog-article {
           background-color: #F9F9FB;
@@ -158,7 +168,7 @@ export function BlogPost() {
         @media (max-width: 767px) {
           .blog-card-container {
             width: calc(100% - 24px);
-            margin: 80px auto 0;
+            margin: 0 auto;
           }
           .blog-article {
             padding: 14px;
@@ -177,7 +187,7 @@ export function BlogPost() {
       `}</style>
 
       {/* Floating Top-Left Close Button [ ✕ ] */}
-      <div className="fixed top-5 left-5 z-40">
+      <div className="fixed top-4 left-4 sm:top-5 sm:left-5 z-40">
         <button
           onClick={() => navigate('/blog')}
           className="w-8 h-8 rounded-xs font-mono font-bold text-sm bg-white text-[#1a1a1a] flex items-center justify-center hover:bg-neutral-100 transition-transform hover:-translate-y-0.5 cursor-pointer"
@@ -192,11 +202,11 @@ export function BlogPost() {
         </button>
       </div>
 
-      {/* Floating Cat Sticker — slow deterministic left→right loop */}
+      {/* Floating Cat Sticker — slow deterministic left→right loop in the green space above the card */}
       <div
         style={{
           position: 'absolute',
-          top: 28,
+          top: 32,
           left: 0,
           width: '100%',
           height: 55,
