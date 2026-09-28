@@ -194,7 +194,7 @@ export function Blog() {
     >
       {/* Full-bleed Centered Main Content Container with Warm Off-White Background & Subtle Paper Texture */}
       <div
-        className="w-full max-w-none mx-auto rounded-none relative overflow-hidden mt-[30px] sm:mt-[50px]"
+        className="w-full max-w-none mx-auto rounded-none relative overflow-visible mt-[30px] sm:mt-[50px]"
         style={{
           backgroundColor: '#FAFAF7',
           border: BORDER_BLACK,
@@ -262,12 +262,14 @@ export function Blog() {
                 onClick={() => setIsAvatarTapped((prev) => !prev)}
               >
                 {/* Peeking Cat Sticker behind the picture frame */}
-                <img
-                  src="/images/blog/peek-cat.png"
-                  alt="Peeking Cat"
-                  aria-hidden="true"
-                  className="peek-cat"
-                />
+                <div className="peek-cat">
+                  <img
+                    src="/images/blog/peek-cat.png"
+                    alt="Peeking Cat"
+                    aria-hidden="true"
+                    className="peek-cat-img w-full h-auto block select-none"
+                  />
+                </div>
 
                 {/* Picture Frame */}
                 <div
@@ -414,34 +416,36 @@ export function Blog() {
               /* Peeking Cat Hover Effect */
               .peek-cat {
                 position: absolute;
-                top: -10px;
-                right: -20px;
-                width: 130px;
+                width: 170px;
                 height: auto;
+                right: 24px;
+                bottom: calc(100% - 50px);
                 z-index: 0;
                 pointer-events: none;
-                transform: translate(-70px, 70px) rotate(0deg);
-                opacity: 0;
-                will-change: transform, opacity;
-                transition: transform 0.5s ease-in, opacity 0.4s ease-in;
+                transform: translateY(130px);
+                opacity: 1;
+                will-change: transform;
+                transition: transform 0.5s ease-in;
+              }
+
+              .peek-cat-img {
+                transform: scaleX(-1);
+                transform-origin: center;
               }
 
               .profile-wrap:hover .peek-cat,
               .profile-wrap.is-active .peek-cat {
-                transform: translate(0, 0) rotate(0deg);
-                opacity: 1;
-                transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.3s ease-out;
+                transform: translateY(0);
+                transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
               }
 
               @media (hover: none) {
                 .profile-wrap:hover .peek-cat {
-                  transform: translate(-70px, 70px) rotate(0deg);
-                  opacity: 0;
+                  transform: translateY(130px);
                 }
                 .profile-wrap.is-active .peek-cat {
-                  transform: translate(0, 0) rotate(0deg);
-                  opacity: 1;
-                  transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.3s ease-out;
+                  transform: translateY(0);
+                  transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
                 }
               }
             `}</style>
