@@ -189,8 +189,8 @@
 }
 
 .doodle-star {
-  left: 6%;
-  top: 9%;
+  left: 5%;
+  top: 6%;
   animation-name: doodle-float-y1;
   animation-duration: 4.8s;
   animation-delay: -1.2s;
@@ -198,79 +198,79 @@
 
 .doodle-waves-left {
   left: 19%;
-  top: 5%;
+  top: 4%;
   animation-name: doodle-float-y2;
   animation-duration: 5.6s;
   animation-delay: -3.4s;
 }
 
 .doodle-asterisk-left {
-  left: 3.5%;
-  top: 38%;
+  left: 2.5%;
+  top: 35%;
   animation-name: doodle-float-y3;
   animation-duration: 4.2s;
   animation-delay: -0.6s;
 }
 
 .doodle-music {
-  left: 5%;
-  top: 62%;
+  left: 4%;
+  top: 60%;
   animation-name: doodle-float-y4;
   animation-duration: 6.2s;
   animation-delay: -2.8s;
 }
 
 .doodle-mini-cassette {
-  left: 13.5%;
-  top: 83%;
+  left: 12%;
+  top: 80%;
   animation-name: doodle-float-y1;
   animation-duration: 5.0s;
   animation-delay: -1.9s;
 }
 
 .doodle-waves-right {
-  left: 73%;
-  top: 5%;
+  left: 72%;
+  top: 4%;
   animation-name: doodle-float-y2;
   animation-duration: 5.4s;
   animation-delay: -4.1s;
 }
 
 .doodle-spiral {
-  left: 89%;
-  top: 11%;
+  left: 88%;
+  top: 9%;
   animation-name: doodle-float-y3;
   animation-duration: 4.6s;
   animation-delay: -0.9s;
 }
 
 .doodle-arrow {
-  left: 86%;
-  top: 28%;
+  left: 85%;
+  top: 26%;
   animation-name: doodle-float-y4;
   animation-duration: 6.0s;
   animation-delay: -2.3s;
 }
 
 .doodle-asterisk-right {
-  left: 94.5%;
-  top: 45%;
+  left: 93.5%;
+  top: 43%;
   animation-name: doodle-float-y1;
   animation-duration: 4.4s;
   animation-delay: -3.7s;
 }
 
 .doodle-sun {
-  left: 90%;
-  top: 71%;
+  left: 88.5%;
+  top: 68%;
   animation-name: doodle-float-y2;
   animation-duration: 5.8s;
   animation-delay: -1.5s;
 }
 
 .doodle-squiggly {
-  left: 74%;
-  top: 91%;
+  left: 72.5%;
+  top: 90%;
   animation-name: doodle-float-y3;
   animation-duration: 4.9s;
   animation-delay: -0.4s;
@@ -278,15 +278,15 @@
 
 .doodle-bracket {
   left: 93%;
-  top: 89%;
+  top: 87%;
   animation-name: doodle-float-y4;
   animation-duration: 5.2s;
   animation-delay: -2.6s;
 }
 
 .doodle-dots-bottom {
-  left: 31%;
-  top: 91%;
+  left: 30.5%;
+  top: 89%;
   animation-name: doodle-float-y1;
   animation-duration: 6.5s;
   animation-delay: -1.8s;
