@@ -418,7 +418,7 @@ export function Blog() {
                 position: absolute;
                 width: 170px;
                 height: auto;
-                right: 24px;
+                left: 24px;
                 bottom: calc(100% - 50px);
                 z-index: 0;
                 pointer-events: none;
@@ -429,7 +429,7 @@ export function Blog() {
               }
 
               .peek-cat-img {
-                transform: scaleX(-1);
+                transform: none;
                 transform-origin: center;
               }
 
