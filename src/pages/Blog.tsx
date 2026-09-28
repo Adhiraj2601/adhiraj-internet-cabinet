@@ -416,13 +416,13 @@ export function Blog() {
               /* Peeking Cat Hover Effect */
               .peek-cat {
                 position: absolute;
-                width: 170px;
+                width: 200px;
                 height: auto;
-                left: 24px;
-                bottom: calc(100% - 50px);
+                left: -6px;
+                bottom: calc(100% - 10px);
                 z-index: 0;
                 pointer-events: none;
-                transform: translateY(130px);
+                transform: translateY(150px);
                 opacity: 1;
                 will-change: transform;
                 transition: transform 0.5s ease-in;
@@ -430,7 +430,6 @@ export function Blog() {
 
               .peek-cat-img {
                 transform: none;
-                transform-origin: center;
               }
 
               .profile-wrap:hover .peek-cat,
@@ -440,9 +439,7 @@ export function Blog() {
               }
 
               @media (hover: none) {
-                .profile-wrap:hover .peek-cat {
-                  transform: translateY(130px);
-                }
+                .profile-wrap:hover .peek-cat { transform: translateY(150px); }
                 .profile-wrap.is-active .peek-cat {
                   transform: translateY(0);
                   transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
