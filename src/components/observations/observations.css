@@ -1,5 +1,13 @@
 /* Cassette & Retro TV Observations Experience CSS */
 
+@font-face {
+  font-family: 'Patrick Hand';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/PatrickHand.ttf') format('truetype');
+}
+
 /* Reel spin animations: left clockwise, right counter-clockwise */
 @keyframes cassette-reel-cw {
   from {

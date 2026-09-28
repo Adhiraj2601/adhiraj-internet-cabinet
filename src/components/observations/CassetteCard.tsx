@@ -37,37 +37,32 @@ export function CassetteCard({
   isInteractive = true,
 }: CassetteCardProps) {
   const textRef = useRef<SVGTextElement>(null)
-  const [fontSize, setFontSize] = useState(32)
+  const [isConstrained, setIsConstrained] = useState(() => post.title.length > 38)
 
   const tapeNumber = formatTapeNumber(post, allObservations)
   const tapeDate = formatTapeDate(post.date || '')
 
-  // Measure title and scale down smoothly to fit on one line (18px - 38px)
+  // Ensure title stays strictly within label boundaries on one line
   useLayoutEffect(() => {
-    if (!textRef.current) return
-    const maxW = 415
-    const baseSize = 34
-    textRef.current.style.fontSize = `${baseSize}px`
-    try {
-      const currentW = textRef.current.getComputedTextLength?.() || textRef.current.getBBox().width
-      if (currentW > maxW) {
-        const scale = maxW / currentW
-        const computed = Math.max(18, Math.min(36, Math.floor(baseSize * scale)))
-        setFontSize(computed)
-      } else {
-        // For short titles like "Chot", keep large ~36px
-        if (post.title.length < 10) {
-          setFontSize(36)
+    const checkFit = () => {
+      if (!textRef.current) return
+      const maxW = 405
+      try {
+        const currentW = textRef.current.getComputedTextLength?.() || textRef.current.getBBox().width
+        if (currentW > maxW) {
+          setIsConstrained(true)
         } else {
-          setFontSize(32)
+          setIsConstrained(false)
         }
+      } catch {
+        setIsConstrained(post.title.length > 38)
       }
-    } catch {
-      const len = post.title.length
-      if (len > 36) setFontSize(19)
-      else if (len > 25) setFontSize(24)
-      else if (len > 12) setFontSize(30)
-      else setFontSize(36)
+    }
+
+    checkFit()
+
+    if (typeof document !== 'undefined' && document.fonts) {
+      document.fonts.ready.then(checkFit).catch(() => {})
     }
   }, [post.title])
 
@@ -129,18 +124,21 @@ export function CassetteCard({
           filter="url(#roughen)"
         />
 
-        {/* Single-line Auto-fitted Title sitting on top line */}
+        {/* Single-line Title sitting on top ruled line with uniform font style, size, and boundary safety */}
         <text
           ref={textRef}
           x="260"
-          y="74"
+          y="78"
           textAnchor="middle"
           fill="#2F5A1A"
+          stroke="#2F5A1A"
+          strokeWidth="0.5"
+          paintOrder="stroke fill"
+          textLength={isConstrained ? 405 : undefined}
+          lengthAdjust={isConstrained ? 'spacingAndGlyphs' : undefined}
           style={{
-            fontSize: `${fontSize}px`,
-            fontFamily: "'Space Mono', monospace",
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
+            fontSize: '28px',
+            fontFamily: "'Patrick Hand', 'Caveat', cursive, sans-serif",
           }}
         >
           {post.title}

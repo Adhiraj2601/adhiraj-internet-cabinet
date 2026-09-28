@@ -207,9 +207,10 @@ function PenIcon({ className = 'w-5 h-5' }: { className?: string }) {
 export function Blog() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tapeParam = searchParams.get('tape')
+  const tabParam = searchParams.get('tab')
 
   const [activeTab, setActiveTab] = useState<'all' | 'observations'>(
-    tapeParam ? 'observations' : 'all'
+    tapeParam || tabParam === 'observations' ? 'observations' : 'all'
   )
   const [isAvatarTapped, setIsAvatarTapped] = useState(false)
   const [selectedTape, setSelectedTape] = useState<Post | null>(null)
