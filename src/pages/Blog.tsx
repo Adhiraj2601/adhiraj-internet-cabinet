@@ -154,30 +154,30 @@ export function Blog() {
       <div className="max-w-6xl mx-auto">
         {/* ===================== HERO CARD ===================== */}
         <div
-          className="rounded-md p-4 sm:p-6 mb-8 relative overflow-hidden"
+          className="rounded-md p-5 sm:p-7 md:p-8 mb-8 relative overflow-hidden"
           style={{
             backgroundColor: BG_GREEN,
             border: `2px solid ${BORDER_DARK}`,
-            boxShadow: `3px 3px 0px ${BORDER_DARK}`,
+            boxShadow: `4px 4px 0px ${BORDER_DARK}`,
           }}
         >
           {/* Top-Right Instagram icon badge */}
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-4 right-4 sm:top-5 sm:right-5">
             <a
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-7 h-7 rounded-xs flex items-center justify-center bg-white/90 hover:bg-white transition-all hover:scale-105"
+              className="w-8 h-8 rounded-xs flex items-center justify-center bg-white/90 hover:bg-white transition-all hover:scale-105"
               style={{
-                border: `1.5px solid ${BORDER_DARK}`,
-                boxShadow: `1px 1px 0px ${BORDER_DARK}`,
+                border: `2px solid ${BORDER_DARK}`,
+                boxShadow: `1.5px 1.5px 0px ${BORDER_DARK}`,
               }}
               title="Instagram Profile"
               aria-label="Instagram Profile"
             >
               <svg
-                width="14"
-                height="14"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -193,16 +193,19 @@ export function Blog() {
             </a>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-7">
-            {/* Avatar / Doodle Circle */}
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 sm:gap-8">
+            {/* Avatar / Illustration Landscape Frame (matching Image 2) */}
             <div
-              className="w-24 h-24 sm:w-28 sm:h-28 rounded-md bg-[#a3c489] flex items-center justify-center shrink-0 overflow-hidden"
-              style={{ border: `2px solid ${BORDER_DARK}` }}
+              className="w-full md:w-[280px] lg:w-[320px] h-44 sm:h-48 md:h-44 rounded-xs bg-[#e4edd4] flex items-center justify-center shrink-0 overflow-hidden"
+              style={{
+                border: `2px solid ${BORDER_DARK}`,
+                boxShadow: `2px 2px 0px ${BORDER_DARK}`,
+              }}
             >
               <img
                 src="/images/blog/cat-doodle.jpg"
                 alt="Adhiraj"
-                className="w-full h-full object-cover select-none"
+                className="w-full h-full object-contain p-2 select-none"
                 onError={(e) => {
                   const target = e.currentTarget
                   target.style.display = 'none'
@@ -210,33 +213,42 @@ export function Blog() {
               />
             </div>
 
-            {/* Monospace Greeting & Bio */}
-            <div className="space-y-1.5 flex-1 font-mono text-neutral-900">
-              <h1 className="text-base sm:text-lg font-bold tracking-tight">
+            {/* Monospace Greeting & Bio with larger fonts matching Image 2 */}
+            <div className="space-y-1.5 sm:space-y-2 flex-1 font-mono text-neutral-900">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1a1a1a]">
                 Helloowwww!!!
               </h1>
-              <p className="text-xs sm:text-sm font-semibold">
+              <p className="text-sm sm:text-base font-semibold text-[#1a1a1a]">
                 I am Adhiraj (Adi)
               </p>
-              <p className="text-xs sm:text-sm text-neutral-800">
+              <p className="text-sm sm:text-base text-neutral-800">
                 Welcome to my Space :&gt;
               </p>
-              <p className="text-xs sm:text-sm text-neutral-800">
+              <p className="text-sm sm:text-base text-neutral-800">
                 I love to learn something DAILY.
               </p>
 
-              {/* Status input box */}
-              <div className="pt-1 flex flex-wrap items-center gap-2 text-xs">
-                <span>And these days i am:</span>
-                <span
-                  className="bg-white px-2.5 py-0.5 rounded-xs font-mono font-medium text-xs text-neutral-900"
+              {/* Status card matching Image 2: outer white card with inner bordered status box */}
+              <div className="pt-1.5">
+                <div
+                  className="inline-flex flex-wrap items-center gap-2.5 bg-white px-3.5 py-1.5 rounded-xs"
                   style={{
-                    border: `1.5px solid ${BORDER_DARK}`,
-                    boxShadow: `1px 1px 0px ${BORDER_DARK}`,
+                    border: `2px solid ${BORDER_DARK}`,
+                    boxShadow: `1.5px 1.5px 0px ${BORDER_DARK}`,
                   }}
                 >
-                  Trying to find a job
-                </span>
+                  <span className="text-xs sm:text-sm font-mono text-[#1a1a1a] font-medium">
+                    And these days i am:
+                  </span>
+                  <span
+                    className="bg-white px-2.5 py-0.5 rounded-[2px] font-mono font-medium text-xs sm:text-sm text-neutral-900"
+                    style={{
+                      border: `1.5px solid ${BORDER_DARK}`,
+                    }}
+                  >
+                    Trying to find a job
+                  </span>
+                </div>
               </div>
             </div>
           </div>
