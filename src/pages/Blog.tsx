@@ -78,68 +78,81 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: (index % 12) * 0.03 }}
-      className="w-full flex flex-col justify-between rounded-none p-3.5 sm:p-4 transition-all duration-200 group hover:-translate-y-0.5"
+      className="w-full max-w-[360px] rounded-none p-[14px] transition-all duration-200 group hover:-translate-y-0.5 justify-self-start"
       style={{
         backgroundColor: BG_CARD_GREEN,
-        border: BORDER_BLACK,
-        boxShadow: '1.5px 1.5px 0px #000000',
+        border: '1.5px solid #000000',
+        boxShadow: '2px 2px 0px #000000',
       }}
     >
-      <div>
-        {/* Top White Square Doodle/Image Box */}
-        <Link
-          to={`/blog/${post.slug}`}
-          className="block w-full aspect-square bg-white rounded-none overflow-hidden mb-3 relative flex items-center justify-center p-3"
-          style={{ border: BORDER_BLACK }}
-        >
-          {post.image ? (
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-full object-contain select-none group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-            />
-          ) : (
-            <DefaultDoodle index={index} />
-          )}
-        </Link>
+      {/* Top Square Thumbnail: aspect 1/1, 1.5px black border, object-fit: cover */}
+      <Link
+        to={`/blog/${post.slug}`}
+        className="block w-full aspect-square bg-white rounded-none overflow-hidden relative flex items-center justify-center"
+        style={{ border: '1.5px solid #000000' }}
+      >
+        {post.image ? (
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+        ) : (
+          <DefaultDoodle index={index} />
+        )}
+      </Link>
 
-        {/* Title */}
-        <h3 className="font-mono font-bold text-sm sm:text-base leading-snug text-[#1a1a1a] line-clamp-2">
-          <Link to={`/blog/${post.slug}`} className="hover:underline">
-            {post.title}
-          </Link>
-        </h3>
-      </div>
+      {/* Below Image: Two-column row (Title/Date on left, 52x52 Arrow button on right) */}
+      <div className="flex items-start justify-between gap-3 mt-[11px]">
+        {/* Left Column: Title (about 16px) & Date (about 13px) + Tag (10px) */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-mono font-bold text-[16px] leading-[1.25] text-[#1a1a1a] line-clamp-2">
+            <Link to={`/blog/${post.slug}`} className="hover:underline">
+              {post.title}
+            </Link>
+          </h3>
 
-      {/* Card Footer: Date, optional category tag, and Orange Arrow Button */}
-      <div className="flex items-center justify-between mt-4 pt-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-mono text-xs text-neutral-800 font-bold">
-            {post.date}
-          </span>
-          {post.category && (
-            <span
-              className="px-1.5 py-0.5 rounded-none text-[9px] font-mono font-bold uppercase text-[#1a1a1a] bg-[#ffd166]"
-              style={{ border: BORDER_BLACK }}
-            >
-              {post.category}
+          <div className="flex items-center gap-2 mt-[6px] flex-wrap">
+            <span className="font-mono text-[13px] text-neutral-800 font-medium">
+              {post.date}
             </span>
-          )}
+            {post.category && (
+              <span
+                className="px-1.5 py-0.5 rounded-none text-[10px] font-mono font-bold uppercase text-[#1a1a1a] bg-[#ffd166]"
+                style={{ border: '1px solid #000000' }}
+              >
+                {post.category}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Warm Orange Action Button */}
+        {/* Right Column: 52x52px square, filled #D9694A, 1.5px black border, 3px 3px 0 #000 shadow */}
         <Link
           to={`/blog/${post.slug}`}
           aria-label={`Read ${post.title}`}
-          className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-mono font-bold text-xs sm:text-sm text-[#1a1a1a] rounded-none transition-transform duration-150 hover:translate-x-0.5"
+          className="w-[52px] h-[52px] shrink-0 flex items-center justify-center font-mono font-bold rounded-none transition-transform duration-150 hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
           style={{
-            backgroundColor: ACCENT_ORANGE,
-            border: BORDER_BLACK,
-            boxShadow: '1px 1px 0px #000000',
+            backgroundColor: '#D9694A',
+            border: '1.5px solid #000000',
+            boxShadow: '3px 3px 0px #000000',
+            color: '#000000',
           }}
         >
-          →
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
         </Link>
       </div>
     </motion.article>
@@ -333,15 +346,34 @@ export function Blog() {
             </button>
           </div>
 
-          {/* ===================== BLOG POST GRID (CSS Grid: auto-fill minmax 340px, 40px gap) ===================== */}
+          {/* ===================== BLOG POST GRID (4-per-row, 25px gap, left-aligned) ===================== */}
           <div id="blog-grid" className="w-full">
+            <style>{`
+              .blog-cards-grid {
+                display: grid;
+                grid-template-columns: repeat(1, minmax(0, 360px));
+                gap: 25px;
+                justify-content: start;
+                width: 100%;
+              }
+              @media (min-width: 600px) {
+                .blog-cards-grid {
+                  grid-template-columns: repeat(2, minmax(0, 360px));
+                }
+              }
+              @media (min-width: 900px) {
+                .blog-cards-grid {
+                  grid-template-columns: repeat(3, minmax(0, 360px));
+                }
+              }
+              @media (min-width: 1200px) {
+                .blog-cards-grid {
+                  grid-template-columns: repeat(4, minmax(0, 360px));
+                }
+              }
+            `}</style>
             {filteredPosts.length > 0 ? (
-              <div
-                className="w-full grid grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]"
-                style={{
-                  gap: '40px',
-                }}
-              >
+              <div className="blog-cards-grid">
                 {filteredPosts.map((post, idx) => (
                   <BlogCard key={post.id || post.slug} post={post} index={idx} />
                 ))}
