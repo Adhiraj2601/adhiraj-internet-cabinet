@@ -43,15 +43,28 @@
   will-change: transform;
 }
 
-/* Hovering anywhere over the card or button starts the reels */
+/* Hovering anywhere over the card or button starts the reels (left CW, right CCW) */
 .cassette-card:hover .cassette-reel-left,
-.cassette-card:hover .cassette-reel-right,
 .cassette-button:hover .cassette-reel-left,
+.group:hover .cassette-reel-left {
+  animation-name: cassette-reel-cw;
+  animation-play-state: running;
+}
+
+.cassette-card:hover .cassette-reel-right,
 .cassette-button:hover .cassette-reel-right,
-.group:hover .cassette-reel-left,
-.group:hover .cassette-reel-right,
+.group:hover .cassette-reel-right {
+  animation-name: cassette-reel-ccw;
+  animation-play-state: running;
+}
+
+/* TV Playback (Phase 2): BOTH reels rotate continuously in a clockwise direction */
 .cassette-playing .cassette-reel-left,
 .cassette-playing .cassette-reel-right {
+  animation-name: cassette-reel-cw;
+  animation-duration: 2s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
   animation-play-state: running;
 }
 

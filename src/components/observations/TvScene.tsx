@@ -6,8 +6,7 @@ import { CassetteCard } from './CassetteCard'
 interface TvSceneProps {
   post: Post
   allObservations: Post[]
-  doorFlapOpen: boolean
-  isTapeInserted: boolean
+  doorFlapOpen?: boolean
   isTapePlaying: boolean
   children?: React.ReactNode
 }
@@ -15,11 +14,15 @@ interface TvSceneProps {
 export function TvScene({
   post,
   allObservations,
-  doorFlapOpen,
-  isTapeInserted,
+  doorFlapOpen = false,
   isTapePlaying,
   children,
 }: TvSceneProps) {
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
   // TV dimensions: viewBox 0 0 760 640
   // TV body: width 690, height 535 -> 690 / 535 = 1.289 : 1 (matches 1.28 : 1)
   return (
@@ -38,6 +41,7 @@ export function TvScene({
         className="w-full h-full block overflow-visible drop-shadow-[4px_6px_0px_#000000]"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        style={{ position: 'relative', zIndex: 10 }}
       >
         {/* Antennas at the top */}
         <g id="tv-antennas" stroke="#000000" strokeWidth="4.5" strokeLinecap="round">
@@ -179,33 +183,41 @@ export function TvScene({
           top: '14.06%',
           width: '62.5%',
           height: '64.84%',
-          zIndex: 10,
+          zIndex: 12,
         }}
       >
         {children}
       </div>
 
-      {/* Docked Cassette at the bottom slot */}
-      {/* Top ~48% hidden/occluded, bottom ~52% (No.007, date, screw holes) peeks below TV! */}
-      {isTapeInserted && (
-        <div
-          className="absolute pointer-events-none"
-          style={{
-            left: '26.3%',
-            bottom: '-14%',
-            width: '47.4%',
-            zIndex: 15,
-            clipPath: 'polygon(0% 44%, 100% 44%, 100% 100%, 0% 100%)',
-          }}
-        >
-          <CassetteCard
-            post={post}
-            allObservations={allObservations}
-            isPlaying={isTapePlaying}
-            isInteractive={false}
-          />
-        </div>
-      )}
+      {/* Phase 1: Vertical Insertion (Translation) into bottom loading slot */}
+      <motion.div
+        className="absolute pointer-events-none"
+        style={{
+          left: '26.3%',
+          bottom: '-15%',
+          width: '47.4%',
+          zIndex: 5,
+        }}
+        initial={{ y: prefersReducedMotion ? 0 : '100vh' }}
+        animate={{ y: 0 }}
+        transition={
+          prefersReducedMotion
+            ? { duration: 0 }
+            : {
+                type: 'spring',
+                stiffness: 110,
+                damping: 18,
+                mass: 1,
+              }
+        }
+      >
+        <CassetteCard
+          post={post}
+          allObservations={allObservations}
+          isPlaying={isTapePlaying}
+          isInteractive={false}
+        />
+      </motion.div>
 
       {/* Black Tape Slot Bar (covers the top edge of inserted cassette) */}
       <div

@@ -6,7 +6,7 @@ import { type Post } from '../../content/posts'
 import { DoodleBackdrop } from './DoodleBackdrop'
 import { TvScene } from './TvScene'
 import { TvScreen, type TvScreenHandle } from './TvScreen'
-import { CassetteCard, RoughenFilterDefs } from './CassetteCard'
+import { RoughenFilterDefs } from './CassetteCard'
 import './observations.css'
 
 interface TvPlayerProps {
@@ -23,10 +23,11 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   // Animation timeline phases:
-  // 'initial' -> 'tv-in' -> 'flap-open' -> 'tape-flying' -> 'tape-inserted' -> 'power-on'
-  const [phase, setPhase] = useState<
-    'initial' | 'tv-in' | 'flap-open' | 'tape-flying' | 'tape-inserted' | 'power-on'
-  >(() => (prefersReducedMotion ? 'power-on' : 'initial'))
+  // Phase 1: 'inserting' (0ms) -> 'docked' (700ms)
+  // Phase 2: 'power-on' (950ms) -> reel playback begins shortly after cassette is fully inserted and text populates screen
+  const [phase, setPhase] = useState<'inserting' | 'docked' | 'power-on'>(
+    () => (prefersReducedMotion ? 'power-on' : 'inserting')
+  )
 
   const [isReadMode, setIsReadMode] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
@@ -40,36 +41,23 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
     }, 350)
   }, [isClosing, onClose])
 
-  // Choreographed Opening Timeline (Pacing ~1.6s total)
+  // Choreographed Opening Timeline:
+  // Phase 1: Vertical insertion from bottom of screen into loading slot
+  // Phase 2: Screen power-on + text population + reel playback
   useEffect(() => {
     if (prefersReducedMotion) return
 
     const t1 = setTimeout(() => {
-      setPhase('tv-in')
-    }, 150)
+      setPhase('docked')
+    }, 700)
 
     const t2 = setTimeout(() => {
-      setPhase('flap-open')
-    }, 450)
-
-    const t3 = setTimeout(() => {
-      setPhase('tape-flying')
-    }, 950)
-
-    const t4 = setTimeout(() => {
-      setPhase('tape-inserted')
-    }, 1500)
-
-    const t5 = setTimeout(() => {
       setPhase('power-on')
-    }, 1700)
+    }, 950)
 
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
-      clearTimeout(t3)
-      clearTimeout(t4)
-      clearTimeout(t5)
     }
   }, [prefersReducedMotion])
 
@@ -105,9 +93,8 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
     }
   }
 
-  const doorFlapOpen = phase === 'flap-open'
-  const isTapeInSlot = phase === 'tape-inserted' || phase === 'power-on'
-  const isTapePlaying = phase === 'tape-inserted' || phase === 'power-on'
+  const isTapeInSlot = phase === 'docked' || phase === 'power-on'
+  const isTapePlaying = phase === 'power-on'
   const isPoweredOn = phase === 'power-on'
 
   return createPortal(
@@ -202,8 +189,6 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
           <TvScene
             post={post}
             allObservations={allObservations}
-            doorFlapOpen={doorFlapOpen}
-            isTapeInserted={isTapeInSlot}
             isTapePlaying={isTapePlaying}
           >
             {/* Single Source of Truth: ONE TvScreen instance animated with layout */}
@@ -230,54 +215,6 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
             </motion.div>
           </TvScene>
         </div>
-
-        {/* Flying Cassette Animation (0ms -> 1500ms before it's seated in the TV slot) */}
-        {!isTapeInSlot && !prefersReducedMotion && (
-          <motion.div
-            layoutId={`tape-${post.slug}`}
-            className="fixed pointer-events-none"
-            style={{ zIndex: 40 }}
-            initial={{
-              left: '8vw',
-              bottom: '6vh',
-              width: 'min(360px, 34vw)',
-              rotate: -12,
-              scale: 0.82,
-              opacity: 1,
-            }}
-            animate={
-              phase === 'tape-flying'
-                ? {
-                    left: 'calc(50% - min(180px, 17vw))',
-                    bottom: 'calc(50% - min(280px, 28vh))',
-                    width: 'min(330px, 32vw)',
-                    rotate: 0,
-                    scale: 0.52,
-                    opacity: 1,
-                  }
-                : {
-                    left: '8vw',
-                    bottom: '6vh',
-                    width: 'min(360px, 34vw)',
-                    rotate: -12,
-                    scale: 0.82,
-                    opacity: 1,
-                  }
-            }
-            transition={{
-              type: 'spring',
-              stiffness: 170,
-              damping: 18,
-            }}
-          >
-            <CassetteCard
-              post={post}
-              allObservations={allObservations}
-              isPlaying={false}
-              isInteractive={false}
-            />
-          </motion.div>
-        )}
       </motion.div>
     </div>,
     document.body
