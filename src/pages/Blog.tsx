@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { posts, type Post } from '../content/posts'
 
-// Retro Scrapbook theme tokens matching the reference image exactly
-const BG_PISTACHIO = '#8fb87e' // Solid light pistachio green outer page background
-const BG_CARD_GREEN = '#a8cb92' // Soft card green matching reference
+// Retro Scrapbook theme tokens
+const BG_PAGE_GREEN = '#A9CB8B' // Lighter pastel green outer page background
+const BG_HEADER_GREEN = '#AFD080' // Fresh, slightly yellower light green for profile header
+const BG_CARD_GREEN = '#A8CB8C' // Fresh yellow-green for blog cards
 const ACCENT_ORANGE = '#e5aa60' // Warm amber/orange accent
-const BORDER_BLACK = '1px solid #000000' // Thin, harsh 1px black border
+const BORDER_BLACK = '1.5px solid #000000' // Thin, harsh 1.5px black border
 const INSTAGRAM_URL = 'https://www.instagram.com/_adhiraj_sengar_/'
 
 // Playful procedural cat doodle for posts that don't have an image
@@ -171,20 +172,25 @@ export function Blog() {
     <div
       className="min-h-screen pt-16 pb-16 px-4 md:px-[2.5vw]"
       style={{
-        backgroundColor: BG_PISTACHIO, // Solid light pistachio green
+        backgroundColor: BG_PAGE_GREEN, // Lighter pastel green
       }}
     >
-      {/* Full-bleed Centered Main Content Container with White Background & Crumpled Paper Texture */}
+      {/* Full-bleed Centered Main Content Container with Warm Off-White Background & Subtle Paper Texture */}
       <div
-        className="w-full max-w-none mx-auto bg-white rounded-none relative overflow-hidden mt-[30px] sm:mt-[50px]"
+        className="w-full max-w-none mx-auto rounded-none relative overflow-hidden mt-[30px] sm:mt-[50px]"
         style={{
+          backgroundColor: '#FAFAF7',
           border: BORDER_BLACK,
-          boxShadow: '4px 4px 0px rgba(0, 0, 0, 0.25)',
+          boxShadow: '4px 4px 0px #000000',
         }}
       >
-        {/* Realistic Crumpled Paper Texture Overlay */}
+        {/* Subtle, Brightened Crumpled Paper Texture Overlay */}
         <div
-          className="absolute inset-0 pointer-events-none bg-[url('/images/crumpled-paper.jpg')] bg-cover bg-center mix-blend-multiply opacity-80 z-0"
+          className="absolute inset-0 pointer-events-none bg-[url('/images/crumpled-paper.jpg')] bg-cover bg-center z-0"
+          style={{
+            filter: 'brightness(1.25) contrast(0.7)',
+            opacity: 0.55,
+          }}
         />
 
         {/* Content Container (z-10 relative with 35px padding) */}
@@ -193,7 +199,7 @@ export function Blog() {
           <div
             className="w-full rounded-none p-5 sm:p-6 md:p-[30px] mb-8 relative overflow-hidden"
             style={{
-              backgroundColor: BG_CARD_GREEN,
+              backgroundColor: BG_HEADER_GREEN,
               border: BORDER_BLACK,
               boxShadow: '2px 2px 0px #000000',
             }}
