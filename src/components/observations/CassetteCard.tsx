@@ -2,6 +2,7 @@ import { useRef, useState, useLayoutEffect } from 'react'
 import { motion } from 'framer-motion'
 import { type Post } from '../../content/posts'
 import { formatTapeDate, formatTapeNumber } from '../../lib/utils'
+import './observations.css'
 
 interface CassetteCardProps {
   post: Post
@@ -166,14 +167,17 @@ export function CassetteCard({
           <circle cx="164" cy="183" r="14" fill="#DDD8C2" stroke="#000000" strokeWidth="2" />
           <circle cx="164" cy="183" r="5" fill="#1A2E05" />
 
-          {/* 6 Radial Spokes (spinning on hover) */}
-          <g className="reel-spokes" style={{ transformOrigin: '164px 183px' }}>
-            <line x1="164" y1="151" x2="164" y2="169" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="164" y1="197" x2="164" y2="215" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="136" y1="167" x2="152" y2="176" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="176" y1="190" x2="192" y2="199" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="136" y1="199" x2="152" y2="190" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="176" y1="176" x2="192" y2="167" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+          {/* Dedicated wrapper group positioning at reel center (164, 183) */}
+          <g transform="translate(164, 183)">
+            {/* 6 Radial Spokes (spinning clockwise on hover) */}
+            <g className="cassette-reel-left">
+              <line x1="0" y1="-32" x2="0" y2="-14" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="0" y1="14" x2="0" y2="32" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="-28" y1="-16" x2="-12" y2="-7" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="12" y1="7" x2="28" y2="16" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="-28" y1="16" x2="-12" y2="7" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="12" y1="-7" x2="28" y2="-16" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+            </g>
           </g>
         </g>
 
@@ -205,14 +209,17 @@ export function CassetteCard({
           <circle cx="356" cy="183" r="14" fill="#DDD8C2" stroke="#000000" strokeWidth="2" />
           <circle cx="356" cy="183" r="5" fill="#1A2E05" />
 
-          {/* 6 Radial Spokes (spinning on hover) */}
-          <g className="reel-spokes" style={{ transformOrigin: '356px 183px' }}>
-            <line x1="356" y1="151" x2="356" y2="169" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="356" y1="197" x2="356" y2="215" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="328" y1="167" x2="344" y2="176" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="368" y1="190" x2="384" y2="199" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="328" y1="199" x2="344" y2="190" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
-            <line x1="368" y1="176" x2="384" y2="167" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+          {/* Dedicated wrapper group positioning at reel center (356, 183) */}
+          <g transform="translate(356, 183)">
+            {/* 6 Radial Spokes (spinning counter-clockwise on hover) */}
+            <g className="cassette-reel-right">
+              <line x1="0" y1="-32" x2="0" y2="-14" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="0" y1="14" x2="0" y2="32" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="-28" y1="-16" x2="-12" y2="-7" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="12" y1="7" x2="28" y2="16" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="-28" y1="16" x2="-12" y2="7" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+              <line x1="12" y1="-7" x2="28" y2="-16" stroke="#000000" strokeWidth="2.5" strokeLinecap="round" />
+            </g>
           </g>
         </g>
 
@@ -281,7 +288,7 @@ export function CassetteCard({
       transition={{ duration: 0.3, delay: (index % 12) * 0.04 }}
       onClick={onClick}
       aria-label={`Play observation: ${post.title}`}
-      className="w-full text-left bg-transparent border-none p-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+      className="cassette-button group w-full text-left bg-transparent border-none p-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
     >
       {content}
     </motion.button>
