@@ -1,52 +1,146 @@
+// Pre-computed wavy lines for the background circle
+const WAVY_CIRCLE_STRIPES = Array.from({ length: 65 }, (_, i) => {
+  const x = -80 + i * 16
+  const isDark = i % 2 === 0
+  const color = isDark ? '#A2C872' : '#DCF2B7'
+  const opacity = isDark ? 0.6 : 0.45
+  let d = `M ${x} -30 `
+  for (let y = 0; y < 920; y += 100) {
+    const offset = (y / 100) % 2 === 0 ? 7 : -7
+    d += `Q ${x + offset} ${y + 50}, ${x} ${y + 100} `
+  }
+  return { d, color, opacity, id: i }
+})
+
+// Pre-computed bottom-left hatched lines (slanted top-left to bottom-right ~60°)
+const BL_HATCH_LINES = Array.from({ length: 36 }, (_, i) => {
+  const offset = -110 + i * 11
+  return {
+    x1: offset,
+    y1: 0,
+    x2: offset + 125,
+    y2: 220,
+    id: i,
+  }
+})
+
+// Pre-computed top-right hatched lines (slanted top-left to bottom-right ~60°)
+const TR_HATCH_LINES = Array.from({ length: 36 }, (_, i) => {
+  const offset = -50 + i * 11
+  return {
+    x1: offset,
+    y1: 0,
+    x2: offset + 125,
+    y2: 220,
+    id: i,
+  }
+})
+
 export function DoodleBackdrop() {
   return (
     <div
       className="absolute inset-0 pointer-events-none overflow-hidden select-none"
       style={{ backgroundColor: '#EDE8D4' }}
     >
-      {/* Behind the TV: Enlarged dynamic pale-green circular background matching reference */}
+      {/* Area 1: Behind the TV - Large pale-green circle with alternating wavy lines */}
       <div
-        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none overflow-hidden"
         style={{
           width: 'min(96vh, 880px)',
           height: 'min(96vh, 880px)',
           backgroundColor: '#CCE4AB',
           zIndex: 1,
         }}
-      />
-
-      {/* Bottom-Left Corner Hatching Patch - bolder & wider */}
-      <svg
-        className="absolute left-0 bottom-0 pointer-events-none"
-        style={{ width: 'min(28vw, 240px)', height: 'min(26vw, 220px)', zIndex: 2 }}
-        viewBox="0 0 230 200"
-        fill="none"
       >
-        <line x1="0" y1="50" x2="75" y2="0" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="0" y1="90" x2="135" y2="0" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="0" y1="130" x2="195" y2="0" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="0" y1="170" x2="230" y2="15" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="15" y1="200" x2="230" y2="55" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="55" y1="200" x2="230" y2="85" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="95" y1="200" x2="230" y2="115" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="135" y1="200" x2="230" y2="145" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-      </svg>
+        <svg viewBox="0 0 880 880" className="w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <filter id="circle-doodle-wobble" x="-5%" y="-5%" width="110%" height="110%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </defs>
+          <rect width="880" height="880" fill="#CCE4AB" />
+          <g filter="url(#circle-doodle-wobble)" transform="rotate(18 440 440)">
+            {WAVY_CIRCLE_STRIPES.map((stripe) => (
+              <path
+                key={stripe.id}
+                d={stripe.d}
+                stroke={stripe.color}
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeOpacity={stripe.opacity}
+                fill="none"
+              />
+            ))}
+          </g>
+        </svg>
+      </div>
 
-      {/* Top-Right Corner Hatching Patch - extends behind spiral */}
-      <svg
-        className="absolute right-0 top-0 pointer-events-none"
-        style={{ width: 'min(28vw, 240px)', height: 'min(26vw, 220px)', zIndex: 2 }}
-        viewBox="0 0 220 190"
-        fill="none"
+      {/* Area 2: Bottom-Left Corner Hatching Patch (slanted top-left to bottom-right, dense & bold) */}
+      <div
+        className="absolute left-0 bottom-0 pointer-events-none overflow-hidden"
+        style={{ width: 'min(28vw, 250px)', height: 'min(26vw, 220px)', zIndex: 2 }}
       >
-        <line x1="30" y1="0" x2="220" y2="135" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="70" y1="0" x2="220" y2="105" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="110" y1="0" x2="220" y2="75" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="150" y1="0" x2="220" y2="45" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="190" y1="0" x2="220" y2="20" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="15" y1="25" x2="220" y2="165" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-        <line x1="0" y1="65" x2="220" y2="190" stroke="#698845" strokeWidth="2.5" strokeOpacity="0.65" />
-      </svg>
+        <svg viewBox="0 0 250 220" className="w-full h-full">
+          <defs>
+            <clipPath id="bl-corner-clip">
+              <polygon points="0,75 160,25 225,105 225,220 0,220" />
+            </clipPath>
+            <filter id="bl-hatch-rough" x="-5%" y="-5%" width="110%" height="110%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" result="noise" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </defs>
+          <g clipPath="url(#bl-corner-clip)" filter="url(#bl-hatch-rough)">
+            {BL_HATCH_LINES.map((line) => (
+              <line
+                key={line.id}
+                x1={line.x1}
+                y1={line.y1}
+                x2={line.x2}
+                y2={line.y2}
+                stroke="#527330"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeOpacity="0.75"
+              />
+            ))}
+          </g>
+        </svg>
+      </div>
+
+      {/* Area 3: Top-Right Corner Hatching Patch (slanted top-left to bottom-right, dense & bold, behind spiral) */}
+      <div
+        className="absolute right-0 top-0 pointer-events-none overflow-hidden"
+        style={{ width: 'min(28vw, 250px)', height: 'min(26vw, 210px)', zIndex: 2 }}
+      >
+        <svg viewBox="0 0 250 210" className="w-full h-full">
+          <defs>
+            <clipPath id="tr-corner-clip">
+              <polygon points="35,0 250,0 250,210 95,120" />
+            </clipPath>
+            <filter id="tr-hatch-rough" x="-5%" y="-5%" width="110%" height="110%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" result="noise" />
+              <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.5" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+          </defs>
+          <g clipPath="url(#tr-corner-clip)" filter="url(#tr-hatch-rough)">
+            {TR_HATCH_LINES.map((line) => (
+              <line
+                key={line.id}
+                x1={line.x1}
+                y1={line.y1}
+                x2={line.x2}
+                y2={line.y2}
+                stroke="#527330"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeOpacity="0.75"
+              />
+            ))}
+          </g>
+        </svg>
+      </div>
 
       {/* 1. Scaled 5-pointed star (Top-Left) with bold stroke & vibrant green fill */}
       <div className="floating-doodle doodle-star">
