@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { posts, type Post } from '../content/posts'
@@ -162,6 +162,23 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
 
 export function Blog() {
   const [activeTab, setActiveTab] = useState<'all' | 'observations'>('all')
+  const [isAvatarTapped, setIsAvatarTapped] = useState(false)
+
+  // On touch devices, close peeking cat if tapping outside
+  useEffect(() => {
+    if (!isAvatarTapped) return
+    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
+      if (!(e.target as HTMLElement).closest('.profile-wrap')) {
+        setIsAvatarTapped(false)
+      }
+    }
+    window.addEventListener('click', handleOutsideClick)
+    window.addEventListener('touchstart', handleOutsideClick)
+    return () => {
+      window.removeEventListener('click', handleOutsideClick)
+      window.removeEventListener('touchstart', handleOutsideClick)
+    }
+  }, [isAvatarTapped])
 
   const filteredPosts =
     activeTab === 'all'
@@ -197,7 +214,7 @@ export function Blog() {
         <div className="relative z-10 p-4 sm:p-6 md:p-[35px]">
           {/* ===================== HERO CARD ===================== */}
           <div
-            className="w-full rounded-none p-5 sm:p-6 md:p-[30px] mb-8 relative overflow-hidden"
+            className="w-full rounded-none p-5 sm:p-6 md:p-[30px] mb-8 relative overflow-visible"
             style={{
               backgroundColor: BG_HEADER_GREEN,
               border: BORDER_BLACK,
@@ -237,23 +254,39 @@ export function Blog() {
             </div>
 
             <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6 sm:gap-8 lg:gap-10">
-              {/* Avatar / Illustration Landscape Frame (~520px wide on desktop) */}
+              {/* Profile Avatar Frame with Peeking Cat Hover Effect */}
               <div
-                className="w-full xl:w-[520px] h-60 sm:h-72 md:h-80 xl:h-[300px] rounded-none bg-[#efe9d9] flex items-center justify-center shrink-0 overflow-hidden"
-                style={{
-                  border: BORDER_BLACK,
-                  boxShadow: '1px 1px 0px #000000',
-                }}
+                className={`profile-wrap relative inline-block w-full xl:w-[520px] shrink-0 select-none cursor-pointer ${
+                  isAvatarTapped ? 'is-active' : ''
+                }`}
+                onClick={() => setIsAvatarTapped((prev) => !prev)}
               >
+                {/* Peeking Cat Sticker behind the picture frame */}
                 <img
-                  src="/images/blog/adhiraj-avatar.jpg"
-                  alt="Adhiraj"
-                  className="w-full h-full object-cover select-none"
-                  onError={(e) => {
-                    const target = e.currentTarget
-                    target.src = '/images/blog/cat-doodle.jpg'
-                  }}
+                  src="/images/blog/peek-cat.png"
+                  alt="Peeking Cat"
+                  aria-hidden="true"
+                  className="peek-cat"
                 />
+
+                {/* Picture Frame */}
+                <div
+                  className="relative z-10 w-full h-60 sm:h-72 md:h-80 xl:h-[300px] rounded-none bg-[#efe9d9] flex items-center justify-center overflow-hidden"
+                  style={{
+                    border: BORDER_BLACK,
+                    boxShadow: '1px 1px 0px #000000',
+                  }}
+                >
+                  <img
+                    src="/images/blog/adhiraj-avatar.jpg"
+                    alt="Adhiraj"
+                    className="w-full h-full object-cover select-none"
+                    onError={(e) => {
+                      const target = e.currentTarget
+                      target.src = '/images/blog/cat-doodle.jpg'
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Monospace Greeting & Bio filling remaining space */}
@@ -375,6 +408,40 @@ export function Blog() {
               @media (min-width: 1200px) {
                 .blog-cards-grid {
                   grid-template-columns: repeat(4, minmax(0, 360px));
+                }
+              }
+
+              /* Peeking Cat Hover Effect */
+              .peek-cat {
+                position: absolute;
+                top: -10px;
+                right: -20px;
+                width: 130px;
+                height: auto;
+                z-index: 0;
+                pointer-events: none;
+                transform: translate(-70px, 70px) rotate(0deg);
+                opacity: 0;
+                will-change: transform, opacity;
+                transition: transform 0.5s ease-in, opacity 0.4s ease-in;
+              }
+
+              .profile-wrap:hover .peek-cat,
+              .profile-wrap.is-active .peek-cat {
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 1;
+                transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.3s ease-out;
+              }
+
+              @media (hover: none) {
+                .profile-wrap:hover .peek-cat {
+                  transform: translate(-70px, 70px) rotate(0deg);
+                  opacity: 0;
+                }
+                .profile-wrap.is-active .peek-cat {
+                  transform: translate(0, 0) rotate(0deg);
+                  opacity: 1;
+                  transition: transform 0.6s cubic-bezier(0.34, 1.3, 0.64, 1), opacity 0.3s ease-out;
                 }
               }
             `}</style>
