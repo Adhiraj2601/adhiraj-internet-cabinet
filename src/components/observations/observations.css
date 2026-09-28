@@ -301,6 +301,13 @@
   scrollbar-width: none;
 }
 
+/* Ensure root html and body have no scrollbars/gutters when TV player modal is active */
+html:has([role="dialog"]),
+html:has(.tv-player-modal) {
+  overflow: hidden !important;
+  scrollbar-gutter: auto !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .cassette-reel-left,
   .cassette-reel-right,

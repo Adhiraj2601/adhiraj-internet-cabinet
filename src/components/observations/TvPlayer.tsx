@@ -61,10 +61,12 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
     }
   }, [prefersReducedMotion])
 
-  // Lock body scroll and handle keyboard Escape
+  // Lock body & html scroll and handle keyboard Escape
   useEffect(() => {
-    const originalOverflow = document.body.style.overflow
+    const originalBodyOverflow = document.body.style.overflow
+    const originalHtmlOverflow = document.documentElement.style.overflow
     document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -75,7 +77,8 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
 
     window.addEventListener('keydown', handleKeyDown)
     return () => {
-      document.body.style.overflow = originalOverflow
+      document.body.style.overflow = originalBodyOverflow
+      document.documentElement.style.overflow = originalHtmlOverflow
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [handleClose])
@@ -102,7 +105,7 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
       role="dialog"
       aria-modal="true"
       aria-label={post.title}
-      className="fixed inset-0 select-none overflow-hidden"
+      className="tv-player-modal fixed inset-0 select-none overflow-hidden"
       style={{
         zIndex: 350,
       }}
