@@ -136,42 +136,54 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
 
   return (
     <div
-      className={`relative w-full h-full flex flex-col overflow-hidden font-mono select-text rounded-none transition-all duration-300 ${
-        isReadMode ? 'p-6 sm:p-10' : 'p-3.5 sm:p-5'
-      }`}
-      style={{
-        backgroundColor: '#1F3A0D',
-        color: '#B5D89A',
-        transform: 'rotate(-1.2deg) skewX(-1deg)',
-        transformOrigin: 'center center',
-        border: '2px solid #000000',
-        boxShadow: isReadMode ? '6px 6px 0px #000000' : '2px 2px 0px #000000',
-      }}
+      className="relative w-full h-full font-mono select-text transition-all duration-300"
       onClick={() => {
         if (!isDone) {
           skip()
         }
       }}
     >
-      {/* Screen reader text */}
-      <span className="sr-only">{fullAccessibleText}</span>
+      {/* Tilted Box Background Layer: maintains the slight tilt & shadow */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-none overflow-hidden"
+        style={{
+          backgroundColor: '#1F3A0D',
+          border: '2px solid #000000',
+          boxShadow: isReadMode ? '6px 6px 0px #000000' : '2px 2px 0px #000000',
+          transform: 'rotate(-1.2deg) skewX(-1deg)',
+          transformOrigin: 'center center',
+          zIndex: 0,
+        }}
+      >
+        {/* CRT Vignette shadow */}
+        <div className="crt-vignette absolute inset-0 z-10 pointer-events-none rounded-none" />
 
-      {/* CRT Vignette shadow */}
-      <div className="crt-vignette absolute inset-0 z-20 pointer-events-none rounded-none" />
+        {/* CRT Scanlines Overlay */}
+        <div className="crt-screen-overlay absolute inset-0 z-10 pointer-events-none rounded-none" />
 
-      {/* CRT Scanlines Overlay */}
-      <div className="crt-screen-overlay absolute inset-0 z-20 pointer-events-none rounded-none" />
+        {/* CRT Power-on Flash Effect */}
+        {isPoweredOn && (
+          <div
+            className="crt-flash-effect absolute inset-0 z-20 pointer-events-none rounded-none"
+            style={{ backgroundColor: '#C8D4B5' }}
+          />
+        )}
+      </div>
 
-      {/* CRT Power-on Flash Effect */}
-      {isPoweredOn && (
-        <div
-          className="crt-flash-effect absolute inset-0 z-30 pointer-events-none rounded-none"
-          style={{ backgroundColor: '#C8D4B5' }}
-        />
-      )}
+      {/* Straight Text & Terminal Content Container (no rotation/skew, perfectly horizontal) */}
+      <div
+        className={`relative z-10 w-full h-full flex flex-col overflow-hidden text-left ${
+          isReadMode ? 'p-6 sm:p-10' : 'p-3.5 sm:p-5'
+        }`}
+        style={{
+          color: '#B5D89A',
+        }}
+      >
+        {/* Screen reader text */}
+        <span className="sr-only">{fullAccessibleText}</span>
 
-      {/* PINNED FIXED HEADER: Play line & Title never scroll away! */}
-      {isPoweredOn && (
+        {/* PINNED FIXED HEADER: Play line & Title never scroll away! */}
+        {isPoweredOn && (
         <div className="shrink-0 pb-2.5 mb-2 border-b border-[#2D5413]/80 select-none z-10 space-y-1">
           {/* Header: ▶ PLAY · TAPE ### · DD MON YYYY */}
           <div className="text-[11px] sm:text-[13px] tracking-wider text-[#6F9A55] font-bold flex items-center gap-2">
@@ -312,5 +324,6 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
         )}
       </div>
     </div>
+  </div>
   )
 })

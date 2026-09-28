@@ -151,7 +151,7 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
                 {isReadMode ? (
                   <>
                     <ArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">← TV</span>
+                    <span className="hidden sm:inline">TV</span>
                   </>
                 ) : (
                   <>
@@ -193,6 +193,7 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
             post={post}
             allObservations={allObservations}
             isTapePlaying={isTapePlaying}
+            isReadMode={isReadMode}
           >
             {/* Single Source of Truth: ONE TvScreen instance animated with layout */}
             <motion.div

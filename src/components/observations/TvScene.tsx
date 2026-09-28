@@ -8,6 +8,7 @@ interface TvSceneProps {
   allObservations: Post[]
   doorFlapOpen?: boolean
   isTapePlaying: boolean
+  isReadMode?: boolean
   children?: React.ReactNode
 }
 
@@ -16,6 +17,7 @@ export function TvScene({
   allObservations,
   doorFlapOpen = false,
   isTapePlaying,
+  isReadMode = false,
   children,
 }: TvSceneProps) {
   const prefersReducedMotion =
@@ -136,14 +138,16 @@ export function TvScene({
 
       {/* Hinged Tape-Door Flap on the TV's Left Side */}
       <div
-        className="absolute"
+        className="absolute transition-opacity duration-200"
         style={{
           left: '2.2%',
           top: '30%',
           width: '4.8%',
           height: '18%',
           perspective: '900px',
-          zIndex: 20,
+          zIndex: 10,
+          opacity: isReadMode ? 0 : 1,
+          pointerEvents: isReadMode ? 'none' : 'auto',
         }}
       >
         <motion.div
@@ -183,7 +187,7 @@ export function TvScene({
           top: '14.06%',
           width: '62.5%',
           height: '64.84%',
-          zIndex: 12,
+          zIndex: isReadMode ? 60 : 12,
         }}
       >
         {children}
@@ -191,12 +195,13 @@ export function TvScene({
 
       {/* Phase 1: Vertical Insertion (Translation) into bottom loading slot */}
       <motion.div
-        className="absolute pointer-events-none"
+        className="absolute pointer-events-none transition-opacity duration-200"
         style={{
           left: '26.3%',
           bottom: '-15%',
           width: '47.4%',
           zIndex: 5,
+          opacity: isReadMode ? 0 : 1,
         }}
         initial={{ y: prefersReducedMotion ? 0 : '100vh' }}
         animate={{ y: 0 }}
@@ -221,7 +226,7 @@ export function TvScene({
 
       {/* Black Tape Slot Bar (covers the top edge of inserted cassette) */}
       <div
-        className="absolute"
+        className="absolute transition-opacity duration-200"
         style={{
           left: '26.3%',
           bottom: '5.2%',
@@ -231,7 +236,9 @@ export function TvScene({
           borderRadius: '3px',
           border: '1.5px solid #222222',
           boxShadow: '0 2px 5px rgba(0,0,0,0.5)',
-          zIndex: 18,
+          zIndex: 10,
+          opacity: isReadMode ? 0 : 1,
+          pointerEvents: isReadMode ? 'none' : 'auto',
         }}
       />
     </div>
