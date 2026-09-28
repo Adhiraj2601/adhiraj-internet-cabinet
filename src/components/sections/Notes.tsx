@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
-import { posts } from '../../content/posts'
+import { posts, isObservation } from '../../content/posts'
 import { SectionLabel } from '../ui/SectionLabel'
 import { stagger, fadeUp } from '../../lib/animations'
 
@@ -59,6 +60,9 @@ export function Notes() {
 
 function NoteRow({ post, index }: { post: typeof posts[0]; index: number }) {
   const [hovered, setHovered] = useState(false)
+  const destination = isObservation(post)
+    ? `/blog?tab=observations&tape=${post.slug}`
+    : `/blog/${post.slug}`
 
   return (
     <motion.li
@@ -67,8 +71,8 @@ function NoteRow({ post, index }: { post: typeof posts[0]; index: number }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <a
-        href={`/notes/${post.slug}`}
+      <Link
+        to={destination}
         className="flex items-start md:items-center justify-between gap-4 py-6 group"
         style={{ borderColor: 'var(--border)' }}
         aria-label={`${post.title} — ${post.date}`}
@@ -100,7 +104,7 @@ function NoteRow({ post, index }: { post: typeof posts[0]; index: number }) {
             →
           </motion.span>
         </div>
-      </a>
+      </Link>
     </motion.li>
   )
 }

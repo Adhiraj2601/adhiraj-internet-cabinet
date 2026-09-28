@@ -37,16 +37,17 @@ export function BlogPost() {
     }
   }, [])
 
-  // Find post by slug or fallback
+  // Filter blog posts strictly to non-observations for sequential navigation
+  const blogPosts = useMemo(() => posts.filter((p) => !isObservation(p)), [])
   const postIndex = useMemo(() => {
-    return posts.findIndex((p) => p.slug === slug)
-  }, [slug])
+    return blogPosts.findIndex((p) => p.slug === slug)
+  }, [slug, blogPosts])
 
-  const post: Post | undefined = postIndex !== -1 ? posts[postIndex] : undefined
+  const post: Post | undefined = postIndex !== -1 ? blogPosts[postIndex] : posts.find((p) => p.slug === slug)
 
   // Prev / Next posts
-  const prevPost = postIndex > 0 ? posts[postIndex - 1] : null
-  const nextPost = postIndex < posts.length - 1 ? posts[postIndex + 1] : null
+  const prevPost = postIndex > 0 ? blogPosts[postIndex - 1] : null
+  const nextPost = postIndex !== -1 && postIndex < blogPosts.length - 1 ? blogPosts[postIndex + 1] : null
 
   // Interactive Comments state
   const [comments, setComments] = useState<CommentItem[]>([])
@@ -71,7 +72,7 @@ export function BlogPost() {
 
   // If this post is an observation, redirect to the Retro TV experience on /blog
   if (post && isObservation(post)) {
-    return <Navigate to={`/blog?tape=${post.slug}`} replace />
+    return <Navigate to={`/blog?tab=observations&tape=${post.slug}`} replace />
   }
 
   if (!post) {

@@ -1,5 +1,5 @@
 import { useEffect, Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { CustomCursor } from './components/ui/CustomCursor'
@@ -74,11 +74,14 @@ function App() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/notes/:slug" element={<BlogPost />} />
+            <Route path="/observations" element={<Navigate to="/blog?tab=observations" replace />} />
             {/* Section anchor fallbacks */}
             <Route path="/work" element={<Home />} />
             <Route path="/notes" element={<Home />} />
             <Route path="/lab" element={<Home />} />
             <Route path="/about" element={<Home />} />
+            {/* 404 catch-all fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
       </Layout>

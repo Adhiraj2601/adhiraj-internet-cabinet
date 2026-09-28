@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { posts, isObservation, type Post } from '../content/posts'
 import { ObservationsGrid } from '../components/observations/ObservationsGrid'
@@ -205,13 +205,15 @@ function PenIcon({ className = 'w-5 h-5' }: { className?: string }) {
 }
 
 export function Blog() {
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const location = useLocation()
   const tapeParam = searchParams.get('tape')
   const tabParam = searchParams.get('tab')
 
-  const [activeTab, setActiveTab] = useState<'all' | 'observations'>(
-    tapeParam || tabParam === 'observations' ? 'observations' : 'all'
-  )
+  const [activeTab, setActiveTab] = useState<'all' | 'observations'>(() => {
+    return tapeParam || tabParam === 'observations' ? 'observations' : 'all'
+  })
   const [isAvatarTapped, setIsAvatarTapped] = useState(false)
   const [selectedTape, setSelectedTape] = useState<Post | null>(null)
 
@@ -219,29 +221,77 @@ export function Blog() {
   const blogPosts = useMemo(() => posts.filter((p) => !isObservation(p)), [])
   const observationPosts = useMemo(() => posts.filter((p) => isObservation(p)), [])
 
-  // Sync selected tape with ?tape= URL param
+  // Sync selected tape and active tab with URL search params (reacts to browser Back / Forward)
   useEffect(() => {
     if (tapeParam) {
       const match = posts.find((p) => p.slug === tapeParam)
       if (match) {
         setSelectedTape(match)
         setActiveTab('observations')
+      } else {
+        setSelectedTape(null)
       }
     } else {
       setSelectedTape(null)
+      if (tabParam === 'observations') {
+        setActiveTab('observations')
+      } else if (tabParam === 'all' || !tabParam) {
+        setActiveTab('all')
+      }
     }
-  }, [tapeParam])
+  }, [tapeParam, tabParam])
 
-  const handleSelectTape = (tape: Post) => {
-    setSelectedTape(tape)
-    setSearchParams({ tape: tape.slug }, { replace: true })
+  // Direct Landing History Bridge:
+  // When a user lands directly on a tape (?tape=...) or refreshes the page,
+  // we ensure that /blog?tab=observations is immediately behind it in history.
+  // When the user clicks the browser Back button (<), it pops cleanly to /blog?tab=observations!
+  const hasInitializedTapeHistory = useRef(false)
+  useEffect(() => {
+    if (hasInitializedTapeHistory.current) return
+    hasInitializedTapeHistory.current = true
+
+    if (tapeParam && !(location.state as { tapePushed?: boolean } | null)?.tapePushed) {
+      // 1. Replace current entry with observations base page
+      navigate(
+        { pathname: '/blog', search: '?tab=observations' },
+        { replace: true, state: { tapeBase: true } }
+      )
+      // 2. Push the tape URL so back button immediately pops back to observations
+      navigate(
+        { pathname: '/blog', search: `?tab=observations&tape=${tapeParam}` },
+        { replace: false, state: { tapePushed: true } }
+      )
+    }
+  }, [tapeParam, location.state, navigate])
+
+  // Tab switching: push history so browser back/forward toggles between tabs
+  const handleTabChange = (tab: 'all' | 'observations') => {
+    if (tab === activeTab) return
+    setActiveTab(tab)
+    if (tab === 'observations') {
+      navigate({ pathname: '/blog', search: '?tab=observations' })
+    } else {
+      navigate({ pathname: '/blog', search: '' })
+    }
   }
 
+  // Tape selection: push new entry with tapePushed: true
+  const handleSelectTape = (tape: Post) => {
+    setSelectedTape(tape)
+    navigate(
+      { pathname: '/blog', search: `?tab=observations&tape=${tape.slug}` },
+      { state: { tapePushed: true } }
+    )
+  }
+
+  // Tape closing (Eject button or Escape):
   const handleCloseTape = () => {
     setSelectedTape(null)
-    const nextParams = new URLSearchParams(searchParams)
-    nextParams.delete('tape')
-    setSearchParams(nextParams, { replace: true })
+    if ((location.state as { tapePushed?: boolean } | null)?.tapePushed || window.history.state?.tapePushed) {
+      navigate(-1)
+    } else {
+      navigate({ pathname: '/blog', search: '?tab=observations' }, { replace: true })
+    }
   }
 
   const currentCount = activeTab === 'all' ? blogPosts.length : observationPosts.length
@@ -404,7 +454,7 @@ export function Blog() {
               }}
             >
               <button
-                onClick={() => setActiveTab('all')}
+                onClick={() => handleTabChange('all')}
                 className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-mono font-bold uppercase transition-colors flex items-center gap-2 sm:gap-2.5 cursor-pointer ${
                   activeTab === 'all'
                     ? 'text-[#000000]'
@@ -420,7 +470,7 @@ export function Blog() {
               </button>
 
               <button
-                onClick={() => setActiveTab('observations')}
+                onClick={() => handleTabChange('observations')}
                 className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-mono font-bold uppercase transition-colors flex items-center gap-2 sm:gap-2.5 cursor-pointer ${
                   activeTab === 'observations'
                     ? 'text-[#000000]'
