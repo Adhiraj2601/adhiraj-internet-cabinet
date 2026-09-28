@@ -78,7 +78,7 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: (index % 12) * 0.03 }}
-      className="flex flex-col justify-between rounded-none p-2.5 sm:p-3 transition-all duration-200 group hover:-translate-y-0.5"
+      className="w-full flex flex-col justify-between rounded-none p-3.5 sm:p-4 transition-all duration-200 group hover:-translate-y-0.5"
       style={{
         backgroundColor: BG_CARD_GREEN,
         border: BORDER_BLACK,
@@ -89,7 +89,7 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
         {/* Top White Square Doodle/Image Box */}
         <Link
           to={`/blog/${post.slug}`}
-          className="block w-full aspect-square bg-white rounded-none overflow-hidden mb-2.5 relative flex items-center justify-center p-2"
+          className="block w-full aspect-square bg-white rounded-none overflow-hidden mb-3 relative flex items-center justify-center p-3"
           style={{ border: BORDER_BLACK }}
         >
           {post.image ? (
@@ -105,7 +105,7 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
         </Link>
 
         {/* Title */}
-        <h3 className="font-mono font-bold text-xs sm:text-[13px] leading-snug text-[#1a1a1a] line-clamp-2">
+        <h3 className="font-mono font-bold text-sm sm:text-base leading-snug text-[#1a1a1a] line-clamp-2">
           <Link to={`/blog/${post.slug}`} className="hover:underline">
             {post.title}
           </Link>
@@ -113,14 +113,14 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
       </div>
 
       {/* Card Footer: Date, optional category tag, and Orange Arrow Button */}
-      <div className="flex items-center justify-between mt-3 pt-2">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="font-mono text-[10px] text-neutral-800 font-bold">
+      <div className="flex items-center justify-between mt-4 pt-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-xs text-neutral-800 font-bold">
             {post.date}
           </span>
           {post.category && (
             <span
-              className="px-1 py-0.2 rounded-none text-[8.5px] font-mono font-bold uppercase text-[#1a1a1a] bg-[#ffd166]"
+              className="px-1.5 py-0.5 rounded-none text-[9px] font-mono font-bold uppercase text-[#1a1a1a] bg-[#ffd166]"
               style={{ border: BORDER_BLACK }}
             >
               {post.category}
@@ -132,7 +132,7 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
         <Link
           to={`/blog/${post.slug}`}
           aria-label={`Read ${post.title}`}
-          className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center font-mono font-bold text-xs sm:text-sm text-[#1a1a1a] rounded-none transition-transform duration-150 hover:translate-x-0.5"
+          className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center font-mono font-bold text-xs sm:text-sm text-[#1a1a1a] rounded-none transition-transform duration-150 hover:translate-x-0.5"
           style={{
             backgroundColor: ACCENT_ORANGE,
             border: BORDER_BLACK,
@@ -156,14 +156,14 @@ export function Blog() {
 
   return (
     <div
-      className="min-h-screen pt-20 pb-20 px-2 sm:px-4 md:px-6 lg:px-8"
+      className="min-h-screen pt-16 pb-16 px-4 md:px-[2.5vw]"
       style={{
         backgroundColor: BG_PISTACHIO, // Solid light pistachio green
       }}
     >
-      {/* Centered Main Content Container with White Background & Crumpled Paper Texture */}
+      {/* Full-bleed Centered Main Content Container with White Background & Crumpled Paper Texture */}
       <div
-        className="max-w-6xl mx-auto bg-white rounded-none sm:rounded-[2px] relative overflow-hidden my-3 sm:my-6"
+        className="w-full max-w-none mx-auto bg-white rounded-none relative overflow-hidden mt-[30px] sm:mt-[50px]"
         style={{
           border: BORDER_BLACK,
           boxShadow: '4px 4px 0px rgba(0, 0, 0, 0.25)',
@@ -174,11 +174,11 @@ export function Blog() {
           className="absolute inset-0 pointer-events-none bg-[url('/images/crumpled-paper.jpg')] bg-cover bg-center mix-blend-multiply opacity-80 z-0"
         />
 
-        {/* Content Container (z-10 relative) */}
-        <div className="relative z-10 p-4 sm:p-6 md:p-8">
+        {/* Content Container (z-10 relative with 35px padding) */}
+        <div className="relative z-10 p-4 sm:p-6 md:p-[35px]">
           {/* ===================== HERO CARD ===================== */}
           <div
-            className="rounded-none p-4 sm:p-6 mb-6 relative overflow-hidden"
+            className="w-full rounded-none p-5 sm:p-6 md:p-[30px] mb-8 relative overflow-hidden"
             style={{
               backgroundColor: BG_CARD_GREEN,
               border: BORDER_BLACK,
@@ -186,7 +186,7 @@ export function Blog() {
             }}
           >
             {/* Top-Right Instagram icon badge */}
-            <div className="absolute top-4 right-4 sm:top-5 sm:right-5">
+            <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
               <a
                 href={INSTAGRAM_URL}
                 target="_blank"
@@ -217,10 +217,10 @@ export function Blog() {
               </a>
             </div>
 
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 sm:gap-8">
-              {/* Avatar / Illustration Landscape Frame (matching Image 2) */}
+            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-6 sm:gap-8 lg:gap-10">
+              {/* Avatar / Illustration Landscape Frame (~520px wide on desktop) */}
               <div
-                className="w-full md:w-[280px] lg:w-[320px] h-44 sm:h-48 md:h-44 rounded-none bg-[#efe9d9] flex items-center justify-center shrink-0 overflow-hidden"
+                className="w-full xl:w-[520px] h-60 sm:h-72 md:h-80 xl:h-[300px] rounded-none bg-[#efe9d9] flex items-center justify-center shrink-0 overflow-hidden"
                 style={{
                   border: BORDER_BLACK,
                   boxShadow: '1px 1px 0px #000000',
@@ -237,35 +237,35 @@ export function Blog() {
                 />
               </div>
 
-              {/* Monospace Greeting & Bio */}
-              <div className="space-y-1.5 sm:space-y-2 flex-1 font-mono text-[#1a1a1a]">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1a1a1a]">
+              {/* Monospace Greeting & Bio filling remaining space */}
+              <div className="space-y-2 sm:space-y-3 flex-1 min-w-0 font-mono text-[#1a1a1a]">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-[#1a1a1a]">
                   Helloowwww!!!
                 </h1>
-                <p className="text-sm sm:text-base font-semibold text-[#1a1a1a]">
+                <p className="text-base sm:text-lg font-semibold text-[#1a1a1a]">
                   I am Adhiraj (Adi)
                 </p>
-                <p className="text-sm sm:text-base text-neutral-800">
+                <p className="text-base sm:text-lg text-neutral-800">
                   Welcome to my Space :&gt;
                 </p>
-                <p className="text-sm sm:text-base text-neutral-800">
+                <p className="text-base sm:text-lg text-neutral-800">
                   I love to learn something DAILY.
                 </p>
 
-                {/* Status card matching reference: outer white card with inner bordered status box */}
-                <div className="pt-1.5">
+                {/* Status card matching reference */}
+                <div className="pt-2">
                   <div
-                    className="inline-flex flex-wrap items-center gap-2.5 bg-white px-3.5 py-1.5 rounded-none"
+                    className="inline-flex flex-wrap items-center gap-3 bg-white px-4 py-2 rounded-none"
                     style={{
                       border: BORDER_BLACK,
                       boxShadow: '1px 1px 0px #000000',
                     }}
                   >
-                    <span className="text-xs sm:text-sm font-mono text-[#1a1a1a] font-medium">
+                    <span className="text-sm font-mono text-[#1a1a1a] font-medium">
                       And these days i am:
                     </span>
                     <span
-                      className="bg-white px-2.5 py-0.5 rounded-none font-mono font-medium text-xs sm:text-sm text-neutral-900"
+                      className="bg-white px-3 py-1 rounded-none font-mono font-medium text-xs sm:text-sm text-neutral-900"
                       style={{
                         border: BORDER_BLACK,
                       }}
@@ -278,13 +278,13 @@ export function Blog() {
             </div>
           </div>
 
-          {/* ===================== TABS & CONTROLS BAR ===================== */}
-          <div className="flex items-center justify-between gap-3 mb-6">
+          {/* ===================== TABS & CONTROLS BAR (Flush with header card) ===================== */}
+          <div className="w-full flex items-center justify-between gap-3 mb-8">
             {/* Left: Category Tabs */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`px-3.5 py-1.5 text-xs font-mono font-bold uppercase rounded-none transition-colors flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2 text-xs sm:text-sm font-mono font-bold uppercase rounded-none transition-colors flex items-center gap-2 cursor-pointer ${
                   activeTab === 'all'
                     ? 'text-[#1a1a1a]'
                     : 'bg-white text-neutral-700 hover:bg-neutral-100'
@@ -301,7 +301,7 @@ export function Blog() {
 
               <button
                 onClick={() => setActiveTab('observations')}
-                className={`px-3.5 py-1.5 text-xs font-mono font-bold uppercase rounded-none transition-colors flex items-center gap-1.5 cursor-pointer ${
+                className={`px-4 py-2 text-xs sm:text-sm font-mono font-bold uppercase rounded-none transition-colors flex items-center gap-2 cursor-pointer ${
                   activeTab === 'observations'
                     ? 'text-[#1a1a1a]'
                     : 'bg-white text-neutral-700 hover:bg-neutral-100'
@@ -322,7 +322,7 @@ export function Blog() {
               onClick={() => {
                 document.getElementById('blog-grid')?.scrollIntoView({ behavior: 'smooth' })
               }}
-              className="px-3.5 py-1.5 text-xs font-mono font-bold text-neutral-800 bg-white rounded-none hover:bg-neutral-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 text-xs sm:text-sm font-mono font-bold text-neutral-800 bg-white rounded-none hover:bg-neutral-100 transition-colors flex items-center gap-2 cursor-pointer"
               style={{
                 border: BORDER_BLACK,
                 boxShadow: '1px 1px 0px #000000',
@@ -333,10 +333,15 @@ export function Blog() {
             </button>
           </div>
 
-          {/* ===================== BLOG POST GRID ===================== */}
-          <div id="blog-grid">
+          {/* ===================== BLOG POST GRID (CSS Grid: auto-fill minmax 340px, 40px gap) ===================== */}
+          <div id="blog-grid" className="w-full">
             {filteredPosts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+              <div
+                className="w-full grid grid-cols-1 sm:grid-cols-2 lg:[grid-template-columns:repeat(auto-fill,minmax(340px,1fr))]"
+                style={{
+                  gap: '40px',
+                }}
+              >
                 {filteredPosts.map((post, idx) => (
                   <BlogCard key={post.id || post.slug} post={post} index={idx} />
                 ))}
@@ -373,7 +378,7 @@ export function Blog() {
           </div>
 
           {/* ===================== FOOTER BAR ===================== */}
-          <div className="mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-neutral-700 font-mono text-xs border-t border-black/30">
+          <div className="w-full mt-14 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-neutral-800 font-mono text-xs sm:text-sm border-t border-black/30">
             <span>
               {filteredPosts.length} entries published
             </span>
