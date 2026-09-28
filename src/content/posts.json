@@ -10,5 +10,57 @@
     "readTime": "",
     "content": "It's the placement season ",
     "image": "/images/blog/76ffd3ce0ed2889d1184a269eb031fe3.jpg"
+  },
+  {
+    "id": "obs-007",
+    "number": "007",
+    "title": "Standing up for no reason",
+    "slug": "standing-up-for-no-reason",
+    "category": "Observations",
+    "date": "26 Sept 2026",
+    "excerpt": "In the metro today I kept noticing people standing up way before their station, holding the pole and staring at the door for a whole minute.",
+    "observation": "In the metro today I kept noticing people standing up way before their station, holding the pole and staring at the door for a whole minute. And it was mostly the older uncles and aunties.",
+    "question": "Why do people stand up so early, before the metro even reaches their station?",
+    "answer": "Mostly it is uncertainty. When you are not sure when your stop is coming, your brain adds a safety buffer, and that buffer is standing up early. Missing your stop costs way more than standing a minute, and the doors stay open only for a few seconds. Maybe it shows more in older people because the metro, its screens and announcements came into their lives late, so they trust their own caution more than the system. Designers have a rule for this: always show people what is happening, because anxious people are usually uninformed people. Japan even gives many stations their own little melody before the doors close, which is known to calm the rush. Makes me wonder: what else do we rush for just because we are not sure?",
+    "signature": "— Yuji"
+  },
+  {
+    "id": "obs-006",
+    "number": "006",
+    "title": "Gods in some shops, gurus in others",
+    "slug": "gods-in-some-shops-gurus-in-others",
+    "category": "Observations",
+    "date": "25 Sept 2026",
+    "excerpt": "Walk down any commercial street in Delhi and every store counter has a miniature framed photo or idol.",
+    "observation": "Walk down any commercial street in Delhi and every store counter has a miniature framed photo or idol. In half the shops it's Lakshmi or Ganesha with fresh marigolds. In the other half, it's a specific guru or spiritual master.",
+    "question": "Why do merchant families align so deeply with specific gurus rather than traditional deities?",
+    "answer": "Deities offer universal cosmic order, but gurus offer human lineage, specific moral guidance, and community trust networks. When two merchants share the same guru, deals happen on trust without contracts. The guru isn't just faith; it's a living social protocol for doing business in an uncertain world.",
+    "signature": "— Yuji"
+  },
+  {
+    "id": "obs-005",
+    "number": "005",
+    "title": "I think I'm being watched (by number plates)",
+    "slug": "i-think-im-being-watched-by-number-plates",
+    "category": "Observations",
+    "date": "24 Sept 2026",
+    "excerpt": "I started noticing that whenever I feel stuck in traffic, certain number plate combinations keep repeating in patterns that feel unnervingly deliberate.",
+    "observation": "I started noticing that whenever I feel stuck in traffic, certain number plate combinations keep repeating in patterns that feel unnervingly deliberate.",
+    "question": "Why does the brain turn completely random digits into patterns that feel personal?",
+    "answer": "Apophenia. Humans are evolved pattern-recognition machines that would rather make a false positive (assuming a rustle in the bushes is a predator) than a false negative. When we are bored or anxious, the threshold drops even lower. Number plates become omens simply because the mind cannot tolerate meaningless noise.",
+    "signature": "— Yuji"
+  },
+  {
+    "id": "obs-004",
+    "number": "004",
+    "title": "Chot",
+    "slug": "chot",
+    "category": "Observations",
+    "date": "23 Sept 2026",
+    "excerpt": "A kid fell on the sidewalk, scraped his knee, and immediately looked up at his mother's face before deciding whether to cry.",
+    "observation": "A kid fell on the sidewalk, scraped his knee, and immediately looked up at his mother's face before deciding whether to cry.",
+    "question": "Is physical pain felt before emotional reaction, or does the reaction shape the pain?",
+    "answer": "Social referencing. Pain is as much social signal as nerve impulse. When the mother smiled and said 'Uth jao sher!', he dusted off his knees and ran off. Pain isn't just damage; it's an assessment of danger.",
+    "signature": "— Yuji"
   }
 ]

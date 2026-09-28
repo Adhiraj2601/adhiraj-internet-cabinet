@@ -12,6 +12,15 @@ export type Post = {
   readTime?: string
   content?: string
   tags?: string[]
+  observation?: string
+  question?: string
+  answer?: string
+  signature?: string
 }
 
 export const posts: Post[] = postsData as Post[]
+
+export function isObservation(post: Post): boolean {
+  return post.category.toLowerCase().includes('observation')
+}
+

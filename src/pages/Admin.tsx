@@ -1998,6 +1998,62 @@ export function Admin() {
                       />
                     </div>
 
+                    {editingPost.category === 'Observations' && (
+                      <div className="space-y-3 p-3 bg-neutral-50 dark:bg-neutral-900 border border-token rounded-xs">
+                        <div className="text-xs font-bold text-accent uppercase tracking-wider">
+                          Structured Observation Fields (Retro TV)
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
+                            Observation (What I noticed)
+                          </label>
+                          <textarea
+                            rows={3}
+                            value={editingPost.observation || ''}
+                            onChange={(e) => setEditingPost({ ...editingPost, observation: e.target.value })}
+                            placeholder="In the metro today I kept noticing..."
+                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
+                            Question (The "Why" question)
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={editingPost.question || ''}
+                            onChange={(e) => setEditingPost({ ...editingPost, question: e.target.value })}
+                            placeholder="Why do people stand up so early...?"
+                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
+                            Answer (Reflection / Attempt at an answer)
+                          </label>
+                          <textarea
+                            rows={4}
+                            value={editingPost.answer || ''}
+                            onChange={(e) => setEditingPost({ ...editingPost, answer: e.target.value })}
+                            placeholder="Mostly it is uncertainty..."
+                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
+                            Signature (e.g. — Yuji)
+                          </label>
+                          <input
+                            type="text"
+                            value={editingPost.signature || ''}
+                            onChange={(e) => setEditingPost({ ...editingPost, signature: e.target.value })}
+                            placeholder="— Yuji"
+                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                          />
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex justify-end gap-2 pt-2 border-t border-token">
                       <button
                         type="button"

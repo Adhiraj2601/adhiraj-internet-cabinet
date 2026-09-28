@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { posts, type Post } from '../content/posts'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { posts, isObservation, type Post } from '../content/posts'
+import { ObservationsGrid } from '../components/observations/ObservationsGrid'
+
+const TvPlayer = lazy(() =>
+  import('../components/observations/TvPlayer').then((m) => ({ default: m.TvPlayer }))
+)
 
 // Retro Scrapbook theme tokens
 const BG_PAGE_GREEN = '#A9CB8B' // Lighter pastel green outer page background
@@ -200,29 +205,45 @@ function PenIcon({ className = 'w-5 h-5' }: { className?: string }) {
 }
 
 export function Blog() {
-  const [activeTab, setActiveTab] = useState<'all' | 'observations'>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tapeParam = searchParams.get('tape')
+
+  const [activeTab, setActiveTab] = useState<'all' | 'observations'>(
+    tapeParam ? 'observations' : 'all'
+  )
   const [isAvatarTapped, setIsAvatarTapped] = useState(false)
+  const [selectedTape, setSelectedTape] = useState<Post | null>(null)
 
-  // On touch devices, close peeking cat if tapping outside
+  // Separate blog posts (strictly non-observations) and observation posts
+  const blogPosts = useMemo(() => posts.filter((p) => !isObservation(p)), [])
+  const observationPosts = useMemo(() => posts.filter((p) => isObservation(p)), [])
+
+  // Sync selected tape with ?tape= URL param
   useEffect(() => {
-    if (!isAvatarTapped) return
-    const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
-      if (!(e.target as HTMLElement).closest('.profile-wrap')) {
-        setIsAvatarTapped(false)
+    if (tapeParam) {
+      const match = posts.find((p) => p.slug === tapeParam)
+      if (match) {
+        setSelectedTape(match)
+        setActiveTab('observations')
       }
+    } else {
+      setSelectedTape(null)
     }
-    window.addEventListener('click', handleOutsideClick)
-    window.addEventListener('touchstart', handleOutsideClick)
-    return () => {
-      window.removeEventListener('click', handleOutsideClick)
-      window.removeEventListener('touchstart', handleOutsideClick)
-    }
-  }, [isAvatarTapped])
+  }, [tapeParam])
 
-  const filteredPosts =
-    activeTab === 'all'
-      ? posts
-      : posts.filter((p) => (p.category || '').toLowerCase().includes('observation'))
+  const handleSelectTape = (tape: Post) => {
+    setSelectedTape(tape)
+    setSearchParams({ tape: tape.slug }, { replace: true })
+  }
+
+  const handleCloseTape = () => {
+    setSelectedTape(null)
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('tape')
+    setSearchParams(nextParams, { replace: true })
+  }
+
+  const currentCount = activeTab === 'all' ? blogPosts.length : observationPosts.length
 
   return (
     <div
@@ -488,47 +509,86 @@ export function Blog() {
                 }
               }
             `}</style>
-            {filteredPosts.length > 0 ? (
-              <div className="blog-cards-grid">
-                {filteredPosts.map((post, idx) => (
-                  <BlogCard key={post.id || post.slug} post={post} index={idx} />
-                ))}
-              </div>
-            ) : (
-              <div
-                className="p-12 text-center rounded-none font-mono"
-                style={{
-                  backgroundColor: BG_CARD_GREEN,
-                  border: BORDER_BLACK,
-                  boxShadow: '2px 2px 0px #000000',
-                }}
-              >
-                <p className="font-bold text-sm text-[#1a1a1a]">
-                  No notes found in this section :&gt;
-                </p>
-                <p className="text-xs text-neutral-700 mt-1">
-                  You can write and publish entries from the Admin dashboard.
-                </p>
-                <Link
-                  to="/admin"
-                  className="inline-block mt-4 px-4 py-1.5 font-mono text-xs font-bold uppercase rounded-none"
-                  style={{
-                    backgroundColor: ACCENT_ORANGE,
-                    border: BORDER_BLACK,
-                    boxShadow: '1px 1px 0px #000000',
-                    color: '#1a1a1a',
-                  }}
+            <AnimatePresence mode="wait">
+              {activeTab === 'all' ? (
+                <motion.div
+                  key="blogs-tab-content"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.18 }}
+                  className="w-full"
                 >
-                  Open Admin Dashboard →
-                </Link>
-              </div>
-            )}
+                  {blogPosts.length > 0 ? (
+                    <div className="blog-cards-grid">
+                      {blogPosts.map((post, idx) => (
+                        <BlogCard key={post.id || post.slug} post={post} index={idx} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div
+                      className="p-12 text-center rounded-none font-mono"
+                      style={{
+                        backgroundColor: BG_CARD_GREEN,
+                        border: BORDER_BLACK,
+                        boxShadow: '2px 2px 0px #000000',
+                      }}
+                    >
+                      <p className="font-bold text-sm text-[#1a1a1a]">
+                        No notes found in this section :&gt;
+                      </p>
+                      <p className="text-xs text-neutral-700 mt-1">
+                        You can write and publish entries from the Admin dashboard.
+                      </p>
+                      <Link
+                        to="/admin"
+                        className="inline-block mt-4 px-4 py-1.5 font-mono text-xs font-bold uppercase rounded-none"
+                        style={{
+                          backgroundColor: ACCENT_ORANGE,
+                          border: BORDER_BLACK,
+                          boxShadow: '1px 1px 0px #000000',
+                          color: '#1a1a1a',
+                        }}
+                      >
+                        Open Admin Dashboard →
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="observations-tab-content"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.18 }}
+                  className="w-full"
+                >
+                  <ObservationsGrid
+                    observations={observationPosts}
+                    onSelectTape={handleSelectTape}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+
+          {/* ===================== TV PLAYER PORTAL OVERLAY ===================== */}
+          {selectedTape && (
+            <Suspense fallback={null}>
+              <TvPlayer
+                post={selectedTape}
+                allObservations={observationPosts}
+                onClose={handleCloseTape}
+                isDirectLink={Boolean(tapeParam && selectedTape.slug === tapeParam)}
+              />
+            </Suspense>
+          )}
 
           {/* ===================== FOOTER BAR ===================== */}
           <div className="w-full mt-14 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-neutral-800 font-mono text-xs sm:text-sm border-t border-black/30">
             <span>
-              {filteredPosts.length} entries published
+              {currentCount} entries published
             </span>
             <div className="flex items-center gap-4">
               <Link to="/" className="hover:text-black font-semibold hover:underline">

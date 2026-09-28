@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
-import { posts, type Post } from '../content/posts'
+import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
+import { posts, isObservation, type Post } from '../content/posts'
 
 const BG_GREEN = '#ADD890' // Bright pastel green page background
 const ACCENT_ORANGE = '#e08b58' // Warm orange button accent
@@ -67,6 +67,11 @@ export function BlogPost() {
     setComments((prev) => [...prev, newComment])
     setCommentName('')
     setCommentText('')
+  }
+
+  // If this post is an observation, redirect to the Retro TV experience on /blog
+  if (post && isObservation(post)) {
+    return <Navigate to={`/blog?tape=${post.slug}`} replace />
   }
 
   if (!post) {
