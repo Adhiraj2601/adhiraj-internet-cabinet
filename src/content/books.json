@@ -107,9 +107,9 @@
     "id": "14",
     "title": "The War of the Worlds",
     "author": "H.G. Wells",
-    "note": "Now I know why it's a classic",
+    "note": "the terror and panic felt through the pages with the twist at the end ",
     "status": "read",
-    "cover": ""
+    "cover": "/images/books/91ab6c738d11916dea819baf945b9f93.jpg"
   },
   {
     "id": "15",
@@ -158,5 +158,13 @@
     "note": "the detailing in worldbuilding is way too good ",
     "status": "read",
     "cover": "/images/books/20518872.jpg"
+  },
+  {
+    "id": "21",
+    "title": "Mein Kamph",
+    "author": "Adolf Hitler",
+    "note": "how a small incident gave birth to the biggest tragedy",
+    "status": "read",
+    "cover": "/images/books/images (2).jpg"
   }
 ]
