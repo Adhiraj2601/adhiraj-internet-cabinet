@@ -2,6 +2,7 @@ import { useEffect, Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
+import { CustomCursor } from './components/ui/CustomCursor'
 import { Home } from './pages/Home'
 import './styles/globals.css'
 
@@ -62,6 +63,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <CustomCursor />
       <Layout>
         <Suspense fallback={<PageFallback />}>
           <Routes>
