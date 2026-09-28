@@ -23,6 +23,10 @@ import {
   RefreshCw,
   Settings,
   Rocket,
+  Tv,
+  Radio,
+  Sparkles,
+  Copy,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -43,8 +47,9 @@ import {
 import type { Project } from '../content/projects'
 import type { Book } from '../content/books'
 import type { ScrapItem } from '../content/scraps'
-import type { Post } from '../content/posts'
+import { isObservation, type Post } from '../content/posts'
 import type { Experiment } from '../content/experiments'
+import { CassetteCard, RoughenFilterDefs } from '../components/observations/CassetteCard'
 
 type Tab = 'projects' | 'books' | 'scraps' | 'currently' | 'notes' | 'lab'
 
@@ -56,8 +61,17 @@ export function Admin() {
   const [authenticatedUser, setAuthenticatedUser] = useState<string | null>(null)
   const [isVerifying, setIsVerifying] = useState(false)
 
-  // Current active tab
-  const [activeTab, setActiveTab] = useState<Tab>('projects')
+  // Current active tab (supports ?tab=notes or ?tab=observations)
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    if (typeof window !== 'undefined') {
+      const tabParam = new URLSearchParams(window.location.search).get('tab')
+      if (tabParam === 'notes' || tabParam === 'observations') return 'notes'
+      if (tabParam === 'projects' || tabParam === 'books' || tabParam === 'scraps' || tabParam === 'currently' || tabParam === 'lab') {
+        return tabParam as Tab
+      }
+    }
+    return 'projects'
+  })
 
   // Editable data states
   const [projectsData, setProjectsData] = useState<Project[]>(initialProjects as Project[])
@@ -88,10 +102,51 @@ export function Admin() {
   const [selectedScrapFile, setSelectedScrapFile] = useState<File | null>(null)
   const [scrapPreviewUrl, setScrapPreviewUrl] = useState<string | null>(null)
 
-  const [editingPost, setEditingPost] = useState<Post | null>(null)
-  const [isNewPost, setIsNewPost] = useState(false)
+  const [editingPost, setEditingPost] = useState<Post | null>(() => {
+    if (typeof window !== 'undefined') {
+      const action = new URLSearchParams(window.location.search).get('action')
+      if (action === 'new-observation') {
+        const obsList = (initialPosts as Post[]).filter((p) => p.category.toLowerCase().includes('observation'))
+        const maxNum = obsList.reduce((max, p) => {
+          const n = parseInt(p.number?.replace(/\D/g, '') || '0', 10)
+          return n > max ? n : max
+        }, 0)
+        const nextNumber = String(maxNum + 1).padStart(3, '0')
+        return {
+          id: `obs-${nextNumber}`,
+          number: nextNumber,
+          title: '',
+          slug: '',
+          category: 'Observations',
+          date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+          excerpt: '',
+          observation: '',
+          question: '',
+          answer: '',
+          signature: '— Adi',
+          content: '',
+        }
+      }
+    }
+    return null
+  })
+  const [isNewPost, setIsNewPost] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('action') === 'new-observation'
+    }
+    return false
+  })
   const [selectedPostImageFile, setSelectedPostImageFile] = useState<File | null>(null)
   const [postImagePreviewUrl, setPostImagePreviewUrl] = useState<string | null>(null)
+  const [notesFilter, setNotesFilter] = useState<'all' | 'observations' | 'articles'>(() => {
+    if (typeof window !== 'undefined') {
+      const tabParam = new URLSearchParams(window.location.search).get('tab')
+      if (tabParam === 'observations') return 'observations'
+      if (tabParam === 'articles') return 'articles'
+    }
+    return 'all'
+  })
+  const [showObservationPreview, setShowObservationPreview] = useState(true)
 
   // Queued image uploads to publish
   const [queuedImages, setQueuedImages] = useState<{ path: string; file: File; label: string }[]>([])
@@ -324,6 +379,17 @@ export function Admin() {
     URL.revokeObjectURL(url)
   }
 
+  // Quick posts.json download
+  const handleDownloadPostsJson = () => {
+    const blob = new Blob([JSON.stringify(postsData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'posts.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   // Project item handlers
   const handleSaveProject = (e: React.FormEvent) => {
     e.preventDefault()
@@ -485,8 +551,19 @@ export function Admin() {
       ])
     }
 
+    const isObs = editingPost.category.toLowerCase().includes('observation')
+    const finalNumber = editingPost.number?.trim() || (isObs ? '001' : '01')
+    const finalExcerpt =
+      editingPost.excerpt?.trim() ||
+      (isObs && editingPost.observation ? editingPost.observation.slice(0, 140) + '...' : '')
+    const finalContent =
+      editingPost.content?.trim() || (isObs && editingPost.observation ? editingPost.observation : '')
+
     const postToSave: Post = {
       ...editingPost,
+      number: finalNumber,
+      excerpt: finalExcerpt,
+      content: finalContent,
       image: postImg || undefined,
     }
 
@@ -846,7 +923,7 @@ export function Admin() {
             }`}
           >
             <FileText size={15} />
-            <span>Blog / Notes ({postsData.length})</span>
+            <span>Blog & Observations ({postsData.length})</span>
           </button>
 
           <button
@@ -1704,357 +1781,343 @@ export function Admin() {
           </div>
         )}
 
-        {/* ===================== TAB 4: BLOG POSTS & NOTES ===================== */}
+        {/* ===================== TAB 4: BLOG POSTS & OBSERVATIONS ===================== */}
         {activeTab === 'notes' && (
           <div>
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold tracking-tight">Blog Posts & Notes</h2>
+                <h2 className="text-xl font-bold tracking-tight">Blog & Observations</h2>
                 <p className="text-xs text-muted mt-1">
-                  Create, edit, and publish articles and notes for your /blog page.
+                  Manage standard blog articles and interactive Retro TV observation cassette tapes.
                 </p>
               </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadPostsJson}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-token hover:bg-neutral-100 rounded-xs text-muted hover:text-foreground transition-colors cursor-pointer"
+                  title="Download current posts.json file"
+                >
+                  <Download size={13} />
+                  <span>Export JSON</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const obsList = postsData.filter((p) => isObservation(p))
+                    const maxNum = obsList.reduce((max, p) => {
+                      const n = parseInt(p.number?.replace(/\D/g, '') || '0', 10)
+                      return n > max ? n : max
+                    }, 0)
+                    const nextNumber = String(maxNum + 1).padStart(3, '0')
+                    setIsNewPost(true)
+                    setEditingPost({
+                      id: `obs-${nextNumber}`,
+                      number: nextNumber,
+                      title: '',
+                      slug: '',
+                      category: 'Observations',
+                      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                      excerpt: '',
+                      observation: '',
+                      question: '',
+                      answer: '',
+                      signature: '— Adi',
+                      content: '',
+                    })
+                    setSelectedPostImageFile(null)
+                    setPostImagePreviewUrl(null)
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider bg-[#AFD080] text-black border border-black shadow-[2px_2px_0px_#000000] hover:bg-[#9fc36f] transition-all shrink-0 cursor-pointer"
+                >
+                  <Tv size={14} />
+                  <span>+ New Observation</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const articleList = postsData.filter((p) => !isObservation(p))
+                    const nextArtNum = String(articleList.length + 1).padStart(2, '0')
+                    setIsNewPost(true)
+                    setEditingPost({
+                      id: String(Date.now()),
+                      number: nextArtNum,
+                      title: '',
+                      slug: '',
+                      category: 'Thoughts',
+                      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+                      excerpt: '',
+                      readTime: '3 min read',
+                      content: '',
+                    })
+                    setSelectedPostImageFile(null)
+                    setPostImagePreviewUrl(null)
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90 transition-opacity shrink-0 cursor-pointer"
+                >
+                  <Plus size={14} />
+                  <span>+ Write Article</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex items-center gap-2 mb-6 border-b border-token pb-3 overflow-x-auto">
               <button
-                onClick={() => {
-                  setIsNewPost(true)
-                  setEditingPost({
-                    id: String(Date.now()),
-                    number: String(postsData.length + 1).padStart(2, '0'),
-                    title: '',
-                    slug: '',
-                    category: 'Thoughts',
-                    date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                    excerpt: '',
-                    readTime: '3 min read',
-                    content: '',
-                  })
-                  setSelectedPostImageFile(null)
-                  setPostImagePreviewUrl(null)
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90 transition-opacity shrink-0"
+                type="button"
+                onClick={() => setNotesFilter('all')}
+                className={`px-3 py-1.5 text-xs rounded-xs transition-colors cursor-pointer ${
+                  notesFilter === 'all'
+                    ? 'bg-foreground text-background font-bold'
+                    : 'text-muted hover:text-foreground hover:bg-neutral-100 font-medium'
+                }`}
               >
-                <Plus size={14} />
-                <span>Write New Post</span>
+                All Entries ({postsData.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setNotesFilter('observations')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xs transition-colors cursor-pointer ${
+                  notesFilter === 'observations'
+                    ? 'bg-[#AFD080] text-black font-bold border border-black shadow-[1px_1px_0px_#000000]'
+                    : 'text-muted hover:text-foreground hover:bg-neutral-100 font-medium'
+                }`}
+              >
+                <Tv size={13} />
+                <span>Observations ({postsData.filter(isObservation).length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setNotesFilter('articles')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xs transition-colors cursor-pointer ${
+                  notesFilter === 'articles'
+                    ? 'bg-foreground text-background font-bold'
+                    : 'text-muted hover:text-foreground hover:bg-neutral-100 font-medium'
+                }`}
+              >
+                <FileText size={13} />
+                <span>Blog Articles ({postsData.filter((p) => !isObservation(p)).length})</span>
               </button>
             </div>
 
             {/* Posts Grid / List */}
-            {postsData.length === 0 ? (
+            {postsData.filter((p) => {
+              if (notesFilter === 'observations') return isObservation(p)
+              if (notesFilter === 'articles') return !isObservation(p)
+              return true
+            }).length === 0 ? (
               <div className="p-12 border border-dashed border-token rounded-sm text-center">
                 <FileText size={32} className="mx-auto text-muted mb-3 opacity-60" />
-                <h3 className="font-bold text-sm">No blog posts yet</h3>
+                <h3 className="font-bold text-sm">No entries found</h3>
                 <p className="text-xs text-muted mt-1 max-w-sm mx-auto">
-                  Start sharing your thoughts, project write-ups, or notes. Click the button above to write your first entry.
+                  {notesFilter === 'observations'
+                    ? 'No observation cassette tapes found. Click "+ New Observation" to create one.'
+                    : 'Start sharing your thoughts or notes. Click the buttons above to create an entry.'}
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {postsData.map((post) => (
-                  <div
-                    key={post.id}
-                    className="p-4 border border-token rounded-sm flex flex-col justify-between bg-[rgba(23,23,23,0.01)]"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-2xs bg-neutral-200/60 text-foreground">
-                          {post.category}
-                        </span>
-                        <span className="text-[10px] text-muted font-mono">{post.date}</span>
-                      </div>
+                {postsData
+                  .filter((post) => {
+                    if (notesFilter === 'observations') return isObservation(post)
+                    if (notesFilter === 'articles') return !isObservation(post)
+                    return true
+                  })
+                  .map((post) => {
+                    const isObs = isObservation(post)
+                    return (
+                      <div
+                        key={post.id}
+                        className={`p-4 border rounded-sm flex flex-col justify-between transition-all ${
+                          isObs
+                            ? 'border-black/70 bg-[#AFD080]/10 hover:border-black'
+                            : 'border-token bg-[rgba(23,23,23,0.01)] hover:border-foreground/40'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            {isObs ? (
+                              <span className="text-[10px] font-mono font-bold tracking-wider px-2 py-0.5 rounded-none bg-[#AFD080] text-black border border-black shadow-[1px_1px_0px_#000000] flex items-center gap-1">
+                                <Tv size={10} />
+                                <span>TAPE No.{post.number || '001'}</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-2xs bg-neutral-200/60 text-foreground">
+                                {post.category}
+                              </span>
+                            )}
+                            <div className="flex items-center gap-2">
+                              {post.readTime && !isObs && (
+                                <span className="text-[10px] text-muted">{post.readTime}</span>
+                              )}
+                              <span className="text-[10px] text-muted font-mono">{post.date}</span>
+                            </div>
+                          </div>
 
-                      <div className="flex gap-3 items-start">
-                        {post.image && (
-                          <img
-                            src={post.image}
-                            alt={post.title}
-                            className="w-14 h-14 object-cover rounded-xs border border-token shrink-0"
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-bold text-sm leading-snug line-clamp-1">{post.title}</h3>
-                          <p className="text-[11px] text-muted font-mono mt-0.5">/blog/{post.slug}</p>
-                          <p className="text-xs text-muted mt-2 line-clamp-2 leading-relaxed">
-                            {post.excerpt || post.content}
-                          </p>
+                          <div className="flex gap-3 items-start">
+                            {post.image && !isObs && (
+                              <img
+                                src={post.image}
+                                alt={post.title}
+                                className="w-14 h-14 object-cover rounded-xs border border-token shrink-0"
+                              />
+                            )}
+                            {isObs && (
+                              <div className="w-12 h-12 shrink-0 bg-[#AFD080] border border-black rounded-none flex flex-col items-center justify-center text-black font-mono shadow-[1px_1px_0px_#000000]">
+                                <Radio size={16} />
+                                <span className="text-[8px] font-bold mt-0.5">TAPE</span>
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-bold text-sm leading-snug line-clamp-1">{post.title}</h3>
+                              <p className="text-[11px] text-muted font-mono mt-0.5">
+                                {isObs ? `/blog?tab=observations&tape=${post.slug}` : `/blog/${post.slug}`}
+                              </p>
+
+                              {isObs && post.question && (
+                                <div className="mt-2 p-2 bg-white/80 dark:bg-black/30 border border-black/20 rounded-xs text-[11px] italic text-neutral-800 dark:text-neutral-200">
+                                  &ldquo;{post.question}&rdquo;
+                                </div>
+                              )}
+
+                              <p className="text-xs text-muted mt-2 line-clamp-2 leading-relaxed">
+                                {post.observation || post.excerpt || post.content}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-token text-xs">
+                          {isObs ? (
+                            <Link
+                              to={`/blog?tab=observations&tape=${post.slug}`}
+                              target="_blank"
+                              className="flex items-center gap-1 text-[11px] text-emerald-700 hover:text-emerald-900 font-bold"
+                            >
+                              <Tv size={12} />
+                              <span>Preview in TV</span>
+                              <ExternalLink size={11} />
+                            </Link>
+                          ) : (
+                            <Link
+                              to={`/blog/${post.slug}`}
+                              target="_blank"
+                              className="flex items-center gap-1 text-[11px] text-muted hover:text-foreground font-medium"
+                            >
+                              <span>Preview</span>
+                              <ExternalLink size={12} />
+                            </Link>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsNewPost(false)
+                                setEditingPost(post)
+                                setSelectedPostImageFile(null)
+                                setPostImagePreviewUrl(post.image || null)
+                              }}
+                              className="p-1.5 border border-token hover:bg-neutral-100 rounded-xs text-muted hover:text-foreground cursor-pointer"
+                              title={isObs ? 'Edit Observation Tape' : 'Edit Post'}
+                            >
+                              <Edit3 size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePost(post.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 border border-red-200 rounded-xs cursor-pointer"
+                              title="Delete Entry"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-token text-xs">
-                      <Link
-                        to={`/blog/${post.slug}`}
-                        target="_blank"
-                        className="flex items-center gap-1 text-[11px] text-muted hover:text-foreground font-medium"
-                      >
-                        <span>Preview</span>
-                        <ExternalLink size={12} />
-                      </Link>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setIsNewPost(false)
-                            setEditingPost(post)
-                            setSelectedPostImageFile(null)
-                            setPostImagePreviewUrl(post.image || null)
-                          }}
-                          className="p-1.5 border border-token hover:bg-neutral-100 rounded-xs text-muted hover:text-foreground"
-                          title="Edit Post"
-                        >
-                          <Edit3 size={13} />
-                        </button>
-                        <button
-                          onClick={() => handleDeletePost(post.id)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 border border-red-200 rounded-xs"
-                          title="Delete Post"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    )
+                  })}
               </div>
             )}
 
-            {/* ===================== EDIT/CREATE BLOG POST MODAL ===================== */}
+            {/* ===================== EDIT/CREATE MODAL ===================== */}
             {editingPost && (
-              <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-                <div className="bg-[var(--background)] border border-token max-w-xl w-full p-6 rounded-sm shadow-xl max-h-[90vh] overflow-y-auto">
-                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-token">
-                    <h3 className="font-bold text-base">
-                      {isNewPost ? 'Write New Blog Post' : `Edit "${editingPost.title}"`}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingPost(null)
-                        setIsNewPost(false)
-                        setSelectedPostImageFile(null)
-                        setPostImagePreviewUrl(null)
-                      }}
-                      className="text-xs text-muted hover:text-foreground font-mono"
-                    >
-                      ✕ Close
-                    </button>
-                  </div>
-
-                  <form onSubmit={handleSavePost} className="space-y-4">
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <div className="bg-[var(--background)] border-2 border-black max-w-2xl w-full p-6 rounded-none shadow-[6px_6px_0px_#000000] max-h-[92vh] overflow-y-auto">
+                  {/* Top Bar with Mode Toggle */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-token">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Title</label>
-                      <input
-                        type="text"
-                        required
-                        value={editingPost.title}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          const autoSlug = isNewPost
-                            ? val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-                            : editingPost.slug
-                          setEditingPost({
-                            ...editingPost,
-                            title: val,
-                            slug: autoSlug,
-                          })
-                        }}
-                        placeholder="e.g. Why I Built LoreGraph"
-                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
-                      />
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs uppercase font-mono tracking-wider text-muted">
+                          {isNewPost ? 'Create New Entry' : 'Edit Entry'}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-lg leading-tight">
+                        {isObservation(editingPost)
+                          ? isNewPost
+                            ? `New Observation Tape (No.${editingPost.number || '001'})`
+                            : `Edit Observation No.${editingPost.number || ''}`
+                          : isNewPost
+                          ? 'Write New Blog Article'
+                          : `Edit "${editingPost.title}"`}
+                      </h3>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">URL Slug</label>
-                        <input
-                          type="text"
-                          required
-                          value={editingPost.slug}
-                          onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
-                          placeholder="e.g. why-i-built-loregraph"
-                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Category</label>
-                        <select
-                          value={editingPost.category}
-                          onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
-                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
-                        >
-                          <option value="Thoughts">Thoughts</option>
-                          <option value="Observations">Observations</option>
-                          <option value="Projects">Projects</option>
-                          <option value="Programming">Programming</option>
-                          <option value="Books">Books</option>
-                          <option value="Writing">Writing</option>
-                          <option value="Learning">Learning</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Date</label>
-                        <input
-                          type="text"
-                          required
-                          value={editingPost.date}
-                          onChange={(e) => setEditingPost({ ...editingPost, date: e.target.value })}
-                          placeholder="e.g. 28 Sep 2026"
-                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Reading Time (optional)</label>
-                        <input
-                          type="text"
-                          value={editingPost.readTime || ''}
-                          onChange={(e) => setEditingPost({ ...editingPost, readTime: e.target.value })}
-                          placeholder="e.g. 4 min read"
-                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Excerpt */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Card Excerpt</label>
-                      <textarea
-                        rows={2}
-                        required
-                        value={editingPost.excerpt}
-                        onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
-                        placeholder="Brief 1-2 sentence overview shown on the blog card..."
-                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent leading-relaxed"
-                      />
-                    </div>
-
-                    {/* Thumbnail Image Uploader */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Thumbnail / Illustration</label>
-                      <div className="border border-dashed border-token p-4 rounded-xs bg-[rgba(23,23,23,0.015)] text-center">
-                        {postImagePreviewUrl ? (
-                          <div className="mb-3">
-                            <img
-                              src={postImagePreviewUrl}
-                              alt="Thumbnail preview"
-                              className="max-h-32 mx-auto object-contain rounded-xs border border-token shadow-xs"
-                            />
-                            <p className="text-[10px] text-muted mt-1 font-mono">
-                              {editingPost.image || selectedPostImageFile?.name}
-                            </p>
-                          </div>
-                        ) : (
-                          <Upload size={24} className="mx-auto text-muted mb-2" />
-                        )}
-
-                        <input
-                          type="file"
-                          accept="image/*"
-                          id="post-image-upload"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              setSelectedPostImageFile(file)
-                              setPostImagePreviewUrl(URL.createObjectURL(file))
+                    <div className="flex items-center gap-2">
+                      {/* Format Switcher */}
+                      <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xs border border-token">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!isObservation(editingPost)) {
+                              const obsList = postsData.filter(isObservation)
+                              const maxNum = obsList.reduce((max, p) => {
+                                const n = parseInt(p.number?.replace(/\D/g, '') || '0', 10)
+                                return n > max ? n : max
+                              }, 0)
+                              const nextNumber = String(maxNum + 1).padStart(3, '0')
+                              setEditingPost({
+                                ...editingPost,
+                                category: 'Observations',
+                                number: editingPost.number && editingPost.number.length >= 3 ? editingPost.number : nextNumber,
+                                signature: editingPost.signature || '— Adi',
+                              })
                             }
                           }}
-                        />
-                        <label
-                          htmlFor="post-image-upload"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100 cursor-pointer"
+                          className={`px-2.5 py-1 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                            isObservation(editingPost)
+                              ? 'bg-[#AFD080] text-black shadow-xs'
+                              : 'text-muted hover:text-foreground'
+                          }`}
                         >
-                          <Upload size={12} />
-                          <span>{postImagePreviewUrl ? 'Change Image' : 'Upload Illustration'}</span>
-                        </label>
-                        {postImagePreviewUrl && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedPostImageFile(null)
-                              setPostImagePreviewUrl(null)
-                              setEditingPost({ ...editingPost, image: undefined })
-                            }}
-                            className="block mx-auto mt-2 text-[10px] text-red-600 hover:underline"
-                          >
-                            Remove image (use default cat doodle)
-                          </button>
-                        )}
+                          <Tv size={12} />
+                          <span>📼 Observation</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (isObservation(editingPost)) {
+                              setEditingPost({
+                                ...editingPost,
+                                category: 'Thoughts',
+                                readTime: editingPost.readTime || '3 min read',
+                              })
+                            }
+                          }}
+                          className={`px-2.5 py-1 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                            !isObservation(editingPost)
+                              ? 'bg-foreground text-background shadow-xs'
+                              : 'text-muted hover:text-foreground'
+                          }`}
+                        >
+                          <FileText size={12} />
+                          <span>📝 Article</span>
+                        </button>
                       </div>
-                    </div>
 
-                    {/* Full Article Content */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">
-                        Article Content
-                      </label>
-                      <textarea
-                        rows={10}
-                        value={editingPost.content || ''}
-                        onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                        placeholder="Write your full note here. Use paragraphs, linebreaks, and ideas..."
-                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
-                      />
-                    </div>
-
-                    {editingPost.category === 'Observations' && (
-                      <div className="space-y-3 p-3 bg-neutral-50 dark:bg-neutral-900 border border-token rounded-xs">
-                        <div className="text-xs font-bold text-accent uppercase tracking-wider">
-                          Structured Observation Fields (Retro TV)
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
-                            Observation (What I noticed)
-                          </label>
-                          <textarea
-                            rows={3}
-                            value={editingPost.observation || ''}
-                            onChange={(e) => setEditingPost({ ...editingPost, observation: e.target.value })}
-                            placeholder="In the metro today I kept noticing..."
-                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
-                            Question (The "Why" question)
-                          </label>
-                          <textarea
-                            rows={2}
-                            value={editingPost.question || ''}
-                            onChange={(e) => setEditingPost({ ...editingPost, question: e.target.value })}
-                            placeholder="Why do people stand up so early...?"
-                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
-                            Answer (Reflection / Attempt at an answer)
-                          </label>
-                          <textarea
-                            rows={4}
-                            value={editingPost.answer || ''}
-                            onChange={(e) => setEditingPost({ ...editingPost, answer: e.target.value })}
-                            placeholder="Mostly it is uncertainty..."
-                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[11px] font-bold uppercase tracking-wider mb-1">
-                            Signature (e.g. — Yuji)
-                          </label>
-                          <input
-                            type="text"
-                            value={editingPost.signature || ''}
-                            onChange={(e) => setEditingPost({ ...editingPost, signature: e.target.value })}
-                            placeholder="— Yuji"
-                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex justify-end gap-2 pt-2 border-t border-token">
                       <button
                         type="button"
                         onClick={() => {
@@ -2063,15 +2126,449 @@ export function Admin() {
                           setSelectedPostImageFile(null)
                           setPostImagePreviewUrl(null)
                         }}
-                        className="px-4 py-2 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100"
+                        className="text-xs text-muted hover:text-foreground font-mono p-1"
+                        title="Close modal"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSavePost} className="space-y-4">
+                    {/* OBSERVATION TAPE FORMAT */}
+                    {isObservation(editingPost) ? (
+                      <>
+                        <div className="p-3 bg-[#AFD080]/20 border border-black/40 text-xs text-neutral-900 flex items-start gap-2.5">
+                          <Tv size={17} className="text-emerald-800 shrink-0 mt-0.5" />
+                          <div className="leading-relaxed">
+                            <strong>Interactive Retro TV Tape:</strong> This entry is placed in the cassette rack on <code>/blog?tab=observations</code> and plays with real typewriter sound and animations inside the 3D Retro TV screen.
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">
+                              Tape Number (e.g. 008)
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editingPost.number || ''}
+                              onChange={(e) => setEditingPost({ ...editingPost, number: e.target.value })}
+                              placeholder="008"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                            />
+                            <p className="text-[10px] text-muted mt-1 font-mono">
+                              Label: No.{String(editingPost.number || '001').padStart(3, '0')}
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                              Date (Printed on Tape)
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editingPost.date}
+                              onChange={(e) => setEditingPost({ ...editingPost, date: e.target.value })}
+                              placeholder="29 Sept 2026"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                              Category
+                            </label>
+                            <select
+                              value={editingPost.category}
+                              onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                            >
+                              <option value="Observations">Observations</option>
+                              <option value="Thoughts">Thoughts</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                              Observation Title (Printed on Cassette)
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editingPost.title}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                const autoSlug = isNewPost
+                                  ? val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                                  : editingPost.slug
+                                setEditingPost({
+                                  ...editingPost,
+                                  title: val,
+                                  slug: autoSlug,
+                                })
+                              }}
+                              placeholder="e.g. Standing up for no reason"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">
+                              URL Slug
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editingPost.slug}
+                              onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
+                              placeholder="e.g. standing-up-for-no-reason"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                            />
+                          </div>
+                        </div>
+
+                        {/* The 3 Core Structured Story Sections */}
+                        <div className="space-y-3 p-4 bg-neutral-50 dark:bg-neutral-900 border border-token rounded-xs">
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 font-mono">
+                                1. [ observation ] What did you notice?
+                              </label>
+                              <span className="text-[10px] text-muted">First section typed on TV</span>
+                            </div>
+                            <textarea
+                              rows={3}
+                              required
+                              value={editingPost.observation || ''}
+                              onChange={(e) => setEditingPost({ ...editingPost, observation: e.target.value })}
+                              placeholder="In the metro today I kept noticing people standing up way before their station, holding the pole and staring at the door for a whole minute..."
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 font-mono">
+                                2. [ question ] The &ldquo;Why&rdquo; question
+                              </label>
+                              <span className="text-[10px] text-muted">Highlighted question prompt</span>
+                            </div>
+                            <textarea
+                              rows={2}
+                              required
+                              value={editingPost.question || ''}
+                              onChange={(e) => setEditingPost({ ...editingPost, question: e.target.value })}
+                              placeholder="Why do people stand up so early, before the metro even reaches their station?"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                            />
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-400 font-mono">
+                                3. [ answer ] Reflection & Insight
+                              </label>
+                              <span className="text-[10px] text-muted">Your thought, insight or principle</span>
+                            </div>
+                            <textarea
+                              rows={5}
+                              required
+                              value={editingPost.answer || ''}
+                              onChange={(e) => setEditingPost({ ...editingPost, answer: e.target.value })}
+                              placeholder="Mostly it is uncertainty. When you are not sure when your stop is coming, your brain adds a safety buffer..."
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                            <div>
+                              <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">
+                                Signature
+                              </label>
+                              <input
+                                type="text"
+                                value={editingPost.signature || ''}
+                                onChange={(e) => setEditingPost({ ...editingPost, signature: e.target.value })}
+                                placeholder="— Adi"
+                                className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                              />
+                            </div>
+
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="block text-xs font-bold uppercase tracking-wider">
+                                  Card Teaser / Excerpt
+                                </label>
+                                {editingPost.observation && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const firstSentence = editingPost.observation?.split(/(?<=[.?!])\s+/)[0] || editingPost.observation || ''
+                                      setEditingPost({ ...editingPost, excerpt: firstSentence })
+                                    }}
+                                    className="text-[10px] text-accent hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                                  >
+                                    <Copy size={10} />
+                                    <span>Copy 1st sentence</span>
+                                  </button>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={editingPost.excerpt}
+                                onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                                placeholder="Short overview..."
+                                className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Live Cassette & TV Preview */}
+                        <div className="border border-token rounded-xs overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => setShowObservationPreview((prev) => !prev)}
+                            className="w-full px-3 py-2 bg-neutral-100 dark:bg-neutral-800 text-xs font-bold flex items-center justify-between border-b border-token cursor-pointer"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <Sparkles size={13} className="text-amber-500" />
+                              <span>Live Cassette & TV Screen Preview</span>
+                            </div>
+                            <span className="text-[11px] text-muted">{showObservationPreview ? 'Hide ▲' : 'Show ▼'}</span>
+                          </button>
+
+                          {showObservationPreview && (
+                            <div className="p-4 bg-[#A9CB8B]/20 space-y-4">
+                              {/* Cassette Mockup */}
+                              <div className="max-w-[340px] mx-auto bg-[#A9CB8B] p-3 rounded-none border border-black shadow-[2px_2px_0px_#000000]">
+                                <RoughenFilterDefs />
+                                <CassetteCard
+                                  post={{
+                                    ...editingPost,
+                                    title: editingPost.title || 'Your Observation Title',
+                                    number: editingPost.number || '008',
+                                    date: editingPost.date || '29 SEP 2026',
+                                  }}
+                                  allObservations={postsData.filter(isObservation)}
+                                  isInteractive={false}
+                                />
+                              </div>
+
+                              {/* TV Screen Preview */}
+                              <div className="bg-[#121811] text-[#A7FF83] p-4 rounded-xs font-mono text-xs border-2 border-black shadow-inner space-y-2.5">
+                                <div className="text-[10px] text-[#A7FF83]/60 uppercase tracking-widest border-b border-[#A7FF83]/20 pb-1 flex justify-between">
+                                  <span>TV PLAYBACK SIMULATION</span>
+                                  <span>TAPE {editingPost.number || '001'}</span>
+                                </div>
+                                {editingPost.observation && (
+                                  <div>
+                                    <span className="text-white font-bold block text-[11px]">[ observation ]</span>
+                                    <p className="mt-0.5 text-neutral-200 leading-relaxed">{editingPost.observation}</p>
+                                  </div>
+                                )}
+                                {editingPost.question && (
+                                  <div>
+                                    <span className="text-amber-300 font-bold block text-[11px]">[ question ]</span>
+                                    <p className="mt-0.5 text-amber-100 leading-relaxed font-semibold">{editingPost.question}</p>
+                                  </div>
+                                )}
+                                {editingPost.answer && (
+                                  <div>
+                                    <span className="text-emerald-300 font-bold block text-[11px]">[ answer ]</span>
+                                    <p className="mt-0.5 text-neutral-200 leading-relaxed">{editingPost.answer}</p>
+                                  </div>
+                                )}
+                                <div className="text-right text-[#A7FF83] font-bold pt-1">
+                                  {editingPost.signature || '— Adi'}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      /* BLOG ARTICLE FORMAT */
+                      <>
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">Title</label>
+                          <input
+                            type="text"
+                            required
+                            value={editingPost.title}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              const autoSlug = isNewPost
+                                ? val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+                                : editingPost.slug
+                              setEditingPost({
+                                ...editingPost,
+                                title: val,
+                                slug: autoSlug,
+                              })
+                            }}
+                            placeholder="e.g. Why I Built LoreGraph"
+                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-semibold"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">URL Slug</label>
+                            <input
+                              type="text"
+                              required
+                              value={editingPost.slug}
+                              onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
+                              placeholder="e.g. why-i-built-loregraph"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Category</label>
+                            <select
+                              value={editingPost.category}
+                              onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                            >
+                              <option value="Thoughts">Thoughts</option>
+                              <option value="Projects">Projects</option>
+                              <option value="Programming">Programming</option>
+                              <option value="Books">Books</option>
+                              <option value="Writing">Writing</option>
+                              <option value="Learning">Learning</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">Date</label>
+                            <input
+                              type="text"
+                              required
+                              value={editingPost.date}
+                              onChange={(e) => setEditingPost({ ...editingPost, date: e.target.value })}
+                              placeholder="e.g. 28 Sep 2026"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Reading Time (optional)</label>
+                            <input
+                              type="text"
+                              value={editingPost.readTime || ''}
+                              onChange={(e) => setEditingPost({ ...editingPost, readTime: e.target.value })}
+                              placeholder="e.g. 4 min read"
+                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">Card Excerpt</label>
+                          <textarea
+                            rows={2}
+                            required
+                            value={editingPost.excerpt}
+                            onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
+                            placeholder="Brief 1-2 sentence overview shown on the blog card..."
+                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent leading-relaxed"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">Thumbnail / Illustration</label>
+                          <div className="border border-dashed border-token p-4 rounded-xs bg-[rgba(23,23,23,0.015)] text-center">
+                            {postImagePreviewUrl ? (
+                              <div className="mb-3">
+                                <img
+                                  src={postImagePreviewUrl}
+                                  alt="Thumbnail preview"
+                                  className="max-h-32 mx-auto object-contain rounded-xs border border-token shadow-xs"
+                                />
+                                <p className="text-[10px] text-muted mt-1 font-mono">
+                                  {editingPost.image || selectedPostImageFile?.name}
+                                </p>
+                              </div>
+                            ) : (
+                              <Upload size={24} className="mx-auto text-muted mb-2" />
+                            )}
+
+                            <input
+                              type="file"
+                              accept="image/*"
+                              id="post-image-upload"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  setSelectedPostImageFile(file)
+                                  setPostImagePreviewUrl(URL.createObjectURL(file))
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="post-image-upload"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100 cursor-pointer"
+                            >
+                              <Upload size={12} />
+                              <span>{postImagePreviewUrl ? 'Change Image' : 'Upload Illustration'}</span>
+                            </label>
+                            {postImagePreviewUrl && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedPostImageFile(null)
+                                  setPostImagePreviewUrl(null)
+                                  setEditingPost({ ...editingPost, image: undefined })
+                                }}
+                                className="block mx-auto mt-2 text-[10px] text-red-600 hover:underline cursor-pointer"
+                              >
+                                Remove image (use default cat doodle)
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                            Article Content
+                          </label>
+                          <textarea
+                            rows={10}
+                            value={editingPost.content || ''}
+                            onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
+                            placeholder="Write your full note here. Use paragraphs, linebreaks, and ideas..."
+                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex justify-end gap-2 pt-3 border-t border-token">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingPost(null)
+                          setIsNewPost(false)
+                          setSelectedPostImageFile(null)
+                          setPostImagePreviewUrl(null)
+                        }}
+                        className="px-4 py-2 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100 cursor-pointer"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90"
+                        className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90 cursor-pointer"
                       >
-                        Save Post
+                        {isObservation(editingPost) ? 'Save Observation Tape' : 'Save Article'}
                       </button>
                     </div>
                   </form>
