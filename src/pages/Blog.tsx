@@ -196,19 +196,19 @@ export function Blog() {
           <div className="flex flex-col md:flex-row items-start md:items-center gap-6 sm:gap-8">
             {/* Avatar / Illustration Landscape Frame (matching Image 2) */}
             <div
-              className="w-full md:w-[280px] lg:w-[320px] h-44 sm:h-48 md:h-44 rounded-xs bg-[#e4edd4] flex items-center justify-center shrink-0 overflow-hidden"
+              className="w-full md:w-[280px] lg:w-[320px] h-44 sm:h-48 md:h-44 rounded-xs bg-[#efe9d9] flex items-center justify-center shrink-0 overflow-hidden"
               style={{
                 border: `2px solid ${BORDER_DARK}`,
                 boxShadow: `2px 2px 0px ${BORDER_DARK}`,
               }}
             >
               <img
-                src="/images/blog/cat-doodle.jpg"
+                src="/images/blog/adhiraj-avatar.jpg"
                 alt="Adhiraj"
-                className="w-full h-full object-contain p-2 select-none"
+                className="w-full h-full object-cover select-none"
                 onError={(e) => {
                   const target = e.currentTarget
-                  target.style.display = 'none'
+                  target.src = '/images/blog/cat-doodle.jpg'
                 }}
               />
             </div>
