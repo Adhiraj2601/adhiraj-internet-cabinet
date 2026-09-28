@@ -7,15 +7,15 @@ export interface TypewriterSection {
 }
 
 interface UseTypewriterOptions {
-  speed?: number // ms per character, default ~14ms
-  pauseBetween?: number // ms pause after finishing a section, default ~250ms
+  speed?: number // ms per character, default ~9ms
+  pauseBetween?: number // ms pause after finishing a section, default ~150ms
   enabled?: boolean
   onDone?: () => void
 }
 
 export function useTypewriter(
   sections: TypewriterSection[],
-  { speed = 14, pauseBetween = 250, enabled = true, onDone }: UseTypewriterOptions = {}
+  { speed = 9, pauseBetween = 150, enabled = true, onDone }: UseTypewriterOptions = {}
 ) {
   // Map of section id -> number of visible characters
   const [typedChars, setTypedChars] = useState<Record<string, number>>({})

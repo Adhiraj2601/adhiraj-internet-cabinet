@@ -6,6 +6,7 @@ import { useTypewriter, type TypewriterSection } from '../../hooks/useTypewriter
 
 export interface TvScreenHandle {
   skipTyping: () => void
+  isDone: boolean
 }
 
 interface TvScreenProps {
@@ -13,6 +14,7 @@ interface TvScreenProps {
   allObservations: Post[]
   isPoweredOn: boolean
   isReadMode?: boolean
+  onFinishTyping?: () => void
 }
 
 interface CommentItem {
@@ -23,7 +25,7 @@ interface CommentItem {
 }
 
 export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScreen(
-  { post, allObservations, isPoweredOn, isReadMode = false },
+  { post, allObservations, isPoweredOn, isReadMode = false, onFinishTyping },
   ref
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -76,24 +78,29 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
   }, [post])
 
   const { typedChars, activeSectionId, isDone, skip } = useTypewriter(sections, {
-    speed: 14,
-    pauseBetween: 240,
+    speed: 9,
+    pauseBetween: 150,
     enabled: isPoweredOn,
+    onDone: onFinishTyping,
   })
 
   useImperativeHandle(ref, () => ({
     skipTyping: skip,
+    isDone,
   }))
 
-  // Auto-scroll to bottom as text is typed unless user intervened
+  // Auto-scroll only when content overflows the visible screen height
   useEffect(() => {
     if (!isPoweredOn || isDone || userScrolledRef.current) return
     const el = containerRef.current
     if (!el) return
-    el.scrollTo({
-      top: el.scrollHeight,
-      behavior: 'smooth',
-    })
+
+    if (el.scrollHeight > el.clientHeight + 10) {
+      el.scrollTo({
+        top: el.scrollHeight - el.clientHeight,
+        behavior: 'smooth',
+      })
+    }
   }, [typedChars, isPoweredOn, isDone])
 
   // Detect user manual scroll to pause auto-following
@@ -129,14 +136,16 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
 
   return (
     <div
-      className={`relative w-full h-full overflow-hidden rounded-[8px] font-mono select-text transition-all duration-300 ${
-        isReadMode ? 'p-6 sm:p-10' : 'p-4 sm:p-6'
+      className={`relative w-full h-full flex flex-col overflow-hidden font-mono select-text rounded-none transition-all duration-300 ${
+        isReadMode ? 'p-6 sm:p-10' : 'p-3.5 sm:p-5'
       }`}
       style={{
         backgroundColor: '#1F3A0D',
         color: '#B5D89A',
         transform: 'rotate(-1.2deg) skewX(-1deg)',
         transformOrigin: 'center center',
+        border: '2px solid #000000',
+        boxShadow: isReadMode ? '6px 6px 0px #000000' : '2px 2px 0px #000000',
       }}
       onClick={() => {
         if (!isDone) {
@@ -148,45 +157,50 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
       <span className="sr-only">{fullAccessibleText}</span>
 
       {/* CRT Vignette shadow */}
-      <div className="crt-vignette absolute inset-0 z-20 pointer-events-none rounded-[8px]" />
+      <div className="crt-vignette absolute inset-0 z-20 pointer-events-none rounded-none" />
 
       {/* CRT Scanlines Overlay */}
-      <div className="crt-screen-overlay absolute inset-0 z-20 pointer-events-none rounded-[8px]" />
+      <div className="crt-screen-overlay absolute inset-0 z-20 pointer-events-none rounded-none" />
 
       {/* CRT Power-on Flash Effect */}
       {isPoweredOn && (
         <div
-          className="crt-flash-effect absolute inset-0 z-30 pointer-events-none"
+          className="crt-flash-effect absolute inset-0 z-30 pointer-events-none rounded-none"
           style={{ backgroundColor: '#C8D4B5' }}
         />
       )}
 
-      {/* Main Terminal Content Window */}
+      {/* PINNED FIXED HEADER: Play line & Title never scroll away! */}
+      {isPoweredOn && (
+        <div className="shrink-0 pb-2.5 mb-2 border-b border-[#2D5413]/80 select-none z-10 space-y-1">
+          {/* Header: ▶ PLAY · TAPE ### · DD MON YYYY */}
+          <div className="text-[11px] sm:text-[13px] tracking-wider text-[#6F9A55] font-bold flex items-center gap-2">
+            <span className="text-[#A4DB7B]">▶ PLAY</span>
+            <span>·</span>
+            <span>TAPE {tapeNumber.replace('No.', '')}</span>
+            <span>·</span>
+            <span>{tapeDate}</span>
+          </div>
+
+          {/* Title in UPPERCASE */}
+          <h2 className="text-[18px] sm:text-[22px] md:text-[25px] font-bold uppercase tracking-tight text-[#D5F5BA] leading-tight">
+            {post.title}
+          </h2>
+        </div>
+      )}
+
+      {/* SCROLLABLE TERMINAL CONTENT WINDOW */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
         aria-hidden="true"
-        className="w-full h-full overflow-y-auto no-scrollbar relative z-10 space-y-4 crt-text-glow pr-2"
+        className="flex-1 overflow-y-auto no-scrollbar relative z-10 space-y-4 crt-text-glow pr-2"
         style={{
           fontFamily: "'Space Mono', monospace",
         }}
       >
         {isPoweredOn && (
           <>
-            {/* Header: ▶ PLAY · TAPE ### · DD MON YYYY */}
-            <div className="text-[12px] sm:text-[13px] tracking-wider text-[#6F9A55] font-bold flex items-center gap-2 select-none border-b border-[#2D5413] pb-2">
-              <span className="text-[#A4DB7B]">▶ PLAY</span>
-              <span>·</span>
-              <span>TAPE {tapeNumber.replace('No.', '')}</span>
-              <span>·</span>
-              <span>{tapeDate}</span>
-            </div>
-
-            {/* Title in UPPERCASE */}
-            <h2 className="text-[20px] sm:text-[24px] md:text-[26px] font-bold uppercase tracking-tight text-[#D5F5BA] leading-tight pt-1">
-              {post.title}
-            </h2>
-
             {/* Sections Typed in Order */}
             <div className="space-y-4 pt-1">
               {sections.map((sec) => {
@@ -250,14 +264,14 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
                       value={commentName}
                       onChange={(e) => setCommentName(e.target.value)}
                       placeholder="Your name"
-                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-xs focus:outline-none focus:border-[#B5D89A]"
+                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-none focus:outline-none focus:border-[#B5D89A]"
                     />
                     <textarea
                       rows={2}
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder="Say something..."
-                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-xs focus:outline-none focus:border-[#B5D89A] leading-relaxed"
+                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-none focus:outline-none focus:border-[#B5D89A] leading-relaxed"
                     />
                     <button
                       type="submit"
@@ -281,7 +295,7 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
                       </p>
                     ) : (
                       comments.map((c) => (
-                        <div key={c.id} className="p-2.5 bg-[#172D0A] border border-[#2D5413] rounded-xs space-y-1">
+                        <div key={c.id} className="p-2.5 bg-[#172D0A] border border-[#2D5413] rounded-none space-y-1">
                           <div className="flex items-center justify-between text-[11px] text-[#6F9A55]">
                             <span className="font-bold text-[#B5D89A]">{c.name}</span>
                             <span>{c.date}</span>

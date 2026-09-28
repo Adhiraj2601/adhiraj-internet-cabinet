@@ -40,7 +40,7 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
     }, 350)
   }, [isClosing, onClose])
 
-  // Choreographed Opening Timeline
+  // Choreographed Opening Timeline (Pacing ~1.6s total)
   useEffect(() => {
     if (prefersReducedMotion) return
 
@@ -62,7 +62,7 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
 
     const t5 = setTimeout(() => {
       setPhase('power-on')
-    }, 1750)
+    }, 1700)
 
     return () => {
       clearTimeout(t1)
@@ -91,6 +91,19 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [handleClose])
+
+  // Toggle Read mode:
+  // If clicked while typing is still running, complete typewriter immediately, then expand!
+  const handleToggleRead = () => {
+    if (!isReadMode) {
+      if (screenRef.current && !screenRef.current.isDone) {
+        screenRef.current.skipTyping()
+      }
+      setIsReadMode(true)
+    } else {
+      setIsReadMode(false)
+    }
+  }
 
   const doorFlapOpen = phase === 'flap-open'
   const isTapeInSlot = phase === 'tape-inserted' || phase === 'power-on'
@@ -137,7 +150,7 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
                 exit={{ opacity: 0, x: 10 }}
                 transition={{ duration: 0.25 }}
                 type="button"
-                onClick={() => setIsReadMode((prev) => !prev)}
+                onClick={handleToggleRead}
                 aria-label={isReadMode ? 'Return to TV view' : 'Read mode'}
                 className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-black font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all duration-150 hover:bg-[#E3B859] hover:translate-x-0.5 hover:translate-y-0.5"
                 style={{
@@ -176,10 +189,15 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
           </button>
         </div>
 
-        {/* Central TV Scene */}
+        {/* Central TV Scene Wrapper with Locked Controlling Dimension */}
         <div
-          className="relative w-full max-w-[920px] max-h-[88vh] flex items-center justify-center"
-          style={{ zIndex: 10 }}
+          className="relative flex items-center justify-center select-none"
+          style={{
+            height: 'min(76vh, 590px)',
+            aspectRatio: '760 / 640',
+            maxWidth: '92vw',
+            zIndex: 10,
+          }}
         >
           <TvScene
             post={post}
@@ -188,16 +206,28 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
             isTapeInserted={isTapeInSlot}
             isTapePlaying={isTapePlaying}
           >
-            {/* When not in Read mode, screen sits inside TV screen frame */}
-            {!isReadMode && (
+            {/* Single Source of Truth: ONE TvScreen instance animated with layout */}
+            <motion.div
+              layout
+              transition={{
+                type: 'spring',
+                stiffness: 160,
+                damping: 24,
+              }}
+              className={
+                isReadMode
+                  ? 'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[94vw] sm:w-[62vw] h-[92dvh] sm:h-[90vh] max-w-[980px] z-50'
+                  : 'w-full h-full'
+              }
+            >
               <TvScreen
                 ref={screenRef}
                 post={post}
                 allObservations={allObservations}
                 isPoweredOn={isPoweredOn}
-                isReadMode={false}
+                isReadMode={isReadMode}
               />
-            )}
+            </motion.div>
           </TvScene>
         </div>
 
@@ -208,19 +238,19 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
             className="fixed pointer-events-none"
             style={{ zIndex: 40 }}
             initial={{
-              left: '10vw',
-              bottom: '8vh',
-              width: 'min(420px, 40vw)',
+              left: '8vw',
+              bottom: '6vh',
+              width: 'min(360px, 34vw)',
               rotate: -12,
-              scale: 0.85,
+              scale: 0.82,
               opacity: 1,
             }}
             animate={
               phase === 'tape-flying'
                 ? {
-                    left: 'calc(50% - min(180px, 18vw))',
-                    bottom: 'calc(50% - min(300px, 30vh))',
-                    width: 'min(360px, 36vw)',
+                    left: 'calc(50% - min(180px, 17vw))',
+                    bottom: 'calc(50% - min(280px, 28vh))',
+                    width: 'min(330px, 32vw)',
                     rotate: 0,
                     scale: 0.52,
                     opacity: 1,
@@ -228,9 +258,9 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
                 : {
                     left: '8vw',
                     bottom: '6vh',
-                    width: 'min(380px, 36vw)',
+                    width: 'min(360px, 34vw)',
                     rotate: -12,
-                    scale: 0.8,
+                    scale: 0.82,
                     opacity: 1,
                   }
             }
@@ -248,33 +278,6 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
             />
           </motion.div>
         )}
-
-        {/* Read Mode Expanded Screen (60vw x 92vh, mobile 96vw x 92dvh) */}
-        <AnimatePresence>
-          {isReadMode && (
-            <motion.div
-              layoutId="crt-expanded-screen"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ type: 'spring', stiffness: 140, damping: 20 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[96vw] sm:w-[60vw] h-[92dvh] sm:h-[92vh] max-w-[1000px] shadow-[6px_6px_0px_#000000] border-2 border-black"
-              style={{
-                zIndex: 60,
-                backgroundColor: '#1F3A0D',
-                borderRadius: '12px',
-              }}
-            >
-              <TvScreen
-                ref={screenRef}
-                post={post}
-                allObservations={allObservations}
-                isPoweredOn={true}
-                isReadMode={true}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
     </div>,
     document.body
