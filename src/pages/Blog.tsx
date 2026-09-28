@@ -298,12 +298,27 @@ export function Blog() {
 
   return (
     <div
-      className="min-h-screen pt-16 pb-16 px-4 md:px-[2.5vw]"
+      className="min-h-screen pt-16 pb-16 px-4 md:px-[2.5vw] relative overflow-hidden"
       style={{
         backgroundColor: BG_PAGE_GREEN, // Lighter pastel green
       }}
     >
-      {/* Full-bleed Centered Main Content Container with Warm Off-White Background & Subtle Paper Texture */}
+      {/* Global Authentic Crumpled Paper Texture Overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none select-none z-20 overflow-hidden"
+        aria-hidden="true"
+      >
+        <img
+          src="/images/crumpled-paper-texture.png"
+          alt=""
+          className="w-full h-full object-cover object-center pointer-events-none select-none"
+          style={{
+            opacity: 0.14,
+          }}
+        />
+      </div>
+
+      {/* Full-bleed Centered Main Content Container with Warm Off-White Background */}
       <div
         className="w-full max-w-none mx-auto rounded-none relative overflow-visible mt-[30px] sm:mt-[50px]"
         style={{
@@ -312,14 +327,6 @@ export function Blog() {
           boxShadow: '4px 4px 0px #000000',
         }}
       >
-        {/* Subtle, Brightened Crumpled Paper Texture Overlay */}
-        <div
-          className="absolute inset-0 pointer-events-none bg-[url('/images/crumpled-paper.jpg')] bg-cover bg-center z-0"
-          style={{
-            filter: 'brightness(1.25) contrast(0.7)',
-            opacity: 0.55,
-          }}
-        />
 
         {/* Content Container (z-10 relative with 35px padding) */}
         <div className="relative z-10 p-4 sm:p-6 md:p-[35px]">
