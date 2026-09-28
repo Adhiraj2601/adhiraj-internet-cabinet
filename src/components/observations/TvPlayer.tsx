@@ -142,10 +142,11 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
                 type="button"
                 onClick={handleToggleRead}
                 aria-label={isReadMode ? 'Return to TV view' : 'Read mode'}
-                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-black font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all duration-150 hover:bg-[#E3B859] hover:translate-x-0.5 hover:translate-y-0.5"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-black font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all duration-150 hover:bg-[#E3B859] hover:translate-x-0.5 hover:translate-y-0.5 focus:outline-none focus-visible:outline-none"
                 style={{
                   border: '1.5px solid #000000',
                   boxShadow: '2px 2px 0px #000000',
+                  outline: 'none',
                 }}
               >
                 {isReadMode ? (
@@ -168,10 +169,11 @@ export function TvPlayer({ post, allObservations, onClose, isDirectLink = false 
             type="button"
             onClick={handleClose}
             aria-label="Eject tape and close"
-            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-black font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all duration-150 hover:bg-[#E3B859] hover:translate-x-0.5 hover:translate-y-0.5"
+            className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white text-black font-mono font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 cursor-pointer transition-all duration-150 hover:bg-[#E3B859] hover:translate-x-0.5 hover:translate-y-0.5 focus:outline-none focus-visible:outline-none"
             style={{
               border: '1.5px solid #000000',
               boxShadow: '2px 2px 0px #000000',
+              outline: 'none',
             }}
           >
             <ArrowUpFromLine className="w-4 h-4" />

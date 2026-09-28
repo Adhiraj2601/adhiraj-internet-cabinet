@@ -136,7 +136,7 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
 
   return (
     <div
-      className="relative w-full h-full font-mono select-text transition-all duration-300"
+      className="tv-screen-container relative w-full h-full font-mono select-text transition-all duration-300"
       onClick={() => {
         if (!isDone) {
           skip()
@@ -276,23 +276,26 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
                       value={commentName}
                       onChange={(e) => setCommentName(e.target.value)}
                       placeholder="Your name"
-                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-none focus:outline-none focus:border-[#B5D89A]"
+                      className="comment-input w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-none focus:outline-none focus-visible:outline-none focus:border-[#B5D89A]"
+                      style={{ outline: 'none', boxShadow: 'none' }}
                     />
                     <textarea
                       rows={2}
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
                       placeholder="Say something..."
-                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-none focus:outline-none focus:border-[#B5D89A] leading-relaxed"
+                      className="comment-input w-full px-3 py-1.5 text-xs sm:text-sm bg-transparent border border-[#3E6D1F] text-[#B5D89A] placeholder-[#5A8738] rounded-none focus:outline-none focus-visible:outline-none focus:border-[#B5D89A] leading-relaxed"
+                      style={{ outline: 'none', boxShadow: 'none' }}
                     />
                     <button
                       type="submit"
-                      className="px-4 py-1.5 text-xs sm:text-sm font-bold uppercase rounded-none transition-transform hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer"
+                      className="px-4 py-1.5 text-xs sm:text-sm font-bold uppercase rounded-none transition-transform hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer focus:outline-none focus-visible:outline-none"
                       style={{
                         backgroundColor: '#A9CB8B',
                         color: '#10200A',
                         border: '1.5px solid #000000',
                         boxShadow: '2px 2px 0px #000000',
+                        outline: 'none',
                       }}
                     >
                       Post

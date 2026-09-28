@@ -124,11 +124,22 @@
   }
 }
 
-/* Focus styles */
+/* Focus & tap styles: remove blue highlights on click/focus */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 2px;
+  outline: none;
+}
+
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+button:focus,
+button:focus-visible {
+  outline: none;
 }
 
 /* Custom scrollbar */

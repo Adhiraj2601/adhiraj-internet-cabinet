@@ -321,3 +321,37 @@ html:has(.tv-player-modal) {
     animation-duration: 100ms !important;
   }
 }
+
+/* Zero out blue highlights and browser focus rings inside TV and observations */
+.tv-screen-container,
+.tv-screen-container *,
+.comment-input {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.tv-screen-container input,
+.tv-screen-container textarea,
+.tv-screen-container button,
+.comment-input {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.tv-screen-container input:focus,
+.tv-screen-container input:focus-visible,
+.tv-screen-container textarea:focus,
+.tv-screen-container textarea:focus-visible,
+.comment-input:focus,
+.comment-input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Retro terminal text selection instead of bright blue */
+.tv-screen-container ::selection,
+.tv-screen-container input::selection,
+.tv-screen-container textarea::selection {
+  background-color: #3E6D1F;
+  color: #D5F5BA;
+}
+
