@@ -1,134 +1,178 @@
 export function DoodleBackdrop() {
   return (
-    <div className="absolute inset-0 pointer-events-none overflow-hidden select-none" style={{ backgroundColor: '#ECE8D3' }}>
-      {/* Behind the TV: Large soft pale-green circular glow (~55-60% of viewport height) */}
+    <div
+      className="absolute inset-0 pointer-events-none overflow-hidden select-none"
+      style={{ backgroundColor: '#EDE8D4' }}
+    >
+      {/* Behind the TV: Large soft pale-green circular background */}
       <div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
         style={{
-          width: 'min(62vh, 650px)',
-          height: 'min(62vh, 650px)',
-          backgroundColor: '#C9E0AE',
-          filter: 'blur(30px)',
-          opacity: 0.85,
+          width: 'min(72vh, 670px)',
+          height: 'min(72vh, 670px)',
+          backgroundColor: '#CCE4AB',
+          zIndex: 1,
         }}
       />
 
-      {/* SVG Container for scattered hand-drawn doodles */}
+      {/* Bottom-Left Corner Hatching Patch */}
       <svg
-        className="absolute inset-0 w-full h-full"
-        xmlns="http://www.w3.org/2000/svg"
+        className="absolute left-0 bottom-0 pointer-events-none"
+        style={{ width: 'min(24vw, 200px)', height: 'min(22vw, 180px)', zIndex: 2 }}
+        viewBox="0 0 180 160"
         fill="none"
-        stroke="#2F5A1A"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ opacity: 0.68 }}
       >
-        {/* ================= TOP-LEFT ================= */}
-        {/* 4-Point Star */}
-        <g className="doodle-float-1" transform="translate(60, 50)">
-          <path d="M 25 0 Q 25 25 0 25 Q 25 25 25 50 Q 25 25 50 25 Q 25 25 25 0 Z" fill="#2F5A1A" fillOpacity="0.12" />
-        </g>
-
-        {/* Wifi Arcs (3 curved lines) */}
-        <g className="doodle-float-2" transform="translate(140, 65)">
-          <path d="M 0 35 A 40 40 0 0 1 50 35" />
-          <path d="M 10 42 A 26 26 0 0 1 40 42" />
-          <circle cx="25" cy="48" r="2.5" fill="#2F5A1A" />
-        </g>
-
-        {/* ================= LEFT & LEFT-MIDDLE ================= */}
-        {/* Music Note */}
-        <g className="doodle-float-2" transform="translate(70, 260)">
-          <ellipse cx="14" cy="38" rx="8" ry="6" fill="#2F5A1A" transform="rotate(-20 14 38)" />
-          <path d="M 21 36 L 21 12 C 21 12, 34 8, 38 18" />
-        </g>
-
-        {/* Small Asterisk / Sparkle */}
-        <g className="doodle-float-1" transform="translate(150, 380)">
-          <line x1="16" y1="4" x2="16" y2="28" />
-          <line x1="4" y1="16" x2="28" y2="16" />
-          <line x1="7" y1="7" x2="25" y2="25" />
-          <line x1="7" y1="25" x2="25" y2="7" />
-        </g>
-
-        {/* ================= BOTTOM-LEFT ================= */}
-        {/* Diagonal Hatching Patch */}
-        <g transform="translate(30, calc(100% - 150px))">
-          <line x1="0" y1="40" x2="40" y2="0" strokeWidth="2" strokeOpacity="0.7" />
-          <line x1="0" y1="60" x2="60" y2="0" strokeWidth="2" strokeOpacity="0.7" />
-          <line x1="10" y1="80" x2="80" y2="10" strokeWidth="2" strokeOpacity="0.7" />
-          <line x1="30" y1="90" x2="90" y2="30" strokeWidth="2" strokeOpacity="0.7" />
-          <line x1="50" y1="100" x2="100" y2="50" strokeWidth="2" strokeOpacity="0.7" />
-        </g>
-
-        {/* Tiny Cassette Doodle */}
-        <g className="doodle-float-2" transform="translate(130, calc(100% - 180px))">
-          <rect x="0" y="0" width="56" height="36" rx="4" fill="none" strokeWidth="2.2" />
-          <rect x="12" y="10" width="32" height="16" rx="2" fill="none" strokeWidth="1.8" />
-          <circle cx="20" cy="18" r="3.5" fill="#2F5A1A" />
-          <circle cx="36" cy="18" r="3.5" fill="#2F5A1A" />
-        </g>
-
-        {/* Squiggle and dots near bottom */}
-        <g transform="translate(240, calc(100% - 90px))">
-          <path d="M 0 15 Q 20 0, 40 15 T 80 15 T 120 15" strokeWidth="2" />
-          <circle cx="140" cy="15" r="2.5" fill="#2F5A1A" />
-          <circle cx="155" cy="15" r="2.5" fill="#2F5A1A" />
-        </g>
-
-        {/* ================= TOP-RIGHT ================= */}
-        {/* Top-Right Hatch Patch */}
-        <g transform="translate(calc(100% - 120px), 25)">
-          <line x1="0" y1="30" x2="30" y2="0" strokeWidth="2" strokeOpacity="0.7" />
-          <line x1="15" y1="45" x2="45" y2="15" strokeWidth="2" strokeOpacity="0.7" />
-          <line x1="30" y1="60" x2="60" y2="30" strokeWidth="2" strokeOpacity="0.7" />
-          <line x1="45" y1="75" x2="75" y2="45" strokeWidth="2" strokeOpacity="0.7" />
-        </g>
-
-        {/* Wifi Arcs */}
-        <g className="doodle-float-1" transform="translate(calc(100% - 210px), 65)">
-          <path d="M 0 35 A 40 40 0 0 1 50 35" />
-          <path d="M 10 42 A 26 26 0 0 1 40 42" />
-          <circle cx="25" cy="48" r="2.5" fill="#2F5A1A" />
-        </g>
-
-        {/* Spiral */}
-        <g className="doodle-float-2" transform="translate(calc(100% - 140px), 170)">
-          <path
-            d="M 25 25 m -20 0 a 20 20 0 1 0 40 0 a 16 16 0 1 0 -32 0 a 12 12 0 1 0 24 0 a 8 8 0 1 0 -16 0"
-            strokeWidth="2.2"
-          />
-        </g>
-
-        {/* ================= RIGHT ================= */}
-        {/* Sun (circle with rays) */}
-        <g className="doodle-float-1" transform="translate(calc(100% - 130px), 320)">
-          <circle cx="25" cy="25" r="14" fill="#2F5A1A" fillOpacity="0.1" strokeWidth="2.2" />
-          <line x1="25" y1="3" x2="25" y2="8" strokeWidth="2" />
-          <line x1="25" y1="42" x2="25" y2="47" strokeWidth="2" />
-          <line x1="3" y1="25" x2="8" y2="25" strokeWidth="2" />
-          <line x1="42" y1="25" x2="47" y2="25" strokeWidth="2" />
-          <line x1="9" y1="9" x2="13" y2="13" strokeWidth="2" />
-          <line x1="37" y1="37" x2="41" y2="41" strokeWidth="2" />
-          <line x1="9" y1="41" x2="13" y2="37" strokeWidth="2" />
-          <line x1="37" y1="9" x2="41" y2="13" strokeWidth="2" />
-        </g>
-
-        {/* Curved Arrow */}
-        <g className="doodle-float-2" transform="translate(calc(100% - 190px), 460)">
-          <path d="M 10 40 C 35 38, 50 20, 42 5" strokeWidth="2.2" />
-          <path d="M 34 2 L 43 5 L 45 15" strokeWidth="2.2" />
-        </g>
-
-        {/* Asterisk / Sparkle */}
-        <g className="doodle-float-1" transform="translate(calc(100% - 100px), calc(100% - 160px))">
-          <line x1="16" y1="4" x2="16" y2="28" strokeWidth="2" />
-          <line x1="4" y1="16" x2="28" y2="16" strokeWidth="2" />
-          <line x1="7" y1="7" x2="25" y2="25" strokeWidth="2" />
-          <line x1="7" y1="25" x2="25" y2="7" strokeWidth="2" />
-        </g>
+        <line x1="0" y1="40" x2="60" y2="0" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="0" y1="70" x2="105" y2="0" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="0" y1="100" x2="150" y2="0" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="0" y1="130" x2="180" y2="10" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="10" y1="160" x2="180" y2="45" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="40" y1="160" x2="180" y2="65" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="70" y1="160" x2="180" y2="85" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="100" y1="160" x2="180" y2="105" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
       </svg>
+
+      {/* Top-Right Corner Hatching Patch */}
+      <svg
+        className="absolute right-0 top-0 pointer-events-none"
+        style={{ width: 'min(22vw, 190px)', height: 'min(20vw, 170px)', zIndex: 2 }}
+        viewBox="0 0 170 160"
+        fill="none"
+      >
+        <line x1="30" y1="0" x2="170" y2="100" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="60" y1="0" x2="170" y2="80" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="90" y1="0" x2="170" y2="60" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="120" y1="0" x2="170" y2="38" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="15" y1="15" x2="170" y2="125" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+        <line x1="0" y1="45" x2="170" y2="160" stroke="#7A9660" strokeWidth="1.8" strokeOpacity="0.45" />
+      </svg>
+
+      {/* 1. Five-pointed star (Top-Left) */}
+      <div className="floating-doodle doodle-star">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+          <path
+            d="M 17 2 L 21.5 12 L 32.5 13 L 24 20.5 L 26.5 31.5 L 17 26 L 7.5 31.5 L 10 20.5 L 1.5 13 L 12.5 12 Z"
+            fill="#A8CB7C"
+            stroke="#2F5A1A"
+            strokeWidth="2.2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+
+      {/* 2. Top-Left Radiating Sound Waves / Signals */}
+      <div className="floating-doodle doodle-waves-left">
+        <svg width="40" height="32" viewBox="0 0 40 32" fill="none" stroke="#2F5A1A" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M 6 25 C 10 11, 24 10, 36 15" />
+          <path d="M 11 27 C 14 17, 23 17, 31 20" />
+          <path d="M 17 29 C 19 23, 23 23, 27 25" />
+        </svg>
+      </div>
+
+      {/* 3. Left Asterisk-like Sparkle */}
+      <div className="floating-doodle doodle-asterisk-left">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#2F5A1A" strokeWidth="2.4" strokeLinecap="round">
+          <line x1="13" y1="3" x2="13" y2="23" />
+          <line x1="3" y1="13" x2="23" y2="13" />
+          <line x1="6" y1="6" x2="20" y2="20" />
+          <line x1="6" y1="20" x2="20" y2="6" />
+        </svg>
+      </div>
+
+      {/* 4. Musical Notes (♫ connected eighth notes) */}
+      <div className="floating-doodle doodle-music">
+        <svg width="28" height="30" viewBox="0 0 28 30" fill="none">
+          <ellipse cx="6" cy="24" rx="4.5" ry="3.5" fill="#2F5A1A" transform="rotate(-15 6 24)" />
+          <ellipse cx="20" cy="20" rx="4.5" ry="3.5" fill="#2F5A1A" transform="rotate(-15 20 20)" />
+          <path d="M 9.5 23 L 9.5 6 L 23.5 3 L 23.5 19" stroke="#2F5A1A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M 9.5 6 L 23.5 3" stroke="#2F5A1A" strokeWidth="3.5" strokeLinecap="round" />
+        </svg>
+      </div>
+
+      {/* 5. Miniature Cassette Tape Icon (tilted ~-10°) */}
+      <div className="floating-doodle doodle-mini-cassette">
+        <svg width="44" height="28" viewBox="0 0 44 28" fill="none" transform="rotate(-10)">
+          <rect x="1.5" y="1.5" width="41" height="25" rx="3.5" fill="#A8CB7C" stroke="#2F5A1A" strokeWidth="2" />
+          <rect x="7" y="5" width="30" height="12" rx="2" fill="#E8E3CE" stroke="#2F5A1A" strokeWidth="1.5" />
+          <circle cx="15" cy="11" r="3" fill="#A8CB7C" stroke="#2F5A1A" strokeWidth="1.5" />
+          <circle cx="29" cy="11" r="3" fill="#A8CB7C" stroke="#2F5A1A" strokeWidth="1.5" />
+          <line x1="9" y1="22" x2="35" y2="22" stroke="#2F5A1A" strokeWidth="1.5" />
+        </svg>
+      </div>
+
+      {/* 6. Top-Right Radiating Sound Waves / Signals */}
+      <div className="floating-doodle doodle-waves-right">
+        <svg width="40" height="32" viewBox="0 0 40 32" fill="none" stroke="#2F5A1A" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M 6 25 C 10 11, 24 10, 36 15" />
+          <path d="M 11 27 C 14 17, 23 17, 31 20" />
+          <path d="M 17 29 C 19 23, 23 23, 27 25" />
+        </svg>
+      </div>
+
+      {/* 7. Upper-Right Small Archimedean Spiral */}
+      <div className="floating-doodle doodle-spiral">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#2F5A1A" strokeWidth="2.2" strokeLinecap="round">
+          <path d="M 13 13 m -2 0 a 2 2 0 1 0 4 0 a 4 4 0 1 0 -8 0 a 7 7 0 1 0 13 0 a 10 10 0 1 0 -18 0" />
+        </svg>
+      </div>
+
+      {/* 8. Curved Arrow pointing up-right */}
+      <div className="floating-doodle doodle-arrow">
+        <svg width="34" height="28" viewBox="0 0 34 28" fill="none" stroke="#2F5A1A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M 4 24 C 8 8, 20 5, 29 9" />
+          <path d="M 21 6 L 30 9 L 26 18" />
+        </svg>
+      </div>
+
+      {/* 9. Right Asterisk-like Sparkle */}
+      <div className="floating-doodle doodle-asterisk-right">
+        <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#2F5A1A" strokeWidth="2.4" strokeLinecap="round">
+          <line x1="13" y1="3" x2="13" y2="23" />
+          <line x1="3" y1="13" x2="23" y2="13" />
+          <line x1="6" y1="6" x2="20" y2="20" />
+          <line x1="6" y1="20" x2="20" y2="6" />
+        </svg>
+      </div>
+
+      {/* 10. Sun Icon with Radiating Rays */}
+      <div className="floating-doodle doodle-sun">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="#2F5A1A" strokeWidth="2.2" strokeLinecap="round">
+          <circle cx="18" cy="18" r="6" fill="#A8CB7C" />
+          <line x1="18" y1="3" x2="18" y2="7" />
+          <line x1="18" y1="29" x2="18" y2="33" />
+          <line x1="3" y1="18" x2="7" y2="18" />
+          <line x1="29" y1="18" x2="33" y2="18" />
+          <line x1="7.5" y1="7.5" x2="10.5" y2="10.5" />
+          <line x1="25.5" y1="25.5" x2="28.5" y2="28.5" />
+          <line x1="7.5" y1="28.5" x2="10.5" y2="25.5" />
+          <line x1="25.5" y1="10.5" x2="28.5" y2="7.5" />
+        </svg>
+      </div>
+
+      {/* 11. Small Squiggly Wavy Line */}
+      <div className="floating-doodle doodle-squiggly">
+        <svg width="38" height="16" viewBox="0 0 38 16" fill="none" stroke="#2F5A1A" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M 3 8 Q 8 2, 13 8 T 23 8 T 33 8" />
+        </svg>
+      </div>
+
+      {/* 12. Bracket Doodle */}
+      <div className="floating-doodle doodle-bracket">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#2F5A1A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M 4 16 L 4 4 L 14 4 L 14 16" />
+        </svg>
+      </div>
+
+      {/* 13. Bottom Cluster of Dots */}
+      <div className="floating-doodle doodle-dots-bottom">
+        <svg width="34" height="24" viewBox="0 0 34 24" fill="#2F5A1A">
+          <circle cx="6" cy="16" r="2.5" />
+          <circle cx="16" cy="10" r="2.2" />
+          <circle cx="26" cy="14" r="2.8" />
+          <circle cx="21" cy="20" r="2" />
+        </svg>
+      </div>
     </div>
   )
 }
