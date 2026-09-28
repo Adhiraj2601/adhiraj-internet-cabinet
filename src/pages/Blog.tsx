@@ -160,6 +160,45 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
   )
 }
 
+function NewspaperIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Outer folded paper outline with left spine roll */}
+      <path d="M5 2h15a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2.5 2.5 0 0 1-2.5-2.5V7A2.5 2.5 0 0 1 4 4.5h1.5v13.5" />
+      {/* Two headline lines */}
+      <line x1="9.5" y1="7.5" x2="17.5" y2="7.5" />
+      <line x1="9.5" y1="12.5" x2="17.5" y2="12.5" />
+    </svg>
+  )
+}
+
+function PenIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* Tilted drawing pen with sharp nib and cap */}
+      <path d="M18 2.5l3.5 3.5-13 13L3 21l2-5.5L18 2.5z" />
+      <path d="M14.5 6l3.5 3.5" />
+      <path d="M6 14.5l3.5 3.5" />
+    </svg>
+  )
+}
+
 export function Blog() {
   const [activeTab, setActiveTab] = useState<'all' | 'observations'>('all')
   const [isAvatarTapped, setIsAvatarTapped] = useState(false)
@@ -334,39 +373,42 @@ export function Blog() {
 
           {/* ===================== TABS & CONTROLS BAR (Flush with header card) ===================== */}
           <div className="w-full flex items-center justify-between gap-3 mb-8">
-            {/* Left: Category Tabs */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            {/* Left: Category Tabs - Connected Segmented Control matching reference */}
+            <div
+              className="inline-flex items-stretch rounded-none overflow-hidden"
+              style={{
+                border: '1.5px solid #000000',
+                boxShadow: '4px 4px 0px #000000',
+              }}
+            >
               <button
                 onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 text-xs sm:text-sm font-mono font-bold uppercase rounded-none transition-colors flex items-center gap-2 cursor-pointer ${
+                className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-mono font-bold uppercase transition-colors flex items-center gap-2 sm:gap-2.5 cursor-pointer ${
                   activeTab === 'all'
-                    ? 'text-[#1a1a1a]'
-                    : 'bg-white text-neutral-700 hover:bg-neutral-100'
+                    ? 'text-[#000000]'
+                    : 'text-neutral-800 hover:bg-neutral-50'
                 }`}
                 style={{
-                  backgroundColor: activeTab === 'all' ? ACCENT_ORANGE : '#ffffff',
-                  border: BORDER_BLACK,
-                  boxShadow: '1px 1px 0px #000000',
+                  backgroundColor: activeTab === 'all' ? '#dcb252' : '#ffffff',
+                  borderRight: '1.5px solid #000000',
                 }}
               >
-                <span>📁</span>
+                <NewspaperIcon className="w-5 h-5 shrink-0" />
                 <span>BLOGS</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('observations')}
-                className={`px-4 py-2 text-xs sm:text-sm font-mono font-bold uppercase rounded-none transition-colors flex items-center gap-2 cursor-pointer ${
+                className={`px-4 sm:px-5 py-2 text-xs sm:text-sm font-mono font-bold uppercase transition-colors flex items-center gap-2 sm:gap-2.5 cursor-pointer ${
                   activeTab === 'observations'
-                    ? 'text-[#1a1a1a]'
-                    : 'bg-white text-neutral-700 hover:bg-neutral-100'
+                    ? 'text-[#000000]'
+                    : 'text-neutral-800 hover:bg-neutral-50'
                 }`}
                 style={{
-                  backgroundColor: activeTab === 'observations' ? ACCENT_ORANGE : '#ffffff',
-                  border: BORDER_BLACK,
-                  boxShadow: '1px 1px 0px #000000',
+                  backgroundColor: activeTab === 'observations' ? '#dcb252' : '#ffffff',
                 }}
               >
-                <span>✏️</span>
+                <PenIcon className="w-5 h-5 shrink-0" />
                 <span>OBSERVATIONS</span>
               </button>
             </div>
@@ -378,8 +420,8 @@ export function Blog() {
               }}
               className="px-4 py-2 text-xs sm:text-sm font-mono font-bold text-neutral-800 bg-white rounded-none hover:bg-neutral-100 transition-colors flex items-center gap-2 cursor-pointer"
               style={{
-                border: BORDER_BLACK,
-                boxShadow: '1px 1px 0px #000000',
+                border: '1.5px solid #000000',
+                boxShadow: '4px 4px 0px #000000',
               }}
             >
               <span>Scroll Down</span>
