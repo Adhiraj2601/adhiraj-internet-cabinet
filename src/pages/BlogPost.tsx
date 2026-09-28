@@ -103,38 +103,75 @@ export function BlogPost() {
         backgroundColor: BG_GREEN,
       }}
     >
-      {/* Floating cat sticker animation keyframes */}
+      {/* Floating cat sticker animation & card styling */}
       <style>{`
-        @keyframes float-across {
-          from { transform: translateX(-60px); }
-          to   { transform: translateX(100vw); }
+        @keyframes floatAcross {
+          0%   { transform: translate3d(-80px, -50%, 0) rotate(-10deg); }
+          25%  { transform: translate3d(25vw, -50%, 0) rotate(8deg); }
+          50%  { transform: translate3d(50vw, -50%, 0) rotate(-5deg); }
+          75%  { transform: translate3d(75vw, -50%, 0) rotate(8deg); }
+          100% { transform: translate3d(calc(100vw + 80px), -50%, 0) rotate(-10deg); }
         }
-        @keyframes tumble {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes bob {
-          0%, 100% { transform: translateY(0); }
-          50%      { transform: translateY(-6px); }
-        }
-        .floating-cat-track {
-          animation: float-across 8s linear infinite;
+        .floating-sticker {
+          animation: floatAcross 9s linear infinite;
           will-change: transform;
         }
-        .floating-cat-bob {
-          animation: bob 1.5s ease-in-out infinite;
-        }
-        .floating-cat-spin {
-          animation: tumble 3s linear infinite;
-        }
         @media (prefers-reduced-motion: reduce) {
-          .floating-cat-track,
-          .floating-cat-bob,
-          .floating-cat-spin {
+          .floating-sticker {
             animation: none !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
           }
-          .floating-cat-track {
-            transform: translateX(calc(50vw - 20px)) !important;
+        }
+
+        .blog-card-container {
+          width: min(72vw, 1200px);
+          margin: 80px auto 0;
+        }
+        .blog-article {
+          background-color: #F9F9FB;
+          border: 1px solid #1a1a1a;
+          box-shadow: 5px 5px 0 #1a1a1a;
+          padding: 18px;
+        }
+        .blog-header {
+          display: flex;
+          flex-direction: row;
+          align-items: flex-start;
+          gap: 28px;
+        }
+        .blog-cover {
+          flex: 0 0 360px;
+          width: 360px;
+          height: 240px;
+          aspect-ratio: 3 / 2;
+          overflow: hidden;
+          border: 2px solid #1a1a1a;
+          box-shadow: 3px 3px 0 #1a1a1a;
+        }
+        .blog-cover img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        @media (max-width: 767px) {
+          .blog-card-container {
+            width: calc(100% - 24px);
+            margin: 80px auto 0;
+          }
+          .blog-article {
+            padding: 14px;
+          }
+          .blog-header {
+            flex-direction: column;
+            gap: 20px;
+          }
+          .blog-cover {
+            flex: none;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 3 / 2;
           }
         }
       `}</style>
@@ -155,70 +192,60 @@ export function BlogPost() {
         </button>
       </div>
 
-      {/* Floating Cat Sticker — loops across top of the page */}
+      {/* Floating Cat Sticker — slow deterministic left→right loop */}
       <div
-        className="absolute left-0 w-full pointer-events-none overflow-hidden z-30"
-        style={{ top: 32, height: 60 }}
+        style={{
+          position: 'absolute',
+          top: 28,
+          left: 0,
+          width: '100%',
+          height: 55,
+          overflow: 'hidden',
+          pointerEvents: 'none',
+          zIndex: 10,
+        }}
       >
-        <div className="floating-cat-track">
-          <div className="floating-cat-bob">
-            <div className="floating-cat-spin">
-              <img
-                src="/images/blog/floating-cat.png"
-                alt=""
-                aria-hidden="true"
-                style={{ width: 48, height: 'auto' }}
-                className="select-none"
-              />
-            </div>
-          </div>
-        </div>
+        <img
+          src="/images/blog/floating-cat.png"
+          alt=""
+          aria-hidden="true"
+          className="floating-sticker select-none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: '50%',
+            width: 52,
+            height: 'auto',
+          }}
+        />
       </div>
 
       {/* Main Centered Card Container */}
-      <div
-        className="mx-auto relative w-full md:w-[65%] md:max-w-[1250px] px-0 md:px-0"
-        style={{ paddingTop: 80 }}
-      >
+      <div className="blog-card-container relative">
         {/* Paper Article Canvas */}
-        <article
-          className="rounded-sm p-3 md:p-[12px]"
-          style={{
-            backgroundColor: '#F9F9FB',
-            border: `1px solid ${BORDER_DARK}`,
-            boxShadow: `5px 5px 0px ${BORDER_DARK}`,
-          }}
-        >
-          {/* Header: Image left, Title right */}
-          <header className="flex flex-col md:flex-row items-start gap-6 pb-0">
-            {/* Thumbnail */}
-            <div
-              className="w-full md:w-[490px] shrink-0 overflow-hidden"
-              style={{
-                aspectRatio: '3 / 2',
-                border: `2px solid ${BORDER_DARK}`,
-                boxShadow: `3px 3px 0px ${BORDER_DARK}`,
-              }}
-            >
+        <article className="blog-article rounded-sm">
+          {/* Header: Cover image left, Title right */}
+          <header className="blog-header pb-0">
+            {/* Thumbnail: controlled visual size 360x240 on desktop */}
+            <div className="blog-cover rounded-xs">
               <img
                 src={post.image || '/images/blog/cat-doodle.jpg'}
                 alt={post.title}
-                className="w-full h-full object-cover select-none"
+                className="select-none"
               />
             </div>
 
             {/* Title & Date */}
-            <div className="flex-1 min-w-0 pt-1">
+            <div className="flex-1 min-w-0 pt-0.5">
               <h1
                 className="font-mono font-light leading-tight text-[#1a1a1a] tracking-normal"
-                style={{ fontSize: 'clamp(2rem, 4vw, 4rem)' }}
+                style={{ fontSize: 'clamp(2rem, 3.8vw, 3.6rem)' }}
               >
                 {post.title}
               </h1>
-              <div className="mt-3">
-                <span className="font-mono text-[13px] text-neutral-700">
+              <div className="mt-2.5">
+                <span className="font-mono text-[13px] text-neutral-800 font-normal">
                   {post.date}
-                  {post.readTime && <> · {post.readTime}</>}
                 </span>
               </div>
             </div>
