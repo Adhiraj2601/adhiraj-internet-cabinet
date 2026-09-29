@@ -1,16 +1,13 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
-import { posts, isObservation } from '../../content/posts'
+import { posts } from '../../content/posts'
 import { SectionLabel } from '../ui/SectionLabel'
 import { stagger, fadeUp } from '../../lib/animations'
 
 export function Notes() {
   const ref = useRef<HTMLElement>(null)
   const isInView = useInView(ref, { once: true, amount: 0.1 })
-
-  const articlePosts = posts.filter((p) => !isObservation(p))
-  const observationPosts = posts.filter((p) => isObservation(p))
   const totalCount = posts.length
 
   return (
@@ -56,7 +53,7 @@ export function Notes() {
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#315CFF] animate-pulse" />
                 <span className="font-mono text-xs sm:text-sm font-bold tracking-wider uppercase text-neutral-900">
-                  Adi's Internet Cabinet
+                  Adi's Archive
                 </span>
               </div>
               <div
@@ -72,33 +69,15 @@ export function Notes() {
 
             {/* Main Content Grid: Description & Button on left, Scrapbook Preview on right */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pt-6 sm:pt-8 items-center">
-              {/* Left Column: Headline, Description, Category badges, Tactile button */}
+              {/* Left Column: Headline, Description, Tactile button */}
               <div className="lg:col-span-7 flex flex-col items-start gap-5 sm:gap-6">
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 leading-tight">
-                  I write things down so I don't forget them.
+                  Welcome to my piece of personal internet real estate
                 </h3>
 
                 <p className="text-base sm:text-lg text-neutral-800 leading-relaxed font-sans max-w-xl">
-                  This is where I think out loud
+                  A collection of thoughts, ideas, experiences and things I’ve learned or I'm passionate about. It all lives here.
                 </p>
-
-                {/* Medium Highlights */}
-                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 font-mono text-xs text-neutral-900">
-                  <span
-                    className="bg-white px-3 py-1.5 font-medium rounded-none flex items-center gap-2"
-                    style={{ border: '1.5px solid #000000' }}
-                  >
-                    <NewspaperIcon className="w-4 h-4 shrink-0 text-neutral-900" />
-                    <span>{articlePosts.length} Longform Articles</span>
-                  </span>
-                  <span
-                    className="bg-white px-3 py-1.5 font-medium rounded-none flex items-center gap-2"
-                    style={{ border: '1.5px solid #000000' }}
-                  >
-                    <PenIcon className="w-4 h-4 shrink-0 text-neutral-900" />
-                    <span>{observationPosts.length} Observation Tapes</span>
-                  </span>
-                </div>
 
                 {/* Tactile Button */}
                 <div className="pt-2 sm:pt-4">
@@ -173,42 +152,3 @@ export function Notes() {
     </section>
   )
 }
-
-function NewspaperIcon({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5 2h15a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2.5 2.5 0 0 1-2.5-2.5V7A2.5 2.5 0 0 1 4 4.5h1.5v13.5" />
-      <line x1="9.5" y1="7.5" x2="17.5" y2="7.5" />
-      <line x1="9.5" y1="12.5" x2="17.5" y2="12.5" />
-    </svg>
-  )
-}
-
-function PenIcon({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M18 2.5l3.5 3.5-13 13L3 21l2-5.5L18 2.5z" />
-      <path d="M14.5 6l3.5 3.5" />
-      <path d="M6 14.5l3.5 3.5" />
-    </svg>
-  )
-}
-
