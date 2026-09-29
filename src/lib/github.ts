@@ -62,6 +62,31 @@ export async function getFileSha(token: string, filePath: string): Promise<strin
   }
 }
 
+// Fetch and parse a JSON file directly from GitHub master branch
+export async function getJsonFileFromGitHub<T>(token: string, filePath: string): Promise<T | null> {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}?ref=${GITHUB_BRANCH}&_t=${Date.now()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      }
+    )
+    if (res.ok) {
+      const data = await res.json()
+      if (data.content && data.encoding === 'base64') {
+        const decoded = base64ToUtf8(data.content.replace(/\n/g, ''))
+        return JSON.parse(decoded) as T
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 // Commit a file update directly to GitHub
 export async function commitFileToGitHub(
   token: string,

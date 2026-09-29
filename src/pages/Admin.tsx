@@ -41,6 +41,7 @@ import initialExperiments from '../content/experiments.json'
 import {
   testGitHubToken,
   commitFileToGitHub,
+  getJsonFileFromGitHub,
   utf8ToBase64,
   fileToBase64,
 } from '../lib/github'
@@ -182,6 +183,7 @@ export function Admin() {
         setIsVerifying(false)
         if (res.valid && res.user) {
           setAuthenticatedUser(res.user)
+          syncWithGitHub(token)
         } else {
           setAuthError(res.error || 'Token expired or invalid.')
           setAuthenticatedUser(null)
@@ -189,6 +191,30 @@ export function Admin() {
       })
     }
   }, [token])
+
+  // Sync state directly from GitHub repository so CMS is never stale
+  const syncWithGitHub = async (userToken: string) => {
+    try {
+      const [remotePosts, remoteProjects, remoteBooks, remoteScraps, remoteCurrently, remoteExperiments] =
+        await Promise.all([
+          getJsonFileFromGitHub<Post[]>(userToken, 'src/content/posts.json'),
+          getJsonFileFromGitHub<Project[]>(userToken, 'src/content/projects.json'),
+          getJsonFileFromGitHub<Book[]>(userToken, 'src/content/books.json'),
+          getJsonFileFromGitHub<ScrapItem[]>(userToken, 'src/content/scraps.json'),
+          getJsonFileFromGitHub<typeof initialCurrently>(userToken, 'src/content/currently.json'),
+          getJsonFileFromGitHub<Experiment[]>(userToken, 'src/content/experiments.json'),
+        ])
+
+      if (remotePosts) setPostsData(remotePosts)
+      if (remoteProjects) setProjectsData(remoteProjects)
+      if (remoteBooks) setBooksData(remoteBooks)
+      if (remoteScraps) setScrapsData(remoteScraps)
+      if (remoteCurrently) setCurrentlyData(remoteCurrently)
+      if (remoteExperiments) setExperimentsData(remoteExperiments)
+    } catch (err) {
+      console.warn('Could not sync with GitHub:', err)
+    }
+  }
 
   // Handle Token Connection
   const handleConnect = async (e: React.FormEvent) => {
@@ -204,6 +230,7 @@ export function Admin() {
       localStorage.setItem('admin_gh_token', tokenInput.trim())
       setToken(tokenInput.trim())
       setAuthenticatedUser(res.user)
+      syncWithGitHub(tokenInput.trim())
       setTokenInput('')
     } else {
       setAuthError(res.error || 'Could not connect. Please check token permissions.')
@@ -332,6 +359,7 @@ export function Admin() {
             : 'Committed to GitHub! Tip: Add a Vercel Deploy Hook in settings (top bar) so Vercel rebuilds automatically on publish.',
         url: lastCommitUrl,
       })
+      syncWithGitHub(token)
     } catch (err: unknown) {
       setPublishMessage({
         type: 'error',
