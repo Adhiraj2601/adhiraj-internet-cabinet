@@ -12,6 +12,11 @@ const navLinks = [
   { label: 'LAB', href: '#lab' },
 ]
 
+// Ephemeral in-memory target for client-side navigation.
+// IMPORTANT: Being an in-memory variable, this is completely wiped on page refresh (F5),
+// preventing any unwanted auto-scrolling when reloading the homepage!
+let pendingScrollTarget: string | null = null
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -26,29 +31,36 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Handle section scrolling when arriving at home (via state.scrollTo or direct hash)
+  // Handle section scrolling ONLY when initiated by an in-app click
   useEffect(() => {
     if (!isHome) return
 
-    const state = location.state as { scrollTo?: string } | null
-    const targetId = state?.scrollTo || (location.hash ? location.hash.replace(/^#/, '') : null)
+    // 1. Clean any stale history state or hash left from past tab sessions
+    if (typeof window !== 'undefined') {
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+      if (window.history.state?.usr?.scrollTo) {
+        const cleanState = { ...window.history.state }
+        if (cleanState.usr) delete cleanState.usr.scrollTo
+        window.history.replaceState(cleanState, '', window.location.pathname)
+      }
+    }
 
-    if (targetId) {
+    // 2. Consume in-memory scroll target (only set by an active user click in this JS session)
+    if (pendingScrollTarget) {
+      const targetId = pendingScrollTarget
+      pendingScrollTarget = null // Clear immediately!
+
       const el = document.getElementById(targetId) || document.querySelector(`[id="${targetId}"]`)
       if (el) {
         const timer = setTimeout(() => {
           el.scrollIntoView({ behavior: 'smooth' })
-          // Clean hash from URL so refresh stays cleanly at the top hero section
-          if (window.location.hash) {
-            window.history.replaceState(null, '', window.location.pathname)
-          }
         }, 150)
         return () => clearTimeout(timer)
       }
-    } else if (window.location.hash) {
-      window.history.replaceState(null, '', window.location.pathname)
     }
-  }, [isHome, location.state, location.hash])
+  }, [isHome, location.pathname])
 
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -65,15 +77,17 @@ export function Navbar() {
     if (href.startsWith('/')) {
       navigate(href)
     } else if (!isHome) {
-      const targetId = href.replace(/^#/, '')
-      // Navigate to home with target section in state so #hash does not pollute URL
-      navigate('/', { state: { scrollTo: targetId } })
+      // In-app navigation: store target in ephemeral memory and navigate to '/'
+      pendingScrollTarget = href.replace(/^#/, '')
+      navigate('/')
     } else {
       const target = document.querySelector(href)
       if (target) {
         target.scrollIntoView({ behavior: 'smooth' })
         // Clear hash from address bar immediately
-        window.history.replaceState(null, '', window.location.pathname)
+        if (window.location.hash) {
+          window.history.replaceState(null, '', window.location.pathname)
+        }
       }
     }
   }

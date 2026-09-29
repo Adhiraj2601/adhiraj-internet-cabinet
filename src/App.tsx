@@ -16,17 +16,21 @@ function ScrollToTop() {
   const location = useLocation()
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual'
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual'
+      }
+      // On fresh reload, always clean any lingering hash and jump to top (0, 0)
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
+      window.scrollTo(0, 0)
     }
   }, [])
 
   useEffect(() => {
-    const state = location.state as { scrollTo?: string } | null
-    if (!state?.scrollTo && !location.hash) {
-      window.scrollTo({ top: 0, behavior: 'instant' })
-    }
-  }, [location.pathname, location.state, location.hash])
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [location.pathname])
 
   return null
 }
