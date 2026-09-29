@@ -1,5 +1,5 @@
 import { useEffect, Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { CustomCursor } from './components/ui/CustomCursor'
@@ -11,6 +11,24 @@ const BooksPage = lazy(() => import('./pages/Books').then((m) => ({ default: m.B
 const SketchesPage = lazy(() => import('./pages/Sketches').then((m) => ({ default: m.SketchesPage })))
 const Blog = lazy(() => import('./pages/Blog').then((m) => ({ default: m.Blog })))
 const BlogPost = lazy(() => import('./pages/BlogPost').then((m) => ({ default: m.BlogPost })))
+
+function SecretAdminShortcut() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      // Secret key combination: Ctrl+Shift+A or Cmd+Shift+A
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault()
+        navigate('/admin')
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [navigate])
+
+  return null
+}
 
 function ScrollToTop() {
   const location = useLocation()
@@ -75,6 +93,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
+      <SecretAdminShortcut />
       <ScrollToTop />
       <CustomCursor />
       <Layout>

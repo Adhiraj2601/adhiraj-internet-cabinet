@@ -13,6 +13,22 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null
 
+export async function adminSignIn(email: string, password: string) {
+  if (!supabase) throw new Error('Supabase client is not configured.')
+  return await supabase.auth.signInWithPassword({ email, password })
+}
+
+export async function adminSignOut() {
+  if (!supabase) return
+  return await supabase.auth.signOut()
+}
+
+export async function getAdminSession() {
+  if (!supabase) return null
+  const { data } = await supabase.auth.getSession()
+  return data.session
+}
+
 export interface CommentRecord {
   id: string
   post_slug: string

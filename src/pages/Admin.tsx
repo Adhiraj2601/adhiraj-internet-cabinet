@@ -27,8 +27,12 @@ import {
   Radio,
   Sparkles,
   Copy,
+  Lock,
+  ArrowRight,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import type { Session } from '@supabase/supabase-js'
+import { supabase, adminSignIn, adminSignOut } from '../lib/supabase'
 
 // Initial content imports
 import initialProjects from '../content/projects.json'
@@ -55,6 +59,64 @@ import { CassetteCard, RoughenFilterDefs } from '../components/observations/Cass
 type Tab = 'projects' | 'books' | 'scraps' | 'currently' | 'notes' | 'lab'
 
 export function Admin() {
+  // Supabase Authentication state
+  const [session, setSession] = useState<Session | null>(null)
+  const [isAuthChecking, setIsAuthChecking] = useState(true)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+  const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  // Listen to Supabase Auth State
+  useEffect(() => {
+    if (!supabase) {
+      setIsAuthChecking(false)
+      return
+    }
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setIsAuthChecking(false)
+    })
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      setSession(currentSession)
+      setIsAuthChecking(false)
+    })
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleSupabaseLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginError('')
+    if (!loginEmail.trim() || !loginPassword.trim()) {
+      setLoginError('Please enter both email and password.')
+      return
+    }
+
+    setIsLoggingIn(true)
+    try {
+      const { data, error } = await adminSignIn(loginEmail.trim(), loginPassword)
+      if (error) {
+        setLoginError(error.message || 'Authentication failed. Access denied.')
+      } else if (data.session) {
+        setSession(data.session)
+      }
+    } catch (err: unknown) {
+      setLoginError(err instanceof Error ? err.message : 'Login failed.')
+    } finally {
+      setIsLoggingIn(false)
+    }
+  }
+
+  const handleSupabaseSignOut = async () => {
+    await adminSignOut()
+    setSession(null)
+  }
+
   // Token & Authentication
   const [token, setToken] = useState(() => localStorage.getItem('admin_gh_token') || '')
   const [tokenInput, setTokenInput] = useState('')
@@ -657,6 +719,111 @@ export function Admin() {
     setHasChanges(true)
   }
 
+  // 1. Initial Auth Check Loader
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center font-mono text-xs uppercase tracking-widest text-muted bg-[#F4F1EA]">
+        <span className="animate-pulse">Verifying Console Credentials...</span>
+      </div>
+    )
+  }
+
+  // 2. Restricted Access Login Screen
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-[#F4F1EA] flex items-center justify-center p-4 font-mono select-none">
+        <div
+          className="w-full max-w-md bg-white p-6 sm:p-8"
+          style={{
+            border: '2px solid #000000',
+            boxShadow: '6px 6px 0px #000000',
+          }}
+        >
+          {/* Header Badge */}
+          <div className="flex items-center justify-between pb-4 mb-6 border-b border-black/15">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#315CFF] animate-pulse" />
+              <span className="text-[11px] font-bold tracking-widest uppercase text-neutral-900">
+                ADI'S ARCHIVE // CONSOLE
+              </span>
+            </div>
+            <Lock size={14} className="text-neutral-500" />
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900 mb-2 font-sans">
+            Restricted Access
+          </h2>
+          <p className="text-xs text-neutral-600 leading-relaxed mb-6 font-sans">
+            This console controls content publication across the archive. Enter your authorized administrator credentials to unlock.
+          </p>
+
+          <form onSubmit={handleSupabaseLogin} className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                Admin Email
+              </label>
+              <input
+                type="email"
+                required
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="name@domain.com"
+                className="w-full px-3 py-2 text-xs bg-[#FBFBFA] text-neutral-900 border border-black focus:outline-none focus:ring-1 focus:ring-black"
+                style={{ borderRadius: 0 }}
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                Master Password
+              </label>
+              <input
+                type="password"
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full px-3 py-2 text-xs bg-[#FBFBFA] text-neutral-900 border border-black focus:outline-none focus:ring-1 focus:ring-black"
+                style={{ borderRadius: 0 }}
+              />
+            </div>
+
+            {loginError && (
+              <div className="p-2.5 bg-red-50 border border-red-300 text-red-700 text-xs flex items-start gap-2">
+                <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isLoggingIn}
+                className="w-full py-3 px-4 font-mono font-bold text-xs uppercase text-neutral-900 bg-[#E3B859] transition-all hover:bg-[#d8ab43] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                style={{
+                  border: '2px solid #000000',
+                  boxShadow: '3px 3px 0px #000000',
+                }}
+              >
+                <span>{isLoggingIn ? 'AUTHENTICATING...' : 'AUTHENTICATE'}</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-black/10 text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-black hover:underline"
+            >
+              <span>← Return to Adi's Archive</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] pb-24">
       {/* Top Navbar */}
@@ -677,6 +844,23 @@ export function Admin() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Supabase Authenticated Session Badge & Lock Button */}
+            {session?.user && (
+              <div className="flex items-center gap-2 border-r border-token pr-3 mr-1">
+                <span className="text-[11px] font-mono text-neutral-600 hidden md:inline truncate max-w-[160px]">
+                  {session.user.email}
+                </span>
+                <button
+                  onClick={handleSupabaseSignOut}
+                  className="flex items-center gap-1 text-[11px] font-mono uppercase font-bold text-neutral-700 hover:text-red-600 transition-colors px-2 py-1 bg-white border border-neutral-300 rounded-xs shadow-xs cursor-pointer"
+                  title="Lock Admin Console & Sign Out"
+                >
+                  <Lock size={11} />
+                  <span>Lock</span>
+                </button>
+              </div>
+            )}
+
             {authenticatedUser ? (
               <div className="flex items-center gap-3">
                 <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-muted">
