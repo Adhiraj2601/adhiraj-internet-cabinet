@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { type Post } from '../../content/posts'
 import { formatTapeDate, formatTapeNumber } from '../../lib/utils'
 import { useTypewriter, type TypewriterSection } from '../../hooks/useTypewriter'
+import { fetchComments, insertComment, formatCommentDate } from '../../lib/supabase'
 
 export interface TvScreenHandle {
   skipTyping: () => void
@@ -34,10 +35,34 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
   const tapeNumber = formatTapeNumber(post, allObservations)
   const tapeDate = formatTapeDate(post.date || '')
 
-  // Comments state (in-memory per open session)
+  // Comments state (synced with Supabase)
   const [comments, setComments] = useState<CommentItem[]>([])
   const [commentName, setCommentName] = useState('')
   const [commentText, setCommentText] = useState('')
+  const [isLoadingComments, setIsLoadingComments] = useState(false)
+  const [isPostingComment, setIsPostingComment] = useState(false)
+
+  // Fetch comments whenever post.slug changes
+  useEffect(() => {
+    if (!post?.slug) return
+    let cancelled = false
+    setIsLoadingComments(true)
+    fetchComments(post.slug).then((records) => {
+      if (cancelled) return
+      setComments(
+        records.map((r) => ({
+          id: r.id,
+          name: r.name,
+          text: r.text,
+          date: formatCommentDate(r.created_at),
+        }))
+      )
+      setIsLoadingComments(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [post?.slug])
 
   // Build typewriter sections
   const sections: TypewriterSection[] = useMemo(() => {
@@ -113,20 +138,40 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
     }
   }
 
-  const handlePostComment = (e: React.FormEvent) => {
+  const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!commentText.trim()) return
+    if (!commentText.trim() || isPostingComment || !post?.slug) return
 
-    const newComment: CommentItem = {
-      id: Date.now().toString(),
-      name: commentName.trim() || 'Anonymous',
-      text: commentText.trim(),
-      date: 'Just now',
+    const authorName = commentName.trim() || 'Anonymous'
+    const textToSend = commentText.trim()
+    setIsPostingComment(true)
+
+    const savedRecord = await insertComment(post.slug, authorName, textToSend)
+    if (savedRecord) {
+      setComments((prev) => [
+        ...prev,
+        {
+          id: savedRecord.id,
+          name: savedRecord.name,
+          text: savedRecord.text,
+          date: formatCommentDate(savedRecord.created_at),
+        },
+      ])
+      setCommentName('')
+      setCommentText('')
+    } else {
+      // Local optimistic fallback if offline
+      const fallbackItem: CommentItem = {
+        id: Date.now().toString(),
+        name: authorName,
+        text: textToSend,
+        date: 'Just now',
+      }
+      setComments((prev) => [...prev, fallbackItem])
+      setCommentName('')
+      setCommentText('')
     }
-
-    setComments((prev) => [...prev, newComment])
-    setCommentName('')
-    setCommentText('')
+    setIsPostingComment(false)
   }
 
   // Full accessible text for screen readers
@@ -289,7 +334,8 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
                     />
                     <button
                       type="submit"
-                      className="px-4 py-1.5 text-xs sm:text-sm font-bold uppercase rounded-none transition-transform hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer focus:outline-none focus-visible:outline-none"
+                      disabled={isPostingComment}
+                      className="px-4 py-1.5 text-xs sm:text-sm font-bold uppercase rounded-none transition-transform hover:translate-x-0.5 hover:translate-y-0.5 cursor-pointer focus:outline-none focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         backgroundColor: '#A9CB8B',
                         color: '#10200A',
@@ -298,13 +344,17 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
                         outline: 'none',
                       }}
                     >
-                      Post
+                      {isPostingComment ? 'Transmitting...' : 'Post'}
                     </button>
                   </form>
 
                   {/* List of comments or empty state */}
                   <div className="space-y-3 pt-2">
-                    {comments.length === 0 ? (
+                    {isLoadingComments ? (
+                      <p className="text-xs sm:text-sm text-[#5A8738] animate-pulse">
+                        [CONNECTING TO ARCHIVE RELAY...]
+                      </p>
+                    ) : comments.length === 0 ? (
                       <p className="text-xs sm:text-sm text-[#5A8738] italic">
                         No comments yet. Be the first.
                       </p>

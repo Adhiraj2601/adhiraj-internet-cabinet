@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useParams, Link, useNavigate, Navigate } from 'react-router-dom'
 import { posts, isObservation, type Post } from '../content/posts'
+import { fetchComments, insertComment, formatCommentDate } from '../lib/supabase'
 
 const BG_GREEN = '#ADD890' // Bright pastel green page background
 const ACCENT_ORANGE = '#e08b58' // Warm orange button accent
@@ -49,25 +50,69 @@ export function BlogPost() {
   const prevPost = postIndex > 0 ? blogPosts[postIndex - 1] : null
   const nextPost = postIndex !== -1 && postIndex < blogPosts.length - 1 ? blogPosts[postIndex + 1] : null
 
-  // Interactive Comments state
+  // Interactive Comments state (synced with Supabase)
   const [comments, setComments] = useState<CommentItem[]>([])
   const [commentName, setCommentName] = useState('')
   const [commentText, setCommentText] = useState('')
+  const [isLoadingComments, setIsLoadingComments] = useState(false)
+  const [isPostingComment, setIsPostingComment] = useState(false)
 
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!commentText.trim()) return
-
-    const newComment: CommentItem = {
-      id: Date.now().toString(),
-      name: commentName.trim() || 'Anonymous Reader',
-      text: commentText.trim(),
-      date: 'Just now',
+  // Fetch comments whenever slug changes
+  useEffect(() => {
+    if (!slug) return
+    let cancelled = false
+    setIsLoadingComments(true)
+    fetchComments(slug).then((records) => {
+      if (cancelled) return
+      setComments(
+        records.map((r) => ({
+          id: r.id,
+          name: r.name,
+          text: r.text,
+          date: formatCommentDate(r.created_at),
+        }))
+      )
+      setIsLoadingComments(false)
+    })
+    return () => {
+      cancelled = true
     }
+  }, [slug])
 
-    setComments((prev) => [...prev, newComment])
-    setCommentName('')
-    setCommentText('')
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!commentText.trim() || isPostingComment || !slug) return
+
+    const authorName = commentName.trim() || 'Anonymous Reader'
+    const textToSend = commentText.trim()
+    setIsPostingComment(true)
+
+    const savedRecord = await insertComment(slug, authorName, textToSend)
+    if (savedRecord) {
+      setComments((prev) => [
+        ...prev,
+        {
+          id: savedRecord.id,
+          name: savedRecord.name,
+          text: savedRecord.text,
+          date: formatCommentDate(savedRecord.created_at),
+        },
+      ])
+      setCommentName('')
+      setCommentText('')
+    } else {
+      // Local optimistic fallback if offline
+      const newComment: CommentItem = {
+        id: Date.now().toString(),
+        name: authorName,
+        text: textToSend,
+        date: 'Just now',
+      }
+      setComments((prev) => [...prev, newComment])
+      setCommentName('')
+      setCommentText('')
+    }
+    setIsPostingComment(false)
   }
 
   // If this post is an observation, redirect to the Retro TV experience on /blog
@@ -357,20 +402,25 @@ export function BlogPost() {
               <div>
                 <button
                   type="submit"
-                  className="px-4 py-1 font-mono font-bold text-xs uppercase text-[#1a1a1a] rounded-xs cursor-pointer hover:opacity-90 transition-opacity"
+                  disabled={isPostingComment}
+                  className="px-4 py-1 font-mono font-bold text-xs uppercase text-[#1a1a1a] rounded-xs cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{
                     backgroundColor: ACCENT_ORANGE,
                     border: `2px solid ${BORDER_DARK}`,
                     boxShadow: `1px 1px 0px ${BORDER_DARK}`,
                   }}
                 >
-                  Post
+                  {isPostingComment ? 'Posting...' : 'Post'}
                 </button>
               </div>
             </form>
 
             {/* Comments List or Empty message */}
-            {comments.length > 0 ? (
+            {isLoadingComments ? (
+              <p className="font-mono text-[11px] text-neutral-400 italic animate-pulse">
+                Loading comments...
+              </p>
+            ) : comments.length > 0 ? (
               <div className="space-y-2 pt-2 border-t border-[#1a1a1a]/10">
                 {comments.map((c) => (
                   <div key={c.id} className="text-xs font-mono bg-white p-2.5 rounded-xs border border-neutral-300">
