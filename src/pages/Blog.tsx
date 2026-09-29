@@ -651,14 +651,9 @@ export function Blog() {
             <span>
               {currentCount} entries published
             </span>
-            <div className="flex items-center gap-4">
-              <Link to="/admin?tab=notes" className="hover:text-black hover:underline opacity-60 hover:opacity-100 transition-opacity">
-                Admin CMS ↗
-              </Link>
-              <Link to="/" className="hover:text-black font-semibold hover:underline">
-                ← Return Home
-              </Link>
-            </div>
+            <Link to="/" className="hover:text-black font-semibold hover:underline">
+              ← Return Home
+            </Link>
           </div>
         </div>
       </div>
