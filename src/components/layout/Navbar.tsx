@@ -26,17 +26,29 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Handle hash scrolling when arriving at home with a hash (e.g. /#work)
+  // Handle section scrolling when arriving at home (via state.scrollTo or direct hash)
   useEffect(() => {
-    if (isHome && location.hash) {
-      const target = document.querySelector(location.hash)
-      if (target) {
-        setTimeout(() => {
-          target.scrollIntoView({ behavior: 'smooth' })
+    if (!isHome) return
+
+    const state = location.state as { scrollTo?: string } | null
+    const targetId = state?.scrollTo || (location.hash ? location.hash.replace(/^#/, '') : null)
+
+    if (targetId) {
+      const el = document.getElementById(targetId) || document.querySelector(`[id="${targetId}"]`)
+      if (el) {
+        const timer = setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth' })
+          // Clean hash from URL so refresh stays cleanly at the top hero section
+          if (window.location.hash) {
+            window.history.replaceState(null, '', window.location.pathname)
+          }
         }, 150)
+        return () => clearTimeout(timer)
       }
+    } else if (window.location.hash) {
+      window.history.replaceState(null, '', window.location.pathname)
     }
-  }, [isHome, location.hash])
+  }, [isHome, location.state, location.hash])
 
   // Prevent body scroll when menu is open
   useEffect(() => {
@@ -53,19 +65,27 @@ export function Navbar() {
     if (href.startsWith('/')) {
       navigate(href)
     } else if (!isHome) {
-      navigate('/' + href)
+      const targetId = href.replace(/^#/, '')
+      // Navigate to home with target section in state so #hash does not pollute URL
+      navigate('/', { state: { scrollTo: targetId } })
     } else {
       const target = document.querySelector(href)
       if (target) {
         target.scrollIntoView({ behavior: 'smooth' })
+        // Clear hash from address bar immediately
+        window.history.replaceState(null, '', window.location.pathname)
       }
     }
   }
 
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault()
+    setMenuOpen(false)
     if (isHome) {
       window.scrollTo({ top: 0, behavior: 'smooth' })
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname)
+      }
     } else {
       navigate('/')
     }

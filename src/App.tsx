@@ -13,11 +13,20 @@ const Blog = lazy(() => import('./pages/Blog').then((m) => ({ default: m.Blog })
 const BlogPost = lazy(() => import('./pages/BlogPost').then((m) => ({ default: m.BlogPost })))
 
 function ScrollToTop() {
-  const { pathname } = useLocation()
+  const location = useLocation()
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' })
-  }, [pathname])
+    if (typeof window !== 'undefined' && 'scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+  }, [])
+
+  useEffect(() => {
+    const state = location.state as { scrollTo?: string } | null
+    if (!state?.scrollTo && !location.hash) {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+    }
+  }, [location.pathname, location.state, location.hash])
 
   return null
 }
