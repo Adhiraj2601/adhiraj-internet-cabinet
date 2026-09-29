@@ -173,7 +173,7 @@ export const TvScreen = forwardRef<TvScreenHandle, TvScreenProps>(function TvScr
       {/* Straight Text & Terminal Content Container (no rotation/skew, perfectly horizontal) */}
       <div
         className={`relative z-10 w-full h-full flex flex-col overflow-hidden text-left ${
-          isReadMode ? 'p-6 sm:p-10' : 'p-3.5 sm:p-5'
+          isReadMode ? 'p-4 sm:p-8 md:p-10' : 'p-3.5 sm:p-5'
         }`}
         style={{
           color: '#B5D89A',

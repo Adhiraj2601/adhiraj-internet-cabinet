@@ -451,7 +451,7 @@ export function Blog() {
           </div>
 
           {/* ===================== TABS & CONTROLS BAR (Flush with header card) ===================== */}
-          <div className="w-full flex items-center justify-between gap-3 mb-8">
+          <div className="w-full flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 mb-8">
             {/* Left: Category Tabs - Connected Segmented Control matching reference */}
             <div
               className="inline-flex items-stretch rounded-none overflow-hidden"
@@ -497,7 +497,7 @@ export function Blog() {
               onClick={() => {
                 document.getElementById('blog-grid')?.scrollIntoView({ behavior: 'smooth' })
               }}
-              className="px-4 py-2 text-xs sm:text-sm font-mono font-bold text-neutral-800 bg-white rounded-none hover:bg-neutral-100 transition-colors flex items-center gap-2 cursor-pointer"
+              className="hidden sm:flex px-4 py-2 text-xs sm:text-sm font-mono font-bold text-neutral-800 bg-white rounded-none hover:bg-neutral-100 transition-colors items-center gap-2 cursor-pointer"
               style={{
                 border: '1.5px solid #000000',
                 boxShadow: '4px 4px 0px #000000',
@@ -513,24 +513,27 @@ export function Blog() {
             <style>{`
               .blog-cards-grid {
                 display: grid;
-                grid-template-columns: repeat(1, minmax(0, 360px));
-                gap: 25px;
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+                gap: 20px;
                 justify-content: start;
                 width: 100%;
               }
               @media (min-width: 600px) {
                 .blog-cards-grid {
                   grid-template-columns: repeat(2, minmax(0, 360px));
+                  gap: 25px;
                 }
               }
               @media (min-width: 900px) {
                 .blog-cards-grid {
                   grid-template-columns: repeat(3, minmax(0, 360px));
+                  gap: 25px;
                 }
               }
               @media (min-width: 1200px) {
                 .blog-cards-grid {
                   grid-template-columns: repeat(4, minmax(0, 360px));
+                  gap: 25px;
                 }
               }
 
