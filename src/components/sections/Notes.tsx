@@ -75,13 +75,11 @@ export function Notes() {
               {/* Left Column: Headline, Description, Category badges, Tactile button */}
               <div className="lg:col-span-7 flex flex-col items-start gap-5 sm:gap-6">
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 leading-tight">
-                  A messy desk of essays, ideas, and audio cassette observations.
+                  I write things down so I don't forget them.
                 </h3>
 
-                <p className="text-sm sm:text-base text-neutral-800 leading-relaxed font-sans max-w-xl">
-                  A small corner of the internet where I write about what I'm learning,
-                  share candid reflections, and record field observations that play on a retro
-                  CRT television.
+                <p className="text-base sm:text-lg text-neutral-800 leading-relaxed font-sans max-w-xl">
+                  This is where I think out loud
                 </p>
 
                 {/* Medium Highlights */}
@@ -112,7 +110,7 @@ export function Notes() {
                       boxShadow: '4px 4px 0px #000000',
                     }}
                   >
-                    <span>enter adi's archive</span>
+                    <span>Open Sesame</span>
                     <span className="text-lg leading-none">→</span>
                   </Link>
                 </div>
@@ -130,17 +128,13 @@ export function Notes() {
                 >
                   {/* Photo area */}
                   <div
-                    className="relative w-full aspect-square bg-[#E8E4DA] overflow-hidden mb-4"
+                    className="relative w-full aspect-square bg-[#FFFFFF] overflow-hidden mb-4"
                     style={{ border: '1.5px solid #000000' }}
                   >
                     <img
-                      src="/images/blog/adhiraj-avatar.jpg"
-                      alt="Adi"
-                      className="w-full h-full object-cover select-none"
-                      onError={(e) => {
-                        const target = e.currentTarget
-                        target.src = '/images/hero.jpg'
-                      }}
+                      src="/images/blog/thinking-cat.jpg"
+                      alt="Thinking cat doodle"
+                      className="w-full h-full object-contain p-2 select-none"
                     />
                   </div>
 
