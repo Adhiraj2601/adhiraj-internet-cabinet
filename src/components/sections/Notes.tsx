@@ -85,17 +85,17 @@ export function Notes() {
                 {/* Medium Highlights */}
                 <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 font-mono text-xs text-neutral-900">
                   <span
-                    className="bg-white px-3 py-1.5 font-medium rounded-none flex items-center gap-1.5"
+                    className="bg-white px-3 py-1.5 font-medium rounded-none flex items-center gap-2"
                     style={{ border: '1.5px solid #000000' }}
                   >
-                    <span>📖</span>
+                    <NewspaperIcon className="w-4 h-4 shrink-0 text-neutral-900" />
                     <span>{articlePosts.length} Longform Articles</span>
                   </span>
                   <span
-                    className="bg-white px-3 py-1.5 font-medium rounded-none flex items-center gap-1.5"
+                    className="bg-white px-3 py-1.5 font-medium rounded-none flex items-center gap-2"
                     style={{ border: '1.5px solid #000000' }}
                   >
-                    <span>📼</span>
+                    <PenIcon className="w-4 h-4 shrink-0 text-neutral-900" />
                     <span>{observationPosts.length} Observation Tapes</span>
                   </span>
                 </div>
@@ -173,3 +173,42 @@ export function Notes() {
     </section>
   )
 }
+
+function NewspaperIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 2h15a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2.5 2.5 0 0 1-2.5-2.5V7A2.5 2.5 0 0 1 4 4.5h1.5v13.5" />
+      <line x1="9.5" y1="7.5" x2="17.5" y2="7.5" />
+      <line x1="9.5" y1="12.5" x2="17.5" y2="12.5" />
+    </svg>
+  )
+}
+
+function PenIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M18 2.5l3.5 3.5-13 13L3 21l2-5.5L18 2.5z" />
+      <path d="M14.5 6l3.5 3.5" />
+      <path d="M6 14.5l3.5 3.5" />
+    </svg>
+  )
+}
+
