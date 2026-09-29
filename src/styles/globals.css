@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: #F4F1EA;
+  --color-foreground: #171717;
+  --color-muted: #77736B;
+  --color-accent: #315CFF;
+}
+
 @layer base {
   :root {
     --background: #F4F1EA;

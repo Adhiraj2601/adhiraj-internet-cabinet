@@ -127,12 +127,28 @@ export function Admin() {
           content: '',
         }
       }
+      if (action === 'new-article') {
+        const articleList = (initialPosts as Post[]).filter((p) => !p.category.toLowerCase().includes('observation'))
+        const nextArtNum = String(articleList.length + 1).padStart(2, '0')
+        return {
+          id: String(Date.now()),
+          number: nextArtNum,
+          title: '',
+          slug: '',
+          category: 'Thoughts',
+          date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+          excerpt: '',
+          readTime: '3 min read',
+          content: '',
+        }
+      }
     }
     return null
   })
   const [isNewPost, setIsNewPost] = useState(() => {
     if (typeof window !== 'undefined') {
-      return new URLSearchParams(window.location.search).get('action') === 'new-observation'
+      const act = new URLSearchParams(window.location.search).get('action')
+      return act === 'new-observation' || act === 'new-article'
     }
     return false
   })
@@ -1433,7 +1449,7 @@ export function Admin() {
                   setSelectedScrapFile(null)
                   setScrapPreviewUrl(null)
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider bg-[#171717] text-white border border-black shadow-[2px_2px_0px_#000000] hover:bg-[#333333] transition-all rounded-xs cursor-pointer"
               >
                 <Plus size={14} />
                 <span>Add Scrap / Sketch</span>
@@ -1856,23 +1872,23 @@ export function Admin() {
                     setSelectedPostImageFile(null)
                     setPostImagePreviewUrl(null)
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90 transition-opacity shrink-0 cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider bg-[#171717] text-white border border-black shadow-[2px_2px_0px_#000000] hover:bg-[#333333] transition-all shrink-0 cursor-pointer"
                 >
                   <Plus size={14} />
-                  <span>+ Write Article</span>
+                  <span>Write Article</span>
                 </button>
               </div>
             </div>
 
             {/* Filter Pills */}
-            <div className="flex items-center gap-2 mb-6 border-b border-token pb-3 overflow-x-auto">
+            <div className="flex items-center gap-2 mb-6 border-b border-black/15 pb-3 overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setNotesFilter('all')}
-                className={`px-3 py-1.5 text-xs rounded-xs transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 text-xs rounded-xs transition-all cursor-pointer ${
                   notesFilter === 'all'
-                    ? 'bg-foreground text-background font-bold'
-                    : 'text-muted hover:text-foreground hover:bg-neutral-100 font-medium'
+                    ? 'bg-[#171717] text-white font-bold border border-black shadow-[1px_1px_0px_#000000]'
+                    : 'bg-white text-neutral-700 hover:text-black hover:bg-neutral-100 font-medium border border-black/20'
                 }`}
               >
                 All Entries ({postsData.length})
@@ -1880,10 +1896,10 @@ export function Admin() {
               <button
                 type="button"
                 onClick={() => setNotesFilter('observations')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xs transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xs transition-all cursor-pointer ${
                   notesFilter === 'observations'
                     ? 'bg-[#AFD080] text-black font-bold border border-black shadow-[1px_1px_0px_#000000]'
-                    : 'text-muted hover:text-foreground hover:bg-neutral-100 font-medium'
+                    : 'bg-white text-neutral-700 hover:text-black hover:bg-neutral-100 font-medium border border-black/20'
                 }`}
               >
                 <Tv size={13} />
@@ -1892,10 +1908,10 @@ export function Admin() {
               <button
                 type="button"
                 onClick={() => setNotesFilter('articles')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xs transition-colors cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-xs transition-all cursor-pointer ${
                   notesFilter === 'articles'
-                    ? 'bg-foreground text-background font-bold'
-                    : 'text-muted hover:text-foreground hover:bg-neutral-100 font-medium'
+                    ? 'bg-[#171717] text-white font-bold border border-black shadow-[1px_1px_0px_#000000]'
+                    : 'bg-white text-neutral-700 hover:text-black hover:bg-neutral-100 font-medium border border-black/20'
                 }`}
               >
                 <FileText size={13} />
@@ -1978,7 +1994,7 @@ export function Admin() {
                               </p>
 
                               {isObs && post.question && (
-                                <div className="mt-2 p-2 bg-white/80 dark:bg-black/30 border border-black/20 rounded-xs text-[11px] italic text-neutral-800 dark:text-neutral-200">
+                                <div className="mt-2 p-2 bg-white border border-black/20 rounded-xs text-[11px] italic text-neutral-800">
                                   &ldquo;{post.question}&rdquo;
                                 </div>
                               )}
@@ -2044,17 +2060,17 @@ export function Admin() {
 
             {/* ===================== EDIT/CREATE MODAL ===================== */}
             {editingPost && (
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
-                <div className="bg-[var(--background)] border-2 border-black max-w-2xl w-full p-6 rounded-none shadow-[6px_6px_0px_#000000] max-h-[92vh] overflow-y-auto">
+              <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <div className="bg-[#FAF8F5] text-[#171717] border-2 border-black max-w-2xl w-full p-6 rounded-none shadow-[6px_6px_0px_#000000] max-h-[92vh] overflow-y-auto">
                   {/* Top Bar with Mode Toggle */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-token">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-3 border-b border-black/20">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs uppercase font-mono tracking-wider text-muted">
+                        <span className="text-xs uppercase font-mono tracking-wider text-neutral-600 font-semibold">
                           {isNewPost ? 'Create New Entry' : 'Edit Entry'}
                         </span>
                       </div>
-                      <h3 className="font-bold text-lg leading-tight">
+                      <h3 className="font-bold text-lg leading-tight text-[#171717]">
                         {isObservation(editingPost)
                           ? isNewPost
                             ? `New Observation Tape (No.${editingPost.number || '001'})`
@@ -2067,7 +2083,7 @@ export function Admin() {
 
                     <div className="flex items-center gap-2">
                       {/* Format Switcher */}
-                      <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-neutral-800 rounded-xs border border-token">
+                      <div className="flex items-center gap-1 p-1 bg-white rounded-xs border border-black/30 shadow-[1px_1px_0px_#000000]">
                         <button
                           type="button"
                           onClick={() => {
@@ -2086,10 +2102,10 @@ export function Admin() {
                               })
                             }
                           }}
-                          className={`px-2.5 py-1 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          className={`px-2.5 py-1 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer rounded-xs ${
                             isObservation(editingPost)
-                              ? 'bg-[#AFD080] text-black shadow-xs'
-                              : 'text-muted hover:text-foreground'
+                              ? 'bg-[#AFD080] text-black border border-black shadow-[1px_1px_0px_#000000]'
+                              : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
                           }`}
                         >
                           <Tv size={12} />
@@ -2107,10 +2123,10 @@ export function Admin() {
                               })
                             }
                           }}
-                          className={`px-2.5 py-1 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          className={`px-2.5 py-1 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer rounded-xs ${
                             !isObservation(editingPost)
-                              ? 'bg-foreground text-background shadow-xs'
-                              : 'text-muted hover:text-foreground'
+                              ? 'bg-[#171717] text-white border border-black shadow-[1px_1px_0px_#000000]'
+                              : 'text-neutral-600 hover:text-black hover:bg-neutral-100'
                           }`}
                         >
                           <FileText size={12} />
@@ -2126,7 +2142,7 @@ export function Admin() {
                           setSelectedPostImageFile(null)
                           setPostImagePreviewUrl(null)
                         }}
-                        className="text-xs text-muted hover:text-foreground font-mono p-1"
+                        className="text-xs text-neutral-500 hover:text-black font-mono p-1.5 hover:bg-neutral-200 rounded cursor-pointer transition-colors"
                         title="Close modal"
                       >
                         ✕
@@ -2138,7 +2154,7 @@ export function Admin() {
                     {/* OBSERVATION TAPE FORMAT */}
                     {isObservation(editingPost) ? (
                       <>
-                        <div className="p-3 bg-[#AFD080]/20 border border-black/40 text-xs text-neutral-900 flex items-start gap-2.5">
+                        <div className="p-3 bg-[#AFD080]/25 border border-black/40 text-xs text-neutral-900 flex items-start gap-2.5 rounded-xs">
                           <Tv size={17} className="text-emerald-800 shrink-0 mt-0.5" />
                           <div className="leading-relaxed">
                             <strong>Interactive Retro TV Tape:</strong> This entry is placed in the cassette rack on <code>/blog?tab=observations</code> and plays with real typewriter sound and animations inside the 3D Retro TV screen.
@@ -2147,7 +2163,7 @@ export function Admin() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono text-neutral-800">
                               Tape Number (e.g. 008)
                             </label>
                             <input
@@ -2156,15 +2172,15 @@ export function Admin() {
                               value={editingPost.number || ''}
                               onChange={(e) => setEditingPost({ ...editingPost, number: e.target.value })}
                               placeholder="008"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-mono placeholder:text-neutral-400"
                             />
-                            <p className="text-[10px] text-muted mt-1 font-mono">
+                            <p className="text-[10px] text-neutral-500 mt-1 font-mono">
                               Label: No.{String(editingPost.number || '001').padStart(3, '0')}
                             </p>
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">
                               Date (Printed on Tape)
                             </label>
                             <input
@@ -2173,18 +2189,18 @@ export function Admin() {
                               value={editingPost.date}
                               onChange={(e) => setEditingPost({ ...editingPost, date: e.target.value })}
                               placeholder="29 Sept 2026"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-mono placeholder:text-neutral-400"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">
                               Category
                             </label>
                             <select
                               value={editingPost.category}
                               onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black"
                             >
                               <option value="Observations">Observations</option>
                               <option value="Thoughts">Thoughts</option>
@@ -2194,7 +2210,7 @@ export function Admin() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">
                               Observation Title (Printed on Cassette)
                             </label>
                             <input
@@ -2213,12 +2229,12 @@ export function Admin() {
                                 })
                               }}
                               placeholder="e.g. Standing up for no reason"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-semibold"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-semibold placeholder:text-neutral-400"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono text-neutral-800">
                               URL Slug
                             </label>
                             <input
@@ -2227,19 +2243,19 @@ export function Admin() {
                               value={editingPost.slug}
                               onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
                               placeholder="e.g. standing-up-for-no-reason"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-mono placeholder:text-neutral-400"
                             />
                           </div>
                         </div>
 
                         {/* The 3 Core Structured Story Sections */}
-                        <div className="space-y-3 p-4 bg-neutral-50 dark:bg-neutral-900 border border-token rounded-xs">
+                        <div className="space-y-4 p-4 bg-white border border-black/25 rounded-xs shadow-[2px_2px_0px_rgba(0,0,0,0.04)]">
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <label className="block text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400 font-mono">
+                              <label className="block text-xs font-bold uppercase tracking-wider text-emerald-900 font-mono">
                                 1. [ observation ] What did you notice?
                               </label>
-                              <span className="text-[10px] text-muted">First section typed on TV</span>
+                              <span className="text-[10px] text-neutral-500 font-mono">First section typed on TV</span>
                             </div>
                             <textarea
                               rows={3}
@@ -2247,16 +2263,16 @@ export function Admin() {
                               value={editingPost.observation || ''}
                               onChange={(e) => setEditingPost({ ...editingPost, observation: e.target.value })}
                               placeholder="In the metro today I kept noticing people standing up way before their station, holding the pole and staring at the door for a whole minute..."
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                              className="w-full px-3 py-2.5 text-xs bg-[#FAF9F5] text-[#171717] border border-black/30 rounded-xs focus:outline-black focus:bg-white font-mono leading-relaxed placeholder:text-neutral-400"
                             />
                           </div>
 
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <label className="block text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400 font-mono">
+                              <label className="block text-xs font-bold uppercase tracking-wider text-amber-900 font-mono">
                                 2. [ question ] The &ldquo;Why&rdquo; question
                               </label>
-                              <span className="text-[10px] text-muted">Highlighted question prompt</span>
+                              <span className="text-[10px] text-neutral-500 font-mono">Highlighted question prompt</span>
                             </div>
                             <textarea
                               rows={2}
@@ -2264,16 +2280,16 @@ export function Admin() {
                               value={editingPost.question || ''}
                               onChange={(e) => setEditingPost({ ...editingPost, question: e.target.value })}
                               placeholder="Why do people stand up so early, before the metro even reaches their station?"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                              className="w-full px-3 py-2.5 text-xs bg-[#FAF9F5] text-[#171717] border border-black/30 rounded-xs focus:outline-black focus:bg-white font-mono leading-relaxed placeholder:text-neutral-400"
                             />
                           </div>
 
                           <div>
                             <div className="flex items-center justify-between mb-1">
-                              <label className="block text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-400 font-mono">
+                              <label className="block text-xs font-bold uppercase tracking-wider text-indigo-900 font-mono">
                                 3. [ answer ] Reflection & Insight
                               </label>
-                              <span className="text-[10px] text-muted">Your thought, insight or principle</span>
+                              <span className="text-[10px] text-neutral-500 font-mono">Your thought, insight or principle</span>
                             </div>
                             <textarea
                               rows={5}
@@ -2281,13 +2297,13 @@ export function Admin() {
                               value={editingPost.answer || ''}
                               onChange={(e) => setEditingPost({ ...editingPost, answer: e.target.value })}
                               placeholder="Mostly it is uncertainty. When you are not sure when your stop is coming, your brain adds a safety buffer..."
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                              className="w-full px-3 py-2.5 text-xs bg-[#FAF9F5] text-[#171717] border border-black/30 rounded-xs focus:outline-black focus:bg-white font-mono leading-relaxed placeholder:text-neutral-400"
                             />
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-black/10">
                             <div>
-                              <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">
+                              <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono text-neutral-800">
                                 Signature
                               </label>
                               <input
@@ -2295,13 +2311,13 @@ export function Admin() {
                                 value={editingPost.signature || ''}
                                 onChange={(e) => setEditingPost({ ...editingPost, signature: e.target.value })}
                                 placeholder="— Adi"
-                                className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                                className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-mono placeholder:text-neutral-400"
                               />
                             </div>
 
                             <div>
                               <div className="flex items-center justify-between mb-1">
-                                <label className="block text-xs font-bold uppercase tracking-wider">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-800">
                                   Card Teaser / Excerpt
                                 </label>
                                 {editingPost.observation && (
@@ -2311,7 +2327,7 @@ export function Admin() {
                                       const firstSentence = editingPost.observation?.split(/(?<=[.?!])\s+/)[0] || editingPost.observation || ''
                                       setEditingPost({ ...editingPost, excerpt: firstSentence })
                                     }}
-                                    className="text-[10px] text-accent hover:underline flex items-center gap-1 cursor-pointer font-medium"
+                                    className="text-[10px] text-blue-700 hover:underline flex items-center gap-1 cursor-pointer font-medium"
                                   >
                                     <Copy size={10} />
                                     <span>Copy 1st sentence</span>
@@ -2323,24 +2339,24 @@ export function Admin() {
                                 value={editingPost.excerpt}
                                 onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
                                 placeholder="Short overview..."
-                                className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                                className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black placeholder:text-neutral-400"
                               />
                             </div>
                           </div>
                         </div>
 
                         {/* Live Cassette & TV Preview */}
-                        <div className="border border-token rounded-xs overflow-hidden">
+                        <div className="border border-black/25 rounded-xs overflow-hidden">
                           <button
                             type="button"
                             onClick={() => setShowObservationPreview((prev) => !prev)}
-                            className="w-full px-3 py-2 bg-neutral-100 dark:bg-neutral-800 text-xs font-bold flex items-center justify-between border-b border-token cursor-pointer"
+                            className="w-full px-3 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-900 text-xs font-bold flex items-center justify-between border-b border-black/20 cursor-pointer transition-colors"
                           >
                             <div className="flex items-center gap-1.5">
                               <Sparkles size={13} className="text-amber-500" />
                               <span>Live Cassette & TV Screen Preview</span>
                             </div>
-                            <span className="text-[11px] text-muted">{showObservationPreview ? 'Hide ▲' : 'Show ▼'}</span>
+                            <span className="text-[11px] text-neutral-600 font-mono">{showObservationPreview ? 'Hide ▲' : 'Show ▼'}</span>
                           </button>
 
                           {showObservationPreview && (
@@ -2396,7 +2412,7 @@ export function Admin() {
                       /* BLOG ARTICLE FORMAT */
                       <>
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">Title</label>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">Title</label>
                           <input
                             type="text"
                             required
@@ -2413,28 +2429,28 @@ export function Admin() {
                               })
                             }}
                             placeholder="e.g. Why I Built LoreGraph"
-                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-semibold"
+                            className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-semibold placeholder:text-neutral-400"
                           />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">URL Slug</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono text-neutral-800">URL Slug</label>
                             <input
                               type="text"
                               required
                               value={editingPost.slug}
                               onChange={(e) => setEditingPost({ ...editingPost, slug: e.target.value })}
                               placeholder="e.g. why-i-built-loregraph"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-mono placeholder:text-neutral-400"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Category</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">Category</label>
                             <select
                               value={editingPost.category}
                               onChange={(e) => setEditingPost({ ...editingPost, category: e.target.value })}
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black"
                             >
                               <option value="Thoughts">Thoughts</option>
                               <option value="Projects">Projects</option>
@@ -2448,56 +2464,56 @@ export function Admin() {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono">Date</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 font-mono text-neutral-800">Date</label>
                             <input
                               type="text"
                               required
                               value={editingPost.date}
                               onChange={(e) => setEditingPost({ ...editingPost, date: e.target.value })}
                               placeholder="e.g. 28 Sep 2026"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black font-mono placeholder:text-neutral-400"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider mb-1">Reading Time (optional)</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">Reading Time (optional)</label>
                             <input
                               type="text"
                               value={editingPost.readTime || ''}
                               onChange={(e) => setEditingPost({ ...editingPost, readTime: e.target.value })}
                               placeholder="e.g. 4 min read"
-                              className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                              className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black placeholder:text-neutral-400"
                             />
                           </div>
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">Card Excerpt</label>
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">Card Excerpt</label>
                           <textarea
                             rows={2}
                             required
                             value={editingPost.excerpt}
                             onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
                             placeholder="Brief 1-2 sentence overview shown on the blog card..."
-                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent leading-relaxed"
+                            className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black leading-relaxed placeholder:text-neutral-400"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">Thumbnail / Illustration</label>
-                          <div className="border border-dashed border-token p-4 rounded-xs bg-[rgba(23,23,23,0.015)] text-center">
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">Thumbnail / Illustration</label>
+                          <div className="border border-dashed border-black/30 p-4 rounded-xs bg-white text-center">
                             {postImagePreviewUrl ? (
                               <div className="mb-3">
                                 <img
                                   src={postImagePreviewUrl}
                                   alt="Thumbnail preview"
-                                  className="max-h-32 mx-auto object-contain rounded-xs border border-token shadow-xs"
+                                  className="max-h-32 mx-auto object-contain rounded-xs border border-black/20 shadow-xs"
                                 />
-                                <p className="text-[10px] text-muted mt-1 font-mono">
+                                <p className="text-[10px] text-neutral-500 mt-1 font-mono">
                                   {editingPost.image || selectedPostImageFile?.name}
                                 </p>
                               </div>
                             ) : (
-                              <Upload size={24} className="mx-auto text-muted mb-2" />
+                              <Upload size={24} className="mx-auto text-neutral-400 mb-2" />
                             )}
 
                             <input
@@ -2515,7 +2531,7 @@ export function Admin() {
                             />
                             <label
                               htmlFor="post-image-upload"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100 cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-black/30 bg-white hover:bg-neutral-100 rounded-xs cursor-pointer text-neutral-800"
                             >
                               <Upload size={12} />
                               <span>{postImagePreviewUrl ? 'Change Image' : 'Upload Illustration'}</span>
@@ -2537,7 +2553,7 @@ export function Admin() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                          <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">
                             Article Content
                           </label>
                           <textarea
@@ -2545,13 +2561,13 @@ export function Admin() {
                             value={editingPost.content || ''}
                             onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
                             placeholder="Write your full note here. Use paragraphs, linebreaks, and ideas..."
-                            className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono leading-relaxed"
+                            className="w-full px-3 py-2 text-xs bg-[#FAF9F5] text-[#171717] border border-black/30 rounded-xs focus:outline-black focus:bg-white font-mono leading-relaxed placeholder:text-neutral-400"
                           />
                         </div>
                       </>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-3 border-t border-token">
+                    <div className="flex justify-end gap-2 pt-3 border-t border-black/20">
                       <button
                         type="button"
                         onClick={() => {
@@ -2560,13 +2576,13 @@ export function Admin() {
                           setSelectedPostImageFile(null)
                           setPostImagePreviewUrl(null)
                         }}
-                        className="px-4 py-2 text-xs font-semibold border border-token rounded-xs hover:bg-neutral-100 cursor-pointer"
+                        className="px-4 py-2 text-xs font-semibold border border-black/30 bg-white text-neutral-800 rounded-xs hover:bg-neutral-100 cursor-pointer transition-colors"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90 cursor-pointer"
+                        className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-[#171717] text-white border border-black shadow-[2px_2px_0px_#000000] rounded-xs hover:bg-[#333333] cursor-pointer transition-colors"
                       >
                         {isObservation(editingPost) ? 'Save Observation Tape' : 'Save Article'}
                       </button>
@@ -2598,7 +2614,7 @@ export function Admin() {
                   setExperimentsData([...experimentsData, newExp])
                   setHasChanges(true)
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-xs hover:opacity-90"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider bg-[#171717] text-white border border-black shadow-[2px_2px_0px_#000000] hover:bg-[#333333] transition-all rounded-xs cursor-pointer"
               >
                 <Plus size={14} />
                 <span>Add Experiment</span>
