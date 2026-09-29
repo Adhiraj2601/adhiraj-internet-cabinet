@@ -171,3 +171,18 @@ button:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes wavy-stripes-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(var(--wave-shift, -105px));
+  }
+}
+
+.wavy-stripes__slide {
+  animation: wavy-stripes-slide linear infinite;
+  will-change: transform;
+}
+

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { posts } from '../../content/posts'
 import { SectionLabel } from '../ui/SectionLabel'
+import { WavyStripes } from '../ui/WavyStripes'
 import { stagger, fadeUp } from '../../lib/animations'
 
 export function Notes() {
@@ -48,8 +49,10 @@ export function Notes() {
               boxShadow: '6px 6px 0px #000000',
             }}
           >
+            <WavyStripes />
+
             {/* Top Bar inside Card */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-6 sm:pb-8 border-b border-black/20">
+            <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 pb-6 sm:pb-8 border-b border-black/20">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#315CFF] animate-pulse" />
                 <span className="font-mono text-xs sm:text-sm font-bold tracking-wider uppercase text-neutral-900">
@@ -68,7 +71,7 @@ export function Notes() {
             </div>
 
             {/* Main Content Grid: Description & Button on left, Scrapbook Preview on right */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pt-6 sm:pt-8 items-center">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pt-6 sm:pt-8 items-center">
               {/* Left Column: Headline, Description, Tactile button */}
               <div className="lg:col-span-7 flex flex-col items-start gap-5 sm:gap-6">
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 leading-tight">
