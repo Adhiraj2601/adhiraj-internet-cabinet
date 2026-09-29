@@ -72,7 +72,7 @@ export function Notes() {
               {/* Left Column: Headline, Description, Tactile button */}
               <div className="lg:col-span-7 flex flex-col items-start gap-5 sm:gap-6">
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-neutral-900 leading-tight">
-                  Welcome to my piece of personal internet real estate
+                  Welcome to my personal internet real estate
                 </h3>
 
                 <p className="text-base sm:text-lg text-neutral-800 leading-relaxed font-sans max-w-xl">
