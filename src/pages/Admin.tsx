@@ -644,7 +644,7 @@ export function Admin() {
             </Link>
             <div className="h-4 w-px bg-token" />
             <h1 className="text-sm font-bold tracking-widest uppercase">
-              Admin Cabinet
+              Admin Archive
             </h1>
           </div>
 
@@ -867,7 +867,7 @@ export function Admin() {
 
               <div className="mt-3">
                 <a
-                  href="https://github.com/settings/tokens/new?scopes=repo&description=Adhiraj+Internet+Cabinet+Admin"
+                  href="https://github.com/settings/tokens/new?scopes=repo&description=Adis+Archive+Admin"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-xs text-accent hover:underline font-medium"

@@ -42,7 +42,7 @@ export function Hero() {
           transition={{ duration: 0.5, delay: 0.35 }}
           className="mb-8 md:mb-12"
         >
-          <SectionLabel>Personal Internet Cabinet / 2026</SectionLabel>
+          <SectionLabel>Adi's Archive / 2026</SectionLabel>
         </motion.div>
 
         {/* 2-column editorial grid: Intro on left, Image Placeholder on right */}

@@ -93,7 +93,7 @@ export function SketchesPage() {
             className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-muted hover:text-foreground transition-colors group"
           >
             <span className="transform transition-transform duration-200 group-hover:-translate-x-1">←</span>
-            <span>Back to Cabinet</span>
+            <span>Back to Archive</span>
           </Link>
         </motion.div>
 

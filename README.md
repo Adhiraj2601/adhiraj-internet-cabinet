@@ -1,4 +1,4 @@
-# Adhiraj's Internet Cabinet
+# Adi's Archive
 
 A personal corner of the internet. Things I build, books I read, ideas I collect.
 
