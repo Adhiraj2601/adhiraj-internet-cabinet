@@ -64,7 +64,7 @@ export function Hero() {
                   >
                     {line.text === "i'm adi." ? (
                       <>
-                        i'm <span style={{ color: '#A8CB7C' }}>adi</span>.
+                        i'm <span style={{ color: '#A8CB7C' }}>adi.</span>
                       </>
                     ) : (
                       line.text
