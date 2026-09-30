@@ -62,7 +62,13 @@ export function Hero() {
                     }}
                     className="block"
                   >
-                    {line.text}
+                    {line.text === "i'm adi." ? (
+                      <>
+                        i'm <span style={{ color: '#A8CB7C' }}>adi</span>.
+                      </>
+                    ) : (
+                      line.text
+                    )}
                   </motion.span>
                 </span>
               ))}
