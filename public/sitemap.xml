@@ -25,13 +25,25 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://adhirajs.vercel.app/blog/homo-sapiens</loc>
+    <lastmod>2026-09-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://adhirajs.vercel.app/blog/wasting-time</loc>
+    <lastmod>2026-09-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://adhirajs.vercel.app/blog/too-many-ideas</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://adhirajs.vercel.app/blog/motivation</loc>
+    <loc>https://adhirajs.vercel.app/blog/change</loc>
     <lastmod>2026-09-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
