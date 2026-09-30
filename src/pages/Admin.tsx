@@ -661,7 +661,11 @@ export function Admin() {
     const finalNumber = editingPost.number?.trim() || (isObs ? '001' : '01')
     const finalExcerpt =
       editingPost.excerpt?.trim() ||
-      (isObs && editingPost.observation ? editingPost.observation.slice(0, 140) + '...' : '')
+      (isObs && editingPost.observation
+        ? editingPost.observation.slice(0, 140) + '...'
+        : editingPost.content
+          ? editingPost.content.slice(0, 140).replace(/\n+/g, ' ') + '...'
+          : '')
     const finalContent =
       editingPost.content?.trim() || (isObs && editingPost.observation ? editingPost.observation : '')
 
@@ -2698,17 +2702,6 @@ export function Admin() {
                           </div>
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">Card Excerpt</label>
-                          <textarea
-                            rows={2}
-                            required
-                            value={editingPost.excerpt}
-                            onChange={(e) => setEditingPost({ ...editingPost, excerpt: e.target.value })}
-                            placeholder="Brief 1-2 sentence overview shown on the blog card..."
-                            className="w-full px-3 py-2 text-xs bg-white text-[#171717] border border-black/30 rounded-xs focus:outline-black leading-relaxed placeholder:text-neutral-400"
-                          />
-                        </div>
 
                         <div>
                           <label className="block text-xs font-bold uppercase tracking-wider mb-1 text-neutral-800">Thumbnail / Illustration</label>
