@@ -45,7 +45,7 @@ export const SketchbookViewer: React.FC<SketchbookViewerProps> = ({ className = 
   return (
     <div
       ref={containerRef}
-      className={`relative w-full aspect-[4/4.2] sm:aspect-[4/3] md:aspect-[16/10] bg-[#C7DCB1] border-2 border-black shadow-[6px_6px_0px_#000000] overflow-hidden select-none ${className}`}
+      className={`relative w-full aspect-[4/4.2] sm:aspect-[4/3] md:aspect-[16/10] bg-[#F3EFE6] border-2 border-black shadow-[6px_6px_0px_#000000] overflow-hidden select-none ${className}`}
     >
       {/* Placeholder shown until iframe mounts and loads */}
       {(!shouldLoad || !isIframeLoaded) && (
