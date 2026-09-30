@@ -85,8 +85,11 @@ export function Scrapbook() {
                     <img
                       src={item.src}
                       alt={item.alt}
-                      className="w-full h-full object-cover select-none"
+                      width={300}
+                      height={300}
                       loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover select-none"
                       onError={(e) => {
                         const target = e.currentTarget
                         target.style.display = 'none'

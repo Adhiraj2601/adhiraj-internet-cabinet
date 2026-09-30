@@ -16,17 +16,10 @@ const supportingLines = [
 ]
 
 export function Hero() {
-  const [heroSrc, setHeroSrc] = useState('/images/hero.jpg')
   const [imgError, setImgError] = useState(false)
 
   const handleImgError = () => {
-    if (heroSrc === '/images/hero.jpg') {
-      setHeroSrc('/images/hero.jpg.png')
-    } else if (heroSrc === '/images/hero.jpg.png') {
-      setHeroSrc('/images/hero.png')
-    } else {
-      setImgError(true)
-    }
+    setImgError(true)
   }
 
   return (
@@ -50,10 +43,16 @@ export function Hero() {
           {/* Left Column: Heading & Supporting Text */}
           <div className="lg:col-span-7 flex flex-col justify-center">
             {/* Large hero text */}
-            <div className="overflow-hidden">
+            <h1
+              className="leading-none font-bold tracking-tighter"
+              style={{
+                fontSize: 'clamp(3.5rem, 8vw, 8.5rem)',
+                color: 'var(--foreground)',
+              }}
+            >
               {heroLines.map((line) => (
-                <div key={line.text} className="overflow-hidden">
-                  <motion.h1
+                <span key={line.text} className="block overflow-hidden">
+                  <motion.span
                     initial={{ y: '100%', opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{
@@ -61,17 +60,13 @@ export function Hero() {
                       delay: line.delay,
                       ease: [0.76, 0, 0.24, 1],
                     }}
-                    className="leading-none font-bold tracking-tighter"
-                    style={{
-                      fontSize: 'clamp(3.5rem, 8vw, 8.5rem)',
-                      color: 'var(--foreground)',
-                    }}
+                    className="block"
                   >
                     {line.text}
-                  </motion.h1>
-                </div>
+                  </motion.span>
+                </span>
               ))}
-            </div>
+            </h1>
 
             {/* Supporting text */}
             <div className="mt-8 md:mt-10">
@@ -92,9 +87,9 @@ export function Hero() {
 
           {/* Right Column: Editorial Image */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0.9, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.85, ease: 'easeOut' }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
             className="lg:col-span-5 flex flex-col justify-center"
           >
             <div className="relative group">
@@ -122,12 +117,28 @@ export function Hero() {
                 }}
               >
                 {!imgError ? (
-                  <img
-                    src={heroSrc}
-                    alt="Adhiraj Sengar"
-                    className="w-full h-full object-cover"
-                    onError={handleImgError}
-                  />
+                  <picture>
+                    <source
+                      type="image/avif"
+                      srcSet="/images/hero-480.avif 480w, /images/hero-800.avif 800w, /images/hero-1200.avif 1200w"
+                      sizes="(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 520px"
+                    />
+                    <source
+                      type="image/webp"
+                      srcSet="/images/hero-480.webp 480w, /images/hero-800.webp 800w, /images/hero-1200.webp 1200w"
+                      sizes="(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 520px"
+                    />
+                    <img
+                      src="/images/hero.webp"
+                      alt="Adhiraj Sengar"
+                      width={520}
+                      height={390}
+                      fetchPriority="high"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                      onError={handleImgError}
+                    />
+                  </picture>
                 ) : (
                   <div className="w-full h-full border border-dashed border-token flex flex-col items-center justify-center p-6 text-center transition-colors group-hover:border-[rgba(23,23,23,0.35)]">
                     {/* Viewfinder icon */}

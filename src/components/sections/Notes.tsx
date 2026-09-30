@@ -114,8 +114,12 @@ export function Notes() {
                     style={{ border: '1.5px solid #000000' }}
                   >
                     <img
-                      src="/images/blog/thinking-cat.jpg"
+                      src="/images/blog/thinking-cat.webp"
                       alt="Thinking cat doodle"
+                      width={180}
+                      height={180}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-contain p-2 select-none"
                     />
                   </div>

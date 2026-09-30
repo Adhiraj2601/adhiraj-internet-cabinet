@@ -48,9 +48,12 @@ function BookCard({ book, index }: { book: typeof books[0]; index: number }) {
           <img
             src={book.cover}
             alt={`${book.title} cover`}
+            width={200}
+            height={300}
             className="w-full h-full object-cover select-none"
             onError={() => setImgError(true)}
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-between p-4 text-center">

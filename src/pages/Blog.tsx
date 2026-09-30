@@ -101,8 +101,11 @@ function BlogCard({ post, index }: { post: Post; index: number }) {
           <img
             src={post.image}
             alt={post.title}
-            className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-300"
+            width={400}
+            height={400}
             loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover select-none group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <DefaultDoodle index={index} />
@@ -309,8 +312,12 @@ export function Blog() {
         aria-hidden="true"
       >
         <img
-          src="/images/crumpled-paper-texture.png"
+          src="/images/crumpled-paper-texture.webp"
           alt=""
+          width={1600}
+          height={1067}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover object-center pointer-events-none select-none"
           style={{
             opacity: 0.14,
@@ -382,9 +389,13 @@ export function Blog() {
                 {/* Peeking Cat Sticker behind the picture frame */}
                 <div className="peek-cat">
                   <img
-                    src="/images/blog/peek-cat.png"
+                    src="/images/blog/peek-cat.webp"
                     alt="Peeking Cat"
                     aria-hidden="true"
+                    width={500}
+                    height={316}
+                    loading="lazy"
+                    decoding="async"
                     className="peek-cat-img w-full h-auto block select-none"
                   />
                 </div>
@@ -398,12 +409,15 @@ export function Blog() {
                   }}
                 >
                   <img
-                    src="/images/blog/adhiraj-avatar.jpg"
+                    src="/images/blog/adhiraj-avatar.webp"
                     alt="Adhiraj"
+                    width={520}
+                    height={390}
+                    decoding="async"
                     className="w-full h-full object-cover select-none"
                     onError={(e) => {
                       const target = e.currentTarget
-                      target.src = '/images/blog/cat-doodle.jpg'
+                      target.src = '/images/blog/cat-doodle.webp'
                     }}
                   />
                 </div>

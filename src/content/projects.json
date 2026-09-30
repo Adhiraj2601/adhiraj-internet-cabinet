@@ -7,7 +7,7 @@
     "category": "World Building",
     "description": "A visual space for connecting ideas, characters and worlds. Built to keep my thoughts, stories, and inspirations in one place.",
     "year": "2026",
-    "image": "/images/projects/loregraph.png",
+    "image": "/images/projects/loregraph.webp",
     "github": "https://github.com/adhirajsengar/loregraph"
   },
   {
@@ -18,7 +18,7 @@
     "category": "Creative Coding",
     "description": "A lightweight digital drawing application built in Python, created as a space to explore graphics programming through a simple and intuitive interface.",
     "year": "2025",
-    "image": "/images/projects/pycasso.png",
+    "image": "/images/projects/pycasso.webp",
     "github": "https://github.com/adhirajsengar/pycasso"
   },
   {
@@ -29,7 +29,7 @@
     "category": "Game",
     "description": "A JavaScript chess game I built to learn and better understand JavaScript through a hands-on project. I’m now experimenting with incorporating UNO mechanics into the chess game to create a unique chess-UNO hybrid.",
     "year": "2024",
-    "image": "/images/projects/chess.png",
+    "image": "/images/projects/chess.webp",
     "github": "https://github.com/adhirajsengar/js-chess"
   }
 ]

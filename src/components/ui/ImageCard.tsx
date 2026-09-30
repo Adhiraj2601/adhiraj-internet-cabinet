@@ -50,9 +50,12 @@ export function ImageCard({
         <img
           src={src}
           alt={alt}
+          width={400}
+          height={300}
           className="w-full h-full object-cover transition-transform duration-500"
           onError={() => setImgError(true)}
           loading="lazy"
+          decoding="async"
         />
       )}
     </motion.div>

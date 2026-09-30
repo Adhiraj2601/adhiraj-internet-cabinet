@@ -267,9 +267,12 @@ export function BlogPost() {
         }}
       >
         <img
-          src="/images/blog/floating-cat.png"
+          src="/images/blog/floating-cat.webp"
           alt=""
           aria-hidden="true"
+          width={52}
+          height={45}
+          decoding="async"
           className="floating-sticker select-none"
           style={{
             position: 'absolute',
@@ -290,8 +293,11 @@ export function BlogPost() {
             {/* Thumbnail: controlled visual size 360x240 on desktop */}
             <div className="blog-cover rounded-xs">
               <img
-                src={post.image || '/images/blog/cat-doodle.jpg'}
+                src={post.image || '/images/blog/cat-doodle.webp'}
                 alt={post.title}
+                width={360}
+                height={240}
+                decoding="async"
                 className="select-none"
               />
             </div>

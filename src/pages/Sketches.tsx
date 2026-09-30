@@ -237,9 +237,12 @@ export function SketchesPage() {
                 >
                   <img
                     src={item.src}
-                    alt={item.alt}
-                    className="w-full h-full object-cover select-none"
+                    alt={item.alt || 'Visual scrap sketch'}
+                    width={400}
+                    height={400}
                     loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover select-none"
                     onError={(e) => {
                       const target = e.currentTarget
                       target.style.display = 'none'
@@ -383,7 +386,8 @@ export function SketchesPage() {
               <div className="p-6 md:p-8 flex items-center justify-center bg-[rgba(23,23,23,0.02)] overflow-y-auto max-h-[65vh]">
                 <img
                   src={selectedSketch.src}
-                  alt={selectedSketch.alt}
+                  alt={selectedSketch.alt || 'Sketch preview'}
+                  decoding="async"
                   className="max-h-[58vh] max-w-full object-contain rounded-2xs shadow-md border border-token/60"
                   style={{
                     transform: `rotate(${selectedSketch.rotation || 0}deg)`,

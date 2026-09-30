@@ -5,7 +5,7 @@
     "author": "Adrian Tchaikovsky",
     "note": "currently making me rethink spiders.",
     "status": "reading",
-    "cover": "/images/books/children of time.png"
+    "cover": "/images/books/children of time.webp"
   },
   {
     "id": "02",
@@ -13,7 +13,7 @@
     "author": "Art Spiegelman",
     "note": "graphic novel. history. mice. more devastating than it has any right to be.",
     "status": "read",
-    "cover": "/images/books/maus.jpg"
+    "cover": "/images/books/maus.webp"
   },
   {
     "id": "03",
@@ -21,7 +21,7 @@
     "author": "Samantha Harvey",
     "note": "sixteen sunrises a day from orbit. makes earth feel very small.",
     "status": "reading",
-    "cover": "/images/books/orbital.jpg"
+    "cover": "/images/books/orbital.webp"
   },
   {
     "id": "04",
@@ -29,7 +29,7 @@
     "author": "Neal Stephenson",
     "note": "invented the metaverse. very chaotic. very fun.",
     "status": "read",
-    "cover": "/images/books/snow crash.png"
+    "cover": "/images/books/snow crash.webp"
   },
   {
     "id": "05",
@@ -37,7 +37,7 @@
     "author": "George Orwell",
     "note": "you already know what it's about.",
     "status": "read",
-    "cover": "/images/books/animal farm.jpg"
+    "cover": "/images/books/animal farm.webp"
   },
   {
     "id": "06",
@@ -45,7 +45,7 @@
     "author": "Paulo Coelho",
     "note": "everyone has read this. there is a reason.",
     "status": "read",
-    "cover": "/images/books/alchemist.png"
+    "cover": "/images/books/alchemist.webp"
   },
   {
     "id": "07",
@@ -53,7 +53,7 @@
     "author": "Satoshi Yagisawa",
     "note": "small. warm. a reminder that books are about more than reading.",
     "status": "read",
-    "cover": "/images/books/days.jpg"
+    "cover": "/images/books/days.webp"
   },
   {
     "id": "08",
@@ -61,7 +61,7 @@
     "author": "Ernest Cline",
     "note": "The book that got me into sci-fi",
     "status": "read",
-    "cover": "/images/books/Ready_Player_One_cover.jpg"
+    "cover": "/images/books/Ready_Player_One_cover.webp"
   },
   {
     "id": "09",
@@ -69,7 +69,7 @@
     "author": "Andy Weir",
     "note": "A heist...set on the moon ",
     "status": "read",
-    "cover": "/images/books/Artemis-Andy_Weir_(2017).jpg"
+    "cover": "/images/books/Artemis-Andy_Weir_(2017).webp"
   },
   {
     "id": "10",
@@ -77,7 +77,7 @@
     "author": "Andy Weir",
     "note": "Rocky Rocks",
     "status": "read",
-    "cover": "/images/books/Screenshot 2026-09-28 002254.png"
+    "cover": "/images/books/Screenshot 2026-09-28 002254.webp"
   },
   {
     "id": "11",
@@ -85,7 +85,7 @@
     "author": "Ernest Cline",
     "note": "not what I expected (after ready player 1)",
     "status": "read",
-    "cover": "/images/books/Ready_Player_Two_-_book_cover.jpg"
+    "cover": "/images/books/Ready_Player_Two_-_book_cover.webp"
   },
   {
     "id": "12",
@@ -93,7 +93,7 @@
     "author": "Ernest Cline",
     "note": "A treat for gamer readers",
     "status": "read",
-    "cover": "/images/books/Armada_novel_cover.jpg"
+    "cover": "/images/books/Armada_novel_cover.webp"
   },
   {
     "id": "13",
@@ -101,7 +101,7 @@
     "author": "Amie Kaufman",
     "note": "My intro to YA fiction ",
     "status": "read",
-    "cover": "/images/books/30075662.jpg"
+    "cover": "/images/books/30075662.webp"
   },
   {
     "id": "14",
@@ -109,7 +109,7 @@
     "author": "H.G. Wells",
     "note": "the terror and panic felt through the pages with the twist at the end ",
     "status": "read",
-    "cover": "/images/books/91ab6c738d11916dea819baf945b9f93.jpg"
+    "cover": "/images/books/91ab6c738d11916dea819baf945b9f93.webp"
   },
   {
     "id": "15",
@@ -117,7 +117,7 @@
     "author": "Randall Munroe",
     "note": "How do people even come up with some of these questions...",
     "status": "read",
-    "cover": "/images/books/21413662.jpg"
+    "cover": "/images/books/21413662.webp"
   },
   {
     "id": "16",
@@ -125,7 +125,7 @@
     "author": "Adam Higginbotham",
     "note": "Unlike thermal burns caused by heat alone, which heal slowly over time, radiation burns grow gradually worse—Goosebumps",
     "status": "read",
-    "cover": "/images/books/40538681.jpg"
+    "cover": "/images/books/40538681.webp"
   },
   {
     "id": "17",
@@ -133,7 +133,7 @@
     "author": "Jeff Kinney",
     "note": "my first ever comic",
     "status": "read",
-    "cover": "/images/books/389627.jpg"
+    "cover": "/images/books/389627.webp"
   },
   {
     "id": "18",
@@ -141,7 +141,7 @@
     "author": "Amie Kaufman",
     "note": "romantic space opera ",
     "status": "read",
-    "cover": "/images/books/23395680.jpg"
+    "cover": "/images/books/23395680.webp"
   },
   {
     "id": "19",
@@ -149,7 +149,7 @@
     "author": "Marie Lu",
     "note": "Young adult may not be up for me",
     "status": "read",
-    "cover": "/images/books/29386918.jpg"
+    "cover": "/images/books/29386918.webp"
   },
   {
     "id": "20",
@@ -157,7 +157,7 @@
     "author": "Liu Cixin",
     "note": "the detailing in worldbuilding is way too good ",
     "status": "read",
-    "cover": "/images/books/20518872.jpg"
+    "cover": "/images/books/20518872.webp"
   },
   {
     "id": "21",
@@ -165,7 +165,7 @@
     "author": "Adolf Hitler",
     "note": "how a small incident gave birth to the biggest tragedy",
     "status": "read",
-    "cover": "/images/books/images (2).jpg"
+    "cover": "/images/books/images (2).webp"
   },
   {
     "id": "22",
@@ -173,6 +173,6 @@
     "author": "singNsong",
     "note": "A emotional rollercoaster that got me into light novels",
     "status": "read",
-    "cover": "/images/books/220520518.jpg"
+    "cover": "/images/books/220520518.webp"
   }
 ]

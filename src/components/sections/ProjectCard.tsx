@@ -71,8 +71,11 @@ function ProjectCardTextLeft({ project }: { project: Project }) {
             <img
               src={project.image}
               alt={project.title}
+              width={600}
+              height={400}
               className="w-full h-auto max-h-[500px] object-contain rounded-xs"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-64 flex items-center justify-center">
@@ -106,8 +109,11 @@ function ProjectCardTextRight({ project }: { project: Project }) {
             <img
               src={project.image}
               alt={project.title}
+              width={600}
+              height={400}
               className="w-full h-auto max-h-[500px] object-contain rounded-xs"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-64 flex items-center justify-center">
@@ -188,8 +194,11 @@ function ProjectCardFullWidth({ project }: { project: Project }) {
           <img
             src={project.image}
             alt={project.title}
+            width={800}
+            height={500}
             className="w-full h-auto max-h-[750px] object-contain rounded-xs"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-64 flex items-center justify-center">
@@ -231,8 +240,11 @@ function ProjectCardLargeText({ project }: { project: Project }) {
             <img
               src={project.image}
               alt={project.title}
+              width={600}
+              height={400}
               className="w-full h-auto max-h-[420px] object-contain rounded-xs"
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="w-full h-48 flex items-center justify-center">

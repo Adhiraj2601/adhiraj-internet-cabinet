@@ -1,7 +1,7 @@
 [
   {
     "id": "01",
-    "src": "/images/scrapbook/6e6a5492-4d07-4ea4-a638-9731131f18eb.jpg",
+    "src": "/images/scrapbook/6e6a5492-4d07-4ea4-a638-9731131f18eb.webp",
     "alt": "the beginning of everything",
     "rotation": -2,
     "size": "tall",
@@ -11,7 +11,7 @@
   },
   {
     "id": "02",
-    "src": "/images/scrapbook/angel.jpg",
+    "src": "/images/scrapbook/angel.webp",
     "alt": "inspired by a manga",
     "rotation": 1.5,
     "size": "tall",
@@ -21,7 +21,7 @@
   },
   {
     "id": "03",
-    "src": "/images/scrapbook/eye.jpg",
+    "src": "/images/scrapbook/eye.webp",
     "alt": "Sunny eye",
     "rotation": -1,
     "size": "square",
@@ -31,7 +31,7 @@
   },
   {
     "id": "04",
-    "src": "/images/scrapbook/cat.jpg",
+    "src": "/images/scrapbook/cat.webp",
     "alt": "character sketch for the 'cat-world'",
     "rotation": 2,
     "size": "square",
@@ -41,7 +41,7 @@
   },
   {
     "id": "05",
-    "src": "/images/scrapbook/dragon.jpg",
+    "src": "/images/scrapbook/dragon.webp",
     "alt": "overgrown lizard",
     "rotation": -1.5,
     "size": "wide",
@@ -51,7 +51,7 @@
   },
   {
     "id": "06",
-    "src": "/images/scrapbook/skull.jpeg",
+    "src": "/images/scrapbook/skull.webp",
     "alt": "skulls are cool",
     "rotation": 0.8,
     "size": "tall",
@@ -61,7 +61,7 @@
   },
   {
     "id": "07",
-    "src": "/images/scrapbook/hand.jpg",
+    "src": "/images/scrapbook/hand.webp",
     "alt": "hands are OP",
     "rotation": 0,
     "size": "tall",
@@ -71,7 +71,7 @@
   },
   {
     "id": "08",
-    "src": "/images/scrapbook/camera.jpg",
+    "src": "/images/scrapbook/camera.webp",
     "alt": "a camera",
     "rotation": 0,
     "size": "square",
@@ -81,7 +81,7 @@
   },
   {
     "id": "09",
-    "src": "/images/scrapbook/aot.jpg",
+    "src": "/images/scrapbook/aot.webp",
     "alt": "aot concept art",
     "rotation": 0,
     "size": "tall",
@@ -91,7 +91,7 @@
   },
   {
     "id": "10",
-    "src": "/images/scrapbook/hen.jpg",
+    "src": "/images/scrapbook/hen.webp",
     "alt": "hen?",
     "rotation": 0,
     "size": "tall",
@@ -101,7 +101,7 @@
   },
   {
     "id": "12",
-    "src": "/images/scrapbook/7618e6cc-62e8-4fa6-939a-92f5878f720e.jpg",
+    "src": "/images/scrapbook/7618e6cc-62e8-4fa6-939a-92f5878f720e.webp",
     "alt": "combo",
     "rotation": 2.5,
     "size": "tall",
