@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { CustomCursor } from './components/ui/CustomCursor'
+import ConstellationBackground from './components/ConstellationBackground'
 import { Home } from './pages/Home'
 import './styles/globals.css'
 
@@ -96,27 +97,30 @@ function App() {
       <SecretAdminShortcut />
       <ScrollToTop />
       <CustomCursor />
-      <Layout>
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/books" element={<BooksPage />} />
-            <Route path="/sketches" element={<SketchesPage />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-            <Route path="/notes/:slug" element={<BlogPost />} />
-            <Route path="/observations" element={<Navigate to="/blog?tab=observations" replace />} />
-            {/* Section anchor fallbacks */}
-            <Route path="/work" element={<Home />} />
-            <Route path="/notes" element={<Home />} />
-            <Route path="/lab" element={<Home />} />
-            <Route path="/about" element={<Home />} />
-            {/* 404 catch-all fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </Layout>
+      <ConstellationBackground />
+      <div className="relative z-10">
+        <Layout>
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/books" element={<BooksPage />} />
+              <Route path="/sketches" element={<SketchesPage />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/notes/:slug" element={<BlogPost />} />
+              <Route path="/observations" element={<Navigate to="/blog?tab=observations" replace />} />
+              {/* Section anchor fallbacks */}
+              <Route path="/work" element={<Home />} />
+              <Route path="/notes" element={<Home />} />
+              <Route path="/lab" element={<Home />} />
+              <Route path="/about" element={<Home />} />
+              {/* 404 catch-all fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </Layout>
+      </div>
     </BrowserRouter>
   )
 }
