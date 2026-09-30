@@ -5,7 +5,6 @@ import { scrapItems } from '../content/scraps'
 import { SectionLabel } from '../components/ui/SectionLabel'
 import { Arrow } from '../components/ui/Arrow'
 import { fadeUp } from '../lib/animations'
-import { SketchbookViewer } from '../components/sketchbook/SketchbookViewer'
 
 const aspectRatios: Record<string, string> = {
   tall: '2/3',
@@ -126,16 +125,6 @@ export function SketchesPage() {
               <span>Click any piece to inspect</span>
             </div>
           </div>
-        </motion.div>
-
-        {/* Interactive Sketchbook Viewer */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="mb-12"
-        >
-          <SketchbookViewer />
         </motion.div>
 
         {/* Scalable Controls Bar: Tabs + Search */}
