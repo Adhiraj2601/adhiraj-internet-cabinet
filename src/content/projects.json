@@ -23,17 +23,6 @@
     "live": "https://py-casso.vercel.app/"
   },
   {
-    "id": "04",
-    "number": "04",
-    "title": "Hybrid Stock Market Prediction Model",
-    "slug": "",
-    "category": "Finance",
-    "description": "A stock price prediction model utilizing a Stacking Meta-Ensemble. It combines a PyTorch Time-Series Transformer, a Deep Bidirectional LSTM, and a Tree Ensemble, using an XGBoost meta-learner to optimally weight predictions based on real-time market volatility.",
-    "year": "2026",
-    "image": "/images/projects/Screenshot 2026-10-01 152652.png",
-    "github": "https://github.com/Adhiraj2601/Stock-Market-Prediction-Model"
-  },
-  {
     "id": "03",
     "number": "03",
     "title": "Chess",
@@ -44,5 +33,16 @@
     "image": "/images/projects/Screenshot 2026-10-01 152000.png",
     "github": "https://github.com/adhirajsengar/js-chess",
     "live": "https://js-chess-game.vercel.app/"
+  },
+  {
+    "id": "04",
+    "number": "04",
+    "title": "Hybrid Stock Market Prediction Model",
+    "slug": "",
+    "category": "Finance",
+    "description": "A stock price prediction model utilizing a Stacking Meta-Ensemble. It combines a PyTorch Time-Series Transformer, a Deep Bidirectional LSTM, and a Tree Ensemble, using an XGBoost meta-learner to optimally weight predictions based on real-time market volatility.",
+    "year": "2026",
+    "image": "/images/projects/Screenshot 2026-10-01 152652.png",
+    "github": "https://github.com/Adhiraj2601/Stock-Market-Prediction-Model"
   }
 ]
