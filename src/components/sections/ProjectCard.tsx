@@ -230,7 +230,7 @@ function ProjectCardLargeText({ project }: { project: Project }) {
       onMouseLeave={() => setHovered(false)}
     >
       {/* Image — fully visible, uncropped */}
-      <div className="md:col-span-5 lg:col-span-4">
+      <div className="md:col-span-6 lg:col-span-5">
         <motion.div
           className="overflow-hidden border border-token/60 bg-[rgba(23,23,23,0.02)] p-2 rounded-sm flex items-center justify-center shadow-xs"
           animate={{ scale: hovered ? 1.02 : 1 }}
@@ -254,16 +254,16 @@ function ProjectCardLargeText({ project }: { project: Project }) {
         </motion.div>
       </div>
 
-      {/* Oversized text */}
-      <div className="md:col-span-7 lg:col-span-8 flex flex-col gap-3">
+      {/* Text */}
+      <div className="md:col-span-6 lg:col-span-7 flex flex-col gap-3">
         <div className="flex items-center gap-4 mb-1">
           <span className="text-[0.7rem] font-semibold tracking-[0.2em] text-muted">{project.number}</span>
           <SectionLabel>{project.category}</SectionLabel>
           <span className="text-[0.7rem] tracking-widest text-muted ml-auto">{project.year}</span>
         </div>
         <h3
-          className="font-bold tracking-tight leading-none"
-          style={{ fontSize: 'clamp(2.5rem, 6vw, 5.5rem)' }}
+          className="font-bold tracking-tight leading-tight"
+          style={{ fontSize: 'clamp(2rem, 4vw, 3.5rem)' }}
         >
           {project.title}
         </h3>
