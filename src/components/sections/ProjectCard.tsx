@@ -175,10 +175,24 @@ function ProjectCardFullWidth({ project }: { project: Project }) {
         </div>
         <div className="flex items-center gap-6">
           <span className="text-[0.7rem] tracking-widest text-muted">{project.year}</span>
+          {project.live && (
+            <a
+              href={project.live}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[0.75rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200"
+            >
+              <motion.span animate={{ x: hovered ? 2 : 0 }} transition={{ duration: 0.2 }}>↗ LIVE</motion.span>
+            </a>
+          )}
           {project.github && (
-            <a href={project.github} target="_blank" rel="noopener noreferrer"
-              className="text-[0.75rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200">
-              ↗ GITHUB
+            <a
+              href={project.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[0.75rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200"
+            >
+              <motion.span animate={{ x: hovered ? 2 : 0 }} transition={{ duration: 0.2, delay: 0.03 }}>↗ GITHUB</motion.span>
             </a>
           )}
         </div>
@@ -271,10 +285,20 @@ function ProjectCardLargeText({ project }: { project: Project }) {
           {project.description}
         </p>
         <div className="flex items-center gap-5 mt-2">
+          {project.live && (
+            <a
+              href={project.live}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-[0.75rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200"
+            >
+              <motion.span animate={{ x: hovered ? 2 : 0 }} transition={{ duration: 0.2 }}>↗ LIVE</motion.span>
+            </a>
+          )}
           {project.github && (
             <a href={project.github} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-[0.75rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200">
-              <motion.span animate={{ x: hovered ? 2 : 0 }} transition={{ duration: 0.2 }}>↗ GITHUB</motion.span>
+              <motion.span animate={{ x: hovered ? 2 : 0 }} transition={{ duration: 0.2, delay: 0.03 }}>↗ GITHUB</motion.span>
             </a>
           )}
           <motion.div animate={{ x: hovered ? 4 : 0 }} transition={{ duration: 0.2 }}>
