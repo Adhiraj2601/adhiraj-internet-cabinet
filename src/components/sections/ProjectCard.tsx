@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { Project } from '../../content/projects'
-import { Arrow } from '../ui/Arrow'
 import { SectionLabel } from '../ui/SectionLabel'
 
 interface ProjectCardProps {
@@ -301,9 +300,6 @@ function ProjectCardLargeText({ project }: { project: Project }) {
               <motion.span animate={{ x: hovered ? 2 : 0 }} transition={{ duration: 0.2, delay: 0.03 }}>↗ GITHUB</motion.span>
             </a>
           )}
-          <motion.div animate={{ x: hovered ? 4 : 0 }} transition={{ duration: 0.2 }}>
-            <Arrow size={14} className="text-muted" />
-          </motion.div>
         </div>
       </div>
     </article>
