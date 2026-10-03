@@ -107,57 +107,11 @@ export function SketchesPage() {
   }, [selectedSketch])
 
   return (
-    <main id="main-content" className="pt-28 md:pt-36 pb-24 min-h-screen">
+    <main id="main-content" className="pt-20 md:pt-24 pb-24 min-h-screen">
       <div className="container-main">
-        {/* Navigation Breadcrumb */}
-        <motion.div
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-muted hover:text-foreground transition-colors group"
-          >
-            <span className="transform transition-transform duration-200 group-hover:-translate-x-1">←</span>
-            <span>Back to Archive</span>
-          </Link>
-        </motion.div>
-
-        {/* Masthead Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="border-b border-token pb-10 md:pb-14 mb-8"
-        >
-          <SectionLabel>05 / Visual Scraps Archive</SectionLabel>
-          <div className="mt-3 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <h1
-                className="font-bold leading-none tracking-tight"
-                style={{ fontSize: 'clamp(2.8rem, 6vw, 5.5rem)' }}
-              >
-                The Sketchbook
-              </h1>
-              <p className="mt-4 text-[0.95rem] text-muted max-w-xl leading-relaxed">
-                An ongoing archive of drawings, digital sketches, photographs, and visual fragments.
-                Raw ideas, late night scribbles, and things I wanted to hold onto.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 text-xs font-mono text-muted shrink-0">
-              <span>{scrapItems.length} visual scraps</span>
-              <span>•</span>
-              <span>Click any piece to inspect</span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* =================== 1. FEATURED 3D CAROUSEL (ON TOP) =================== */}
-        <section aria-label="Interactive 3D Sketchbook Carousel" className="pt-2 pb-6">
-          <div className="w-full relative h-[440px] md:h-[580px]">
+        {/* =================== 1. FEATURED 3D CAROUSEL (AT VERY TOP) =================== */}
+        <section aria-label="Interactive 3D Sketchbook Carousel" className="pt-2 md:pt-4 pb-4">
+          <div className="w-full relative h-[480px] md:h-[620px]">
             <CircularCarousel
               items={carouselItems}
               preset="cylinder"
@@ -179,7 +133,7 @@ export function SketchesPage() {
           </div>
 
           {/* Scroll Down Indicator */}
-          <div className="flex flex-col items-center justify-center gap-2 pt-6 pb-8 text-muted">
+          <div className="flex flex-col items-center justify-center gap-2 pt-4 pb-6 text-muted">
             <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
               Scroll down to explore masonry archive
             </span>
@@ -194,12 +148,59 @@ export function SketchesPage() {
           </div>
         </section>
 
-        {/* =================== 2. MASONRY GRID (BELOW CAROUSEL) =================== */}
+        {/* =================== 2. MASTHEAD HEADER & MASONRY ARCHIVE (BELOW CAROUSEL) =================== */}
         <section
           id="archive-grid"
           aria-label="Complete Visual Scraps Grid Archive"
-          className="pt-10 md:pt-14 border-t border-token/60"
+          className="pt-12 md:pt-16 border-t border-token/60"
         >
+          {/* Navigation Breadcrumb */}
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4 }}
+            className="mb-8"
+          >
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-muted hover:text-foreground transition-colors group"
+            >
+              <span className="transform transition-transform duration-200 group-hover:-translate-x-1">←</span>
+              <span>Back to Archive</span>
+            </Link>
+          </motion.div>
+
+          {/* Masthead Header (Shifted below carousel) */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="border-b border-token pb-10 md:pb-14 mb-10"
+          >
+            <SectionLabel>05 / Visual Scraps Archive</SectionLabel>
+            <div className="mt-3 flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <div>
+                <h1
+                  className="font-bold leading-none tracking-tight"
+                  style={{ fontSize: 'clamp(2.8rem, 6vw, 5.5rem)' }}
+                >
+                  The Sketchbook
+                </h1>
+                <p className="mt-4 text-[0.95rem] text-muted max-w-xl leading-relaxed">
+                  An ongoing archive of drawings, digital sketches, photographs, and visual fragments.
+                  Raw ideas, late night scribbles, and things I wanted to hold onto.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 text-xs font-mono text-muted shrink-0">
+                <span>{scrapItems.length} visual scraps</span>
+                <span>•</span>
+                <span>Click any piece to inspect</span>
+              </div>
+            </div>
+          </motion.div>
           {/* Controls Bar: Filters + Search */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-6 border-b border-token/60">
             {/* Format / Aspect Ratio Filters */}
