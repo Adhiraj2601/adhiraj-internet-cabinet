@@ -109,36 +109,89 @@ export function SketchesPage() {
   }, [selectedSketch])
 
   return (
-    <main id="main-content" className="pt-20 md:pt-24 pb-24 min-h-screen">
-      <div className="container-main">
-        {/* =================== 1. FEATURED 3D CAROUSEL (AT VERY TOP) =================== */}
-        <section aria-label="Interactive 3D Sketchbook Carousel" className="pt-2 md:pt-4 pb-4">
-          <div className="w-full relative h-[480px] md:h-[620px]">
-            <CircularCarousel
-              items={carouselItems}
-              preset="cylinder"
-              intro="rise"
-              cardWidth={isMobile ? 150 : 210}
-              aspectRatio={0.8}
-              gap={isMobile ? 16 : 22}
-              speed={8}
-              autoplay="drift"
-              pauseOnHover={false}
-              focusOnClick
-              captions
-              depthFade={0.55}
-              fadeColor={CREAM}
-              innerShade={0.25}
-              cornerRadius={8}
-              onItemClick={(item) => {
-                const found = scrapItems.find((s) => s.id === item.id)
-                if (found) setSelectedSketch(found)
-              }}
-            />
+    <main id="main-content" className="pt-0 md:pt-24 pb-24 min-h-screen">
+      {!isMobile ? (
+        <div className="container-main pt-20 md:pt-0">
+          {/* =================== 1. FEATURED 3D CAROUSEL (DESKTOP) =================== */}
+          <section aria-label="Interactive 3D Sketchbook Carousel" className="pt-2 md:pt-4 pb-4">
+            <div className="w-full relative h-[480px] md:h-[620px]">
+              <CircularCarousel
+                items={carouselItems}
+                preset="cylinder"
+                intro="rise"
+                cardWidth={210}
+                aspectRatio={0.8}
+                gap={22}
+                speed={8}
+                autoplay="drift"
+                pauseOnHover={false}
+                focusOnClick
+                captions
+                depthFade={0.55}
+                fadeColor={CREAM}
+                innerShade={0.25}
+                cornerRadius={8}
+                onItemClick={(item) => {
+                  const found = scrapItems.find((s) => s.id === item.id)
+                  if (found) setSelectedSketch(found)
+                }}
+              />
+            </div>
+
+            {/* Scroll Down Indicator */}
+            <div className="flex flex-col items-center justify-center gap-2 pt-4 pb-6 text-muted">
+              <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
+                Scroll down to explore masonry archive
+              </span>
+              <motion.span
+                animate={{ y: [0, 5, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                className="text-muted/60 text-sm select-none"
+                aria-hidden="true"
+              >
+                ↓
+              </motion.span>
+            </div>
+          </section>
+        </div>
+      ) : (
+        /* =================== 1. REBALANCED MOBILE HERO (NARROW TOUCH SCREENS - 100svh) =================== */
+        <section
+          aria-label="Interactive 3D Sketchbook Carousel"
+          className="sketches-hero-mobile"
+        >
+          {/* Header clearance space */}
+          <div className="sketches-hero-header-spacer" />
+
+          {/* Content Group (3D gallery + caption + counter) centered with downward bias */}
+          <div className="sketches-hero-content-group">
+            <div className="sketches-hero-carousel-wrap">
+              <CircularCarousel
+                items={carouselItems}
+                preset="cylinder"
+                intro="rise"
+                cardWidth={150}
+                aspectRatio={0.8}
+                gap={16}
+                speed={8}
+                autoplay="drift"
+                pauseOnHover={false}
+                focusOnClick
+                captions
+                depthFade={0.55}
+                fadeColor={CREAM}
+                innerShade={0.25}
+                cornerRadius={8}
+                onItemClick={(item) => {
+                  const found = scrapItems.find((s) => s.id === item.id)
+                  if (found) setSelectedSketch(found)
+                }}
+              />
+            </div>
           </div>
 
-          {/* Scroll Down Indicator */}
-          <div className="flex flex-col items-center justify-center gap-2 pt-4 pb-6 text-muted">
+          {/* Scroll Down Indicator Pinned Near Bottom with margin-top: auto (16 to 24px above divider line) */}
+          <div className="sketches-hero-scroll-hint">
             <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
               Scroll down to explore masonry archive
             </span>
@@ -152,7 +205,9 @@ export function SketchesPage() {
             </motion.span>
           </div>
         </section>
+      )}
 
+      <div className="container-main">
         {/* =================== 2. MASTHEAD HEADER & MASONRY ARCHIVE (BELOW CAROUSEL) =================== */}
         <section
           id="archive-grid"
