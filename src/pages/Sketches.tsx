@@ -122,7 +122,7 @@ export function SketchesPage() {
               gap={isMobile ? 16 : 22}
               speed={8}
               autoplay="drift"
-              pauseOnHover
+              pauseOnHover={false}
               focusOnClick
               captions
               depthFade={0.55}
