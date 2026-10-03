@@ -14,6 +14,7 @@ export interface CircularGalleryProps {
   fontUrl?: string
   scrollSpeed?: number
   scrollEase?: number
+  offsetY?: number
   onActiveChange?: (index: number) => void
   className?: string
   style?: React.CSSProperties

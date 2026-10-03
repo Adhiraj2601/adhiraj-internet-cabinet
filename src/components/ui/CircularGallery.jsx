@@ -375,6 +375,7 @@ class App {
       font = 'bold 30px Figtree',
       scrollSpeed = 2,
       scrollEase = 0.05,
+      offsetY = 1.2,
       onActiveChange
     } = {}
   ) {
@@ -382,6 +383,7 @@ class App {
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onActiveChange = onActiveChange;
+    this.offsetY = offsetY;
     this.lastActiveIndex = -1;
     this.onCheckDebounce = debounce(this.onCheck, 200);
 
@@ -411,6 +413,7 @@ class App {
   }
   createScene() {
     this.scene = new Transform();
+    this.scene.position.y = this.offsetY;
   }
   createGeometry() {
     this.planeGeometry = new Plane(this.gl, {
@@ -634,6 +637,7 @@ export default function CircularGallery({
   fontUrl,
   scrollSpeed = 2,
   scrollEase = 0.05,
+  offsetY = 1.2,
   onActiveChange,
   className = '',
   style
@@ -660,6 +664,7 @@ export default function CircularGallery({
         font: resolvedFont,
         scrollSpeed,
         scrollEase,
+        offsetY,
         onActiveChange: (index) => onActiveChangeRef.current?.(index)
       });
     });
@@ -668,7 +673,7 @@ export default function CircularGallery({
       isMounted = false;
       if (app) app.destroy();
     };
-  }, [items, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase]);
+  }, [items, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase, offsetY]);
 
   if (!items || items.length === 0) {
     return (

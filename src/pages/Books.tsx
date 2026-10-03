@@ -165,13 +165,13 @@ export function BooksPage() {
   }, [])
 
   return (
-    <main id="main-content" className="pt-20 md:pt-24 pb-24 min-h-screen">
+    <main id="main-content" className="pt-14 md:pt-16 pb-24 min-h-screen">
       <div className="container-main">
         {/* =================== 1. FEATURED 3D CIRCULAR GALLERY (AT VERY TOP) =================== */}
-        <section aria-label="Interactive 3D Book Gallery" className="pt-2 md:pt-4 pb-4">
+        <section aria-label="Interactive 3D Book Gallery" className="pt-0 pb-2">
           <div
-            className="w-full relative"
-            style={{ height: isMobile ? 420 : 580, position: 'relative' }}
+            className="w-full relative -mt-2 md:-mt-4"
+            style={{ height: isMobile ? 360 : 480, position: 'relative' }}
           >
             <CircularGallery
               items={galleryItems}
@@ -179,6 +179,7 @@ export function BooksPage() {
               textColor="#171717"
               borderRadius={0.05}
               scrollEase={0.05}
+              offsetY={isMobile ? 0.9 : 1.3}
               font="600 32px Caveat, cursive"
               onActiveChange={setActiveGalleryIndex}
             />
@@ -186,7 +187,7 @@ export function BooksPage() {
 
           {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
           {activeBook && (
-            <div className="mt-4 md:mt-6 max-w-xl mx-auto text-center px-4 min-h-[130px] flex flex-col items-center justify-center">
+            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[110px] flex flex-col items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeBook.id}-${activeGalleryIndex}`}
@@ -194,7 +195,7 @@ export function BooksPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="flex flex-col items-center gap-2"
+                  className="flex flex-col items-center gap-1.5"
                 >
                   {/* Status & Volume Index */}
                   <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
@@ -236,7 +237,7 @@ export function BooksPage() {
           )}
 
           {/* Scroll Down Indicator */}
-          <div className="flex flex-col items-center justify-center gap-2 pt-4 pb-6 text-muted">
+          <div className="flex flex-col items-center justify-center gap-1.5 pt-2 pb-5 text-muted">
             <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
               Scroll down to explore library archive
             </span>
