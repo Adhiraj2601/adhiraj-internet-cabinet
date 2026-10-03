@@ -164,6 +164,7 @@ export function Admin() {
   const [isNewScrap, setIsNewScrap] = useState(false)
   const [selectedScrapFile, setSelectedScrapFile] = useState<File | null>(null)
   const [scrapPreviewUrl, setScrapPreviewUrl] = useState<string | null>(null)
+  const [scrapsFilter, setScrapsFilter] = useState<'all' | 'carousel'>('all')
 
   const [editingPost, setEditingPost] = useState<Post | null>(() => {
     if (typeof window !== 'undefined') {
@@ -637,6 +638,17 @@ export function Admin() {
       setScrapsData(scrapsData.filter((s) => s.id !== id))
       setHasChanges(true)
     }
+  }
+
+  const toggleScrapInCarousel = (id: string) => {
+    const updated = scrapsData.map((s) => {
+      if (s.id === id) {
+        return { ...s, inCarousel: !s.inCarousel }
+      }
+      return s
+    })
+    setScrapsData(updated)
+    setHasChanges(true)
   }
 
   // Blog / Notes Handlers
@@ -1660,6 +1672,7 @@ export function Admin() {
                     rotation: 0,
                     size: 'square',
                     note: '',
+                    inCarousel: scrapsData.filter((s) => s.inCarousel).length < 11,
                   })
                   setIsNewScrap(true)
                   setSelectedScrapFile(null)
@@ -1672,8 +1685,66 @@ export function Admin() {
               </button>
             </div>
 
+            {/* Carousel Showcase Feature Manager */}
+            {(() => {
+              const carouselCount = scrapsData.filter((s) => s.inCarousel).length
+              return (
+                <div className="mb-6 p-4 border border-token rounded-xs bg-[rgba(23,23,23,0.02)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-accent" />
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                        3D Carousel Showcase (11 Pieces)
+                      </h3>
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded-xs border ${
+                          carouselCount === 11
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : carouselCount > 11
+                            ? 'bg-blue-100 text-blue-800 border-blue-300'
+                            : 'bg-amber-100 text-amber-800 border-amber-300'
+                        }`}
+                      >
+                        {carouselCount} / 11 selected
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted mt-1 max-w-xl">
+                      Select which artworks appear on the top rotating 3D cylinder. Click the badge on any piece below to toggle it in or out of the carousel.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center border border-token rounded-xs overflow-hidden text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setScrapsFilter('all')}
+                        className={`px-3 py-1 font-semibold transition-colors ${
+                          scrapsFilter === 'all'
+                            ? 'bg-foreground text-background font-bold'
+                            : 'text-muted hover:text-foreground bg-background'
+                        }`}
+                      >
+                        All ({scrapsData.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setScrapsFilter('carousel')}
+                        className={`px-3 py-1 font-semibold transition-colors border-l border-token ${
+                          scrapsFilter === 'carousel'
+                            ? 'bg-foreground text-background font-bold'
+                            : 'text-muted hover:text-foreground bg-background'
+                        }`}
+                      >
+                        Carousel Only ({carouselCount})
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {scrapsData.map((scrap) => {
+              {(scrapsFilter === 'carousel' ? scrapsData.filter((s) => s.inCarousel) : scrapsData).map((scrap) => {
                 const ratio = scrap.size === 'tall' ? '2/3' : scrap.size === 'wide' ? '3/2' : '1/1'
                 return (
                   <div
@@ -1721,6 +1792,16 @@ export function Admin() {
                             {scrap.rotation > 0 ? `+${scrap.rotation}°` : `${scrap.rotation}°`}
                           </span>
                         </div>
+
+                        {/* Carousel status badge */}
+                        {scrap.inCarousel && (
+                          <div className="absolute top-2 right-2 pointer-events-none">
+                            <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-300 px-1.5 py-0.5 rounded shadow-2xs">
+                              <Sparkles size={9} className="text-emerald-600" />
+                              Carousel
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Handwritten Note */}
@@ -1737,9 +1818,23 @@ export function Admin() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-token">
+                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-token gap-2">
                       <span className="text-[10px] font-mono font-bold text-muted">#{scrap.id}</span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => toggleScrapInCarousel(scrap.id)}
+                          className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-xs border transition-all ${
+                            scrap.inCarousel
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 shadow-2xs'
+                              : 'bg-background text-muted border-token hover:text-foreground hover:bg-neutral-100'
+                          }`}
+                          title={scrap.inCarousel ? 'Featured in 3D Carousel (Click to remove)' : 'Click to feature in 3D Carousel'}
+                        >
+                          <Sparkles size={11} className={scrap.inCarousel ? 'text-emerald-600' : 'text-muted'} />
+                          <span>{scrap.inCarousel ? 'In Carousel' : 'Add to Carousel'}</span>
+                        </button>
+
                         <button
                           onClick={() => {
                             setEditingScrap(scrap)
@@ -1926,6 +2021,30 @@ export function Admin() {
                           className="w-full accent-foreground cursor-pointer"
                         />
                       </div>
+                    </div>
+
+                    {/* Featured in 3D Carousel Checkbox */}
+                    <div className="flex items-start gap-3 p-3 bg-neutral-100/60 border border-token rounded-xs">
+                      <input
+                        type="checkbox"
+                        id="scrap-in-carousel"
+                        checked={Boolean(editingScrap.inCarousel)}
+                        onChange={(e) =>
+                          setEditingScrap({
+                            ...editingScrap,
+                            inCarousel: e.target.checked,
+                          })
+                        }
+                        className="mt-0.5 h-4 w-4 rounded accent-foreground cursor-pointer"
+                      />
+                      <label htmlFor="scrap-in-carousel" className="cursor-pointer select-none">
+                        <span className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                          Feature in 3D Carousel (11 Pieces)
+                        </span>
+                        <span className="block text-[11px] text-muted leading-relaxed">
+                          Include this artwork in the 11-piece rotating 3D cylinder at the top of the /sketches page.
+                        </span>
+                      </label>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-token">

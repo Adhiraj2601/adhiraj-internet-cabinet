@@ -9,6 +9,7 @@ export type ScrapItem = {
   note: string
   date?: string
   description?: string
+  inCarousel?: boolean
 }
 
 export const scrapItems: ScrapItem[] = scrapsData as ScrapItem[]

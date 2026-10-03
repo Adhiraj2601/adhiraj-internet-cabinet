@@ -7,7 +7,8 @@
     "size": "tall",
     "note": "radhe radhe",
     "date": "March 2026",
-    "description": "A sketch capturing the beginning of everything."
+    "description": "A sketch capturing the beginning of everything.",
+    "inCarousel": true
   },
   {
     "id": "02",
@@ -17,7 +18,8 @@
     "size": "tall",
     "note": "Winged helmets look so cool.",
     "date": "February 2026",
-    "description": "Character study inspired by manga aesthetics and dynamic winged headpieces."
+    "description": "Character study inspired by manga aesthetics and dynamic winged headpieces.",
+    "inCarousel": true
   },
   {
     "id": "03",
@@ -27,7 +29,8 @@
     "size": "square",
     "note": "and when the heart loves something, the eyes see it as paradise",
     "date": "January 2026",
-    "description": "Pencil study focused on light, warmth, and intense gaze."
+    "description": "Pencil study focused on light, warmth, and intense gaze.",
+    "inCarousel": true
   },
   {
     "id": "04",
@@ -37,7 +40,8 @@
     "size": "square",
     "note": "gangsta kitty",
     "date": "March 2026",
-    "description": "Character concept exploration for an ongoing cat-world series."
+    "description": "Character concept exploration for an ongoing cat-world series.",
+    "inCarousel": true
   },
   {
     "id": "05",
@@ -47,7 +51,8 @@
     "size": "wide",
     "note": "world \"building\"",
     "date": "February 2026",
-    "description": "An overgrown lizard doodle experimenting with scales and silhouette."
+    "description": "An overgrown lizard doodle experimenting with scales and silhouette.",
+    "inCarousel": true
   },
   {
     "id": "06",
@@ -57,7 +62,8 @@
     "size": "tall",
     "note": "Death : the wish of some, the relief of many, and the end of all",
     "date": "March 2026",
-    "description": "An ink and graphite sketch meditating on stillness, form, and contrast."
+    "description": "An ink and graphite sketch meditating on stillness, form, and contrast.",
+    "inCarousel": true
   },
   {
     "id": "07",
@@ -67,7 +73,8 @@
     "size": "tall",
     "note": "hands-on learning",
     "date": "March 2026",
-    "description": "Hand anatomy sketch studying complex perspective, joint articulation, and foreshortening."
+    "description": "Hand anatomy sketch studying complex perspective, joint articulation, and foreshortening.",
+    "inCarousel": true
   },
   {
     "id": "08",
@@ -77,7 +84,8 @@
     "size": "square",
     "note": "crazy how humans can turn rocks into devices that freeze light in time",
     "date": "March 2026",
-    "description": "An illustration appreciating industrial design, lenses, and capturing time."
+    "description": "An illustration appreciating industrial design, lenses, and capturing time.",
+    "inCarousel": true
   },
   {
     "id": "09",
@@ -87,7 +95,8 @@
     "size": "tall",
     "note": "Finished watching A.O.T ",
     "date": "March 2026",
-    "description": "Concept art tribute inspired by the conclusion of Attack on Titan."
+    "description": "Concept art tribute inspired by the conclusion of Attack on Titan.",
+    "inCarousel": true
   },
   {
     "id": "10",
@@ -97,7 +106,8 @@
     "size": "tall",
     "note": "trying out new markers",
     "date": "March 2026",
-    "description": "Loose exploration with fresh markers experimenting with feather texture and rhythm."
+    "description": "Loose exploration with fresh markers experimenting with feather texture and rhythm.",
+    "inCarousel": true
   },
   {
     "id": "12",
@@ -107,6 +117,7 @@
     "size": "tall",
     "note": "random scribbles",
     "date": "March 2026",
-    "description": "Compilation of spontaneous doodles, quick character sketches, and daily notes."
+    "description": "Compilation of spontaneous doodles, quick character sketches, and daily notes.",
+    "inCarousel": true
   }
 ]

@@ -5,6 +5,7 @@ export interface CircularCarouselItem {
   alt?: string
   title?: string
   subtitle?: string
+  id?: string
 }
 
 export interface CircularCarouselProps {

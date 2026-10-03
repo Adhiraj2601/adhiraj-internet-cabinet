@@ -25,17 +25,18 @@ export function SketchesPage() {
   const [selectedSketch, setSelectedSketch] = useState<ScrapItem | null>(null)
   const isMobile = useIsMobile()
 
-  // Full set of sketches mapped for the carousel ring on top
-  const carouselItems = useMemo(
-    () =>
-      scrapItems.map((item) => ({
-        src: item.src,
-        alt: item.alt,
-        title: item.note || item.alt,
-        subtitle: `#${item.id}${item.date ? ' · ' + item.date : ''}`,
-      })),
-    []
-  )
+  // Carousel displays 11 featured sketches selected via admin dashboard
+  const carouselItems = useMemo(() => {
+    const featured = scrapItems.filter((item) => item.inCarousel ?? true)
+    const list = featured.length >= 5 ? featured : scrapItems
+    return list.slice(0, 11).map((item) => ({
+      src: item.src,
+      alt: item.alt,
+      title: item.note || item.alt,
+      subtitle: `#${item.id}${item.date ? ' · ' + item.date : ''}`,
+      id: item.id,
+    }))
+  }, [])
 
   // Filtered sketches for the masonry grid below
   const filteredSketches = useMemo(() => {
@@ -128,7 +129,10 @@ export function SketchesPage() {
               fadeColor={CREAM}
               innerShade={0.25}
               cornerRadius={8}
-              onItemClick={(_item, index) => setSelectedSketch(scrapItems[index])}
+              onItemClick={(item) => {
+                const found = scrapItems.find((s) => s.id === item.id)
+                if (found) setSelectedSketch(found)
+              }}
             />
           </div>
 
