@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { scrapItems } from '../content/scraps'
 import { SectionLabel } from '../components/ui/SectionLabel'
 import { Arrow } from '../components/ui/Arrow'
@@ -24,11 +24,23 @@ const MIN_CAROUSEL_ITEMS = 5
 const CREAM = '#F4F1EA'
 
 export function SketchesPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [filter, setFilter] = useState<SizeFilter>('all')
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>(() =>
+    searchParams.get('view') === 'carousel' ? 'carousel' : 'grid'
+  )
   const isMobile = useIsMobile()
+
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode)
+    if (mode === 'carousel') {
+      setSearchParams({ view: 'carousel' }, { replace: true })
+    } else {
+      setSearchParams({}, { replace: true })
+    }
+  }
 
   // Filtered sketches — single source of truth for both views
   const filteredSketches = useMemo(() => {
@@ -154,90 +166,73 @@ export function SketchesPage() {
           </div>
         </motion.div>
 
-        {/* Controls Bar: Filters + Search + View Toggle */}
+        {/* Controls Bar: Filters + View Mode Toggle + Search */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-token/60"
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10 pb-6 border-b border-token/60"
         >
-          {/* Format / Aspect Ratio Filters */}
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
-                filter === 'all'
-                  ? 'bg-foreground text-background font-bold'
-                  : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
-              }`}
-            >
-              All Formats ({scrapItems.length})
-            </button>
-            <button
-              onClick={() => setFilter('tall')}
-              className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
-                filter === 'tall'
-                  ? 'bg-foreground text-background font-bold'
-                  : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
-              }`}
-            >
-              Tall (2:3)
-            </button>
-            <button
-              onClick={() => setFilter('wide')}
-              className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
-                filter === 'wide'
-                  ? 'bg-foreground text-background font-bold'
-                  : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
-              }`}
-            >
-              Wide (3:2)
-            </button>
-            <button
-              onClick={() => setFilter('square')}
-              className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
-                filter === 'square'
-                  ? 'bg-foreground text-background font-bold'
-                  : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
-              }`}
-            >
-              Square (1:1)
-            </button>
-          </div>
-
-          {/* Right side: Search + View toggle */}
-          <div className="flex items-center gap-3">
-            {/* Search Input */}
-            <div className="relative w-full sm:w-56">
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search notes or sketches..."
-                className="w-full text-xs px-3 py-1.5 bg-transparent border border-token rounded-xs focus:outline-none focus:border-foreground placeholder:text-muted/60"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
-                  aria-label="Clear search"
-                >
-                  ✕
-                </button>
-              )}
+          {/* Left: Format Filters + View Mode Toggle directly beside it */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* Format / Aspect Ratio Filters */}
+            <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1">
+              <button
+                onClick={() => setFilter('all')}
+                className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
+                  filter === 'all'
+                    ? 'bg-foreground text-background font-bold'
+                    : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
+                }`}
+              >
+                All Formats ({scrapItems.length})
+              </button>
+              <button
+                onClick={() => setFilter('tall')}
+                className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
+                  filter === 'tall'
+                    ? 'bg-foreground text-background font-bold'
+                    : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
+                }`}
+              >
+                Tall (2:3)
+              </button>
+              <button
+                onClick={() => setFilter('wide')}
+                className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
+                  filter === 'wide'
+                    ? 'bg-foreground text-background font-bold'
+                    : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
+                }`}
+              >
+                Wide (3:2)
+              </button>
+              <button
+                onClick={() => setFilter('square')}
+                className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
+                  filter === 'square'
+                    ? 'bg-foreground text-background font-bold'
+                    : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
+                }`}
+              >
+                Square (1:1)
+              </button>
             </div>
 
-            {/* View Mode Toggle */}
+            {/* Separator */}
+            <div className="hidden sm:block h-4 w-px bg-token" />
+
+            {/* View Mode Toggle: Grid | Carousel */}
             <div
-              className="flex items-center border border-token rounded-xs overflow-hidden shrink-0"
+              className="flex items-center border border-token rounded-xs overflow-hidden shrink-0 bg-[rgba(23,23,23,0.03)]"
               role="group"
               aria-label="View mode"
             >
               <button
-                onClick={() => setViewMode('grid')}
+                onClick={() => handleViewChange('grid')}
                 className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all ${
                   viewMode === 'grid'
-                    ? 'bg-foreground text-background'
+                    ? 'bg-foreground text-background font-bold'
                     : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
                 }`}
                 aria-pressed={viewMode === 'grid'}
@@ -245,10 +240,10 @@ export function SketchesPage() {
                 Grid
               </button>
               <button
-                onClick={() => setViewMode('carousel')}
+                onClick={() => handleViewChange('carousel')}
                 className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all border-l border-token ${
                   viewMode === 'carousel'
-                    ? 'bg-foreground text-background'
+                    ? 'bg-foreground text-background font-bold'
                     : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
                 }`}
                 aria-pressed={viewMode === 'carousel'}
@@ -256,6 +251,26 @@ export function SketchesPage() {
                 Carousel
               </button>
             </div>
+          </div>
+
+          {/* Right side: Search Input */}
+          <div className="relative w-full lg:w-64">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search notes or sketches..."
+              className="w-full text-xs px-3 py-1.5 bg-transparent border border-token rounded-xs focus:outline-none focus:border-foreground placeholder:text-muted/60"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </motion.div>
 
