@@ -165,13 +165,16 @@ export function BooksPage() {
   }, [])
 
   return (
-    <main id="main-content" className="pt-14 md:pt-16 pb-24 min-h-screen">
+    <main id="main-content" className="pt-20 md:pt-24 pb-24 min-h-screen">
       <div className="container-main">
         {/* =================== 1. FEATURED 3D CIRCULAR GALLERY (AT VERY TOP) =================== */}
-        <section aria-label="Interactive 3D Book Gallery" className="pt-0 pb-2">
+        <section
+          aria-label="Interactive 3D Book Gallery"
+          className="min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col justify-between pt-2 md:pt-4 pb-4 md:pb-6"
+        >
           <div
-            className="w-full relative -mt-2 md:-mt-4"
-            style={{ height: isMobile ? 360 : 480, position: 'relative' }}
+            className="w-full relative"
+            style={{ height: isMobile ? 360 : 500, position: 'relative' }}
           >
             <CircularGallery
               items={galleryItems}
@@ -190,7 +193,7 @@ export function BooksPage() {
 
           {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
           {activeBook && (
-            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[110px] flex flex-col items-center justify-center">
+            <div className="mt-2 md:mt-3 max-w-xl mx-auto text-center px-4 min-h-[110px] flex flex-col items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeBook.id}-${activeGalleryIndex}`}
@@ -239,8 +242,8 @@ export function BooksPage() {
             </div>
           )}
 
-          {/* Scroll Down Indicator */}
-          <div className="flex flex-col items-center justify-center gap-1.5 pt-2 pb-5 text-muted">
+          {/* Scroll Down Indicator (touches bottom of visible screen) */}
+          <div className="mt-auto flex flex-col items-center justify-center gap-2 pt-4 pb-4 md:pb-6 text-muted">
             <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
               Scroll down to explore library archive
             </span>
@@ -259,7 +262,7 @@ export function BooksPage() {
         <section
           id="archive-grid"
           aria-label="Complete Book Archive Grid"
-          className="pt-12 md:pt-16 border-t border-token/60"
+          className="pt-12 md:pt-16"
         >
           {/* Navigation Breadcrumb */}
           <motion.div
