@@ -195,6 +195,11 @@ export function BooksPage() {
                 items={galleryItems}
                 activeIndex={activeGalleryIndex}
                 onActiveChange={setActiveGalleryIndex}
+                autoplay={true}
+                speed={28}
+                direction="forward"
+                resumeDelay={2500}
+                initialIndex={0}
               />
             )}
           </div>
@@ -202,8 +207,11 @@ export function BooksPage() {
           {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
           {activeBook && (
             <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[90px] sm:min-h-[105px] flex flex-col items-center justify-start">
-              <div
+              <motion.div
                 key={activeBook.id}
+                initial={{ opacity: 0.6 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
                 className="flex flex-col items-center gap-1 sm:gap-1.5 w-full"
               >
                 {/* Status & Volume Index */}
@@ -240,7 +248,7 @@ export function BooksPage() {
                     "{activeBook.note}"
                   </p>
                 )}
-              </div>
+              </motion.div>
             </div>
           )}
 

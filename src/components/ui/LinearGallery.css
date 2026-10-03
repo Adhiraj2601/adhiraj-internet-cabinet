@@ -20,12 +20,18 @@
   width: 100%;
   align-items: center;
   touch-action: pan-x pan-y;
-  /* Pad the track by (100% - cardWidth) / 2 on both sides so first and last cards can reach the center */
+  /* Pad track so first and last cards can reach the center */
   padding-left: calc((100% - var(--card-size)) / 2);
   padding-right: calc((100% - var(--card-size)) / 2);
   padding-top: 12px;
   padding-bottom: 16px;
   box-sizing: border-box;
+}
+
+/* Snap conflict: while drifting, disable scroll-snap for fluid subpixel movement */
+.linear-gallery.is-drifting {
+  scroll-snap-type: none !important;
+  scroll-behavior: auto !important;
 }
 
 .linear-gallery::-webkit-scrollbar {
@@ -78,4 +84,35 @@
   padding: 0 4px;
   letter-spacing: -0.01em;
   line-height: 1.2;
+}
+
+/* Accessible Play/Pause toggle button */
+.linear-gallery-toggle {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(23, 23, 23, 0.14);
+  color: #171717;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+  opacity: 0.8;
+}
+
+.linear-gallery-toggle:hover,
+.linear-gallery-toggle:focus-visible {
+  opacity: 1;
+  transform: scale(1.08);
+  background: #ffffff;
+  outline: 2px solid #171717;
+  outline-offset: 2px;
 }
