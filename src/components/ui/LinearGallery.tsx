@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import { useEffect, useRef, useMemo, useCallback } from 'react'
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 import './LinearGallery.css'
 
@@ -44,12 +44,16 @@ export function LinearGallery({
   // to avoid Android integer rounding truncation that causes drift to stall.
   const posRef = useRef(0)
   const isDriftingRef = useRef(false)
-  const isManualPausedRef = useRef(false)
+  const isTouchingRef = useRef(false)
   const lastTimeRef = useRef(0)
   const rafIdRef = useRef<number | null>(null)
   const activeRafIdRef = useRef<number | null>(null)
   const resumeTimerRef = useRef<number | null>(null)
   const visResumeTimerRef = useRef<number | null>(null)
+
+  // Drag vs Tap detection refs (ignore clicks if finger moved > 8px)
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null)
+  const isDragRef = useRef(false)
 
   // Tracking refs to ensure fresh values inside RAF loops and event callbacks
   const speedRef = useRef(speed)
@@ -73,9 +77,6 @@ export function LinearGallery({
   // Reduced motion support: disable autoplay entirely if user prefers reduced motion
   const prefersReducedMotion = usePrefersReducedMotion()
   const isAutoplayConfigured = autoplay && !prefersReducedMotion
-
-  // Accessibility toggle state for Play / Pause
-  const [isPlaying, setIsPlaying] = useState(isAutoplayConfigured)
 
   // ==========================================
   // 3X ITEM LIST REPEAT FOR INFINITE WRAPPING
@@ -118,7 +119,7 @@ export function LinearGallery({
   // AUTOPLAY LOGIC: START & STOP DRIFT
   // ==========================================
   const startDrift = useCallback(() => {
-    if (!isAutoplayConfigured || isManualPausedRef.current) return
+    if (!isAutoplayConfigured || isTouchingRef.current) return
     if (isDriftingRef.current) return
 
     const container = containerRef.current
@@ -147,7 +148,8 @@ export function LinearGallery({
 
     // Main RAF Drift Loop
     const driftLoop = (time: number) => {
-      if (!isDriftingRef.current) return
+      // Guard: never write scrollLeft when drift stopped or finger is active on track
+      if (!isDriftingRef.current || isTouchingRef.current) return
 
       const dt = Math.min((time - lastTimeRef.current) / 1000, 0.1)
       lastTimeRef.current = time
@@ -168,7 +170,6 @@ export function LinearGallery({
         }
 
         // Write directly to container.scrollLeft; DO NOT read scrollLeft back each frame
-        // because Android rounds it and stalls the drift.
         c.scrollLeft = posRef.current
       }
 
@@ -187,7 +188,7 @@ export function LinearGallery({
 
       const container = containerRef.current
       if (container) {
-        // Re-enable CSS scroll-snap so carousel settles one card at center
+        // Re-enable CSS scroll-snap immediately so user touch or momentum settles properly
         container.classList.remove('is-drifting')
         posRef.current = container.scrollLeft
       }
@@ -199,8 +200,8 @@ export function LinearGallery({
         resumeTimerRef.current = null
       }
 
-      // Schedule auto-resume after resumeDelay if allowed and not manually paused
-      if (allowResume && isAutoplayConfigured && !isManualPausedRef.current) {
+      // Schedule auto-resume after resumeDelay if allowed and finger is not down
+      if (allowResume && isAutoplayConfigured && !isTouchingRef.current) {
         resumeTimerRef.current = window.setTimeout(() => {
           startDrift()
         }, resumeDelayRef.current)
@@ -229,7 +230,7 @@ export function LinearGallery({
       }
 
       // Kick off autoplay drift after initial centering
-      if (isAutoplayConfigured && !isManualPausedRef.current) {
+      if (isAutoplayConfigured) {
         resumeTimerRef.current = window.setTimeout(() => {
           startDrift()
         }, 800)
@@ -274,29 +275,120 @@ export function LinearGallery({
   }, [originalLength, measureSetWidth])
 
   // ==========================================
-  // USER INTERACTION DETECTION
+  // USER TOUCH & DRAG INTERACTION HANDLERS
   // ==========================================
-  // pointerdown, touchstart, wheel, keydown immediately stop drift
+  // 1:1 native scroll drag: On touchstart / pointerdown, immediately stop drift
+  // and re-enable scroll-snap (remove is-drifting) so the drift loop never writes
+  // scrollLeft while the finger is down.
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
-    const handleInteraction = () => {
+    const handlePointerDown = (e: PointerEvent) => {
+      isTouchingRef.current = true
+      pointerStartRef.current = { x: e.clientX, y: e.clientY }
+      isDragRef.current = false
+      stopDrift(false) // Stop drift, remove is-drifting, don't resume while finger is down
+    }
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (pointerStartRef.current) {
+        const dx = e.clientX - pointerStartRef.current.x
+        const dy = e.clientY - pointerStartRef.current.y
+        if (Math.hypot(dx, dy) > 8) {
+          isDragRef.current = true
+        }
+      }
+    }
+
+    const handlePointerUp = () => {
+      isTouchingRef.current = false
+      // Schedule resume only after finger release
+      if (isAutoplayConfigured) {
+        if (resumeTimerRef.current !== null) {
+          clearTimeout(resumeTimerRef.current)
+        }
+        resumeTimerRef.current = window.setTimeout(() => {
+          startDrift()
+        }, resumeDelayRef.current)
+      }
+      setTimeout(() => {
+        pointerStartRef.current = null
+        isDragRef.current = false
+      }, 50)
+    }
+
+    const handleTouchStart = (e: TouchEvent) => {
+      isTouchingRef.current = true
+      if (e.touches[0]) {
+        pointerStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      }
+      isDragRef.current = false
+      stopDrift(false)
+    }
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (pointerStartRef.current && e.touches[0]) {
+        const dx = e.touches[0].clientX - pointerStartRef.current.x
+        const dy = e.touches[0].clientY - pointerStartRef.current.y
+        if (Math.hypot(dx, dy) > 8) {
+          isDragRef.current = true
+        }
+      }
+    }
+
+    const handleTouchEnd = () => {
+      isTouchingRef.current = false
+      if (isAutoplayConfigured) {
+        if (resumeTimerRef.current !== null) {
+          clearTimeout(resumeTimerRef.current)
+        }
+        resumeTimerRef.current = window.setTimeout(() => {
+          startDrift()
+        }, resumeDelayRef.current)
+      }
+      setTimeout(() => {
+        pointerStartRef.current = null
+        isDragRef.current = false
+      }, 50)
+    }
+
+    const handleWheel = () => {
       stopDrift(true)
     }
 
-    container.addEventListener('pointerdown', handleInteraction, { passive: true })
-    container.addEventListener('touchstart', handleInteraction, { passive: true })
-    container.addEventListener('wheel', handleInteraction, { passive: true })
-    container.addEventListener('keydown', handleInteraction, { passive: true })
+    const handleKeyDown = () => {
+      stopDrift(true)
+    }
+
+    container.addEventListener('pointerdown', handlePointerDown, { passive: true })
+    container.addEventListener('pointermove', handlePointerMove, { passive: true })
+    container.addEventListener('pointerup', handlePointerUp, { passive: true })
+    container.addEventListener('pointercancel', handlePointerUp, { passive: true })
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true })
+    container.addEventListener('touchmove', handleTouchMove, { passive: true })
+    container.addEventListener('touchend', handleTouchEnd, { passive: true })
+    container.addEventListener('touchcancel', handleTouchEnd, { passive: true })
+
+    container.addEventListener('wheel', handleWheel, { passive: true })
+    container.addEventListener('keydown', handleKeyDown, { passive: true })
 
     return () => {
-      container.removeEventListener('pointerdown', handleInteraction)
-      container.removeEventListener('touchstart', handleInteraction)
-      container.removeEventListener('wheel', handleInteraction)
-      container.removeEventListener('keydown', handleInteraction)
+      container.removeEventListener('pointerdown', handlePointerDown)
+      container.removeEventListener('pointermove', handlePointerMove)
+      container.removeEventListener('pointerup', handlePointerUp)
+      container.removeEventListener('pointercancel', handlePointerUp)
+
+      container.removeEventListener('touchstart', handleTouchStart)
+      container.removeEventListener('touchmove', handleTouchMove)
+      container.removeEventListener('touchend', handleTouchEnd)
+      container.removeEventListener('touchcancel', handleTouchEnd)
+
+      container.removeEventListener('wheel', handleWheel)
+      container.removeEventListener('keydown', handleKeyDown)
     }
-  }, [stopDrift])
+  }, [stopDrift, isAutoplayConfigured, startDrift])
 
   // ==========================================
   // ACTIVE INDEX & SCROLL RESUME MANAGEMENT
@@ -354,14 +446,15 @@ export function LinearGallery({
     }
 
     const handleScroll = () => {
-      // While not drifting, reschedule resume timer on every scroll event (drag, momentum, snap settle)
+      // While not drifting, reschedule resume timer on every scroll event
+      // (drag, momentum fling, snap settle). Wait until all scroll events stop for resumeDelay.
       if (!isDriftingRef.current) {
         posRef.current = container.scrollLeft
         if (resumeTimerRef.current !== null) {
           clearTimeout(resumeTimerRef.current)
           resumeTimerRef.current = null
         }
-        if (isAutoplayConfigured && !isManualPausedRef.current) {
+        if (isAutoplayConfigured && !isTouchingRef.current) {
           resumeTimerRef.current = window.setTimeout(() => {
             startDrift()
           }, resumeDelayRef.current)
@@ -409,12 +502,12 @@ export function LinearGallery({
           }
           stopDrift(false)
         } else {
-          if (isAutoplayConfigured && !isManualPausedRef.current) {
+          if (isAutoplayConfigured) {
             if (visResumeTimerRef.current !== null) {
               clearTimeout(visResumeTimerRef.current)
             }
             visResumeTimerRef.current = window.setTimeout(() => {
-              if (isIntersectingRef.current && !document.hidden && !isManualPausedRef.current) {
+              if (isIntersectingRef.current && !document.hidden && !isTouchingRef.current) {
                 startDrift()
               }
             }, 500)
@@ -433,12 +526,12 @@ export function LinearGallery({
         }
         stopDrift(false)
       } else {
-        if (isAutoplayConfigured && !isManualPausedRef.current) {
+        if (isAutoplayConfigured) {
           if (visResumeTimerRef.current !== null) {
             clearTimeout(visResumeTimerRef.current)
           }
           visResumeTimerRef.current = window.setTimeout(() => {
-            if (isIntersectingRef.current && !document.hidden && !isManualPausedRef.current) {
+            if (isIntersectingRef.current && !document.hidden && !isTouchingRef.current) {
               startDrift()
             }
           }, 500)
@@ -470,25 +563,14 @@ export function LinearGallery({
   }, [])
 
   // ==========================================
-  // ACCESSIBILITY: PLAY / PAUSE BUTTON
-  // ==========================================
-  const handleTogglePlay = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (isPlaying) {
-      isManualPausedRef.current = true
-      setIsPlaying(false)
-      stopDrift(false)
-    } else {
-      isManualPausedRef.current = false
-      setIsPlaying(true)
-      startDrift()
-    }
-  }
-
-  // ==========================================
-  // CARD TAP / CLICK HANDLER
+  // CARD TAP / CLICK HANDLER (DRAG-SAFE)
   // ==========================================
   const handleCardClick = (item: LinearGalleryItem, globalIndex: number) => {
+    // If the pointer moved more than 8px, it was a drag gesture — do not count as a tap!
+    if (isDragRef.current) {
+      return
+    }
+
     stopDrift(true)
 
     const origIndex = globalIndex % originalLength
@@ -538,40 +620,6 @@ export function LinearGallery({
           )
         })}
       </div>
-
-      {/* Accessibility Play/Pause Button */}
-      {autoplay && !prefersReducedMotion && (
-        <button
-          type="button"
-          className="linear-gallery-toggle"
-          onClick={handleTogglePlay}
-          aria-label={isPlaying ? 'Pause gallery autoplay' : 'Play gallery autoplay'}
-          title={isPlaying ? 'Pause gallery autoplay' : 'Play gallery autoplay'}
-        >
-          {isPlaying ? (
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <rect x="5" y="4" width="4" height="16" rx="1" />
-              <rect x="15" y="4" width="4" height="16" rx="1" />
-            </svg>
-          ) : (
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <polygon points="6 4 20 12 6 20 6 4" />
-            </svg>
-          )}
-        </button>
-      )}
     </div>
   )
 }
