@@ -7,6 +7,7 @@ export interface CircularGalleryItem {
 
 export interface CircularGalleryProps {
   items?: CircularGalleryItem[]
+  initialIndex?: number
   bend?: number
   textColor?: string
   borderRadius?: number

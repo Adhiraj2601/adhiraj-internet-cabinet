@@ -5,22 +5,22 @@
  */
 
 export const GALLERY_ENTRANCE = {
-  /** Duration per card travel in milliseconds (900 - 1100ms) */
-  cardDuration: 1000,
+  /** Duration per card travel in milliseconds (800 - 1000ms) */
+  cardDuration: 900,
   /** Quick fade duration for prefers-reduced-motion in ms */
   reducedMotionDuration: 200,
-  /** Stagger delay in milliseconds per card distance from center (60 - 90ms) */
-  staggerMs: 75,
-  /** Maximum number of cards away from center to stagger */
+  /** Stagger delay in milliseconds per card left-to-right (50 - 70ms) */
+  staggerMs: 60,
+  /** Maximum number of cards to stagger */
   maxStaggerSteps: 6,
   /** Threshold (0.0 to 1.0) of card travel over which opacity ramps from 0 to 1 */
   opacityRampThreshold: 0.4,
   /** Progress (0.0 to 1.0) of overall intro when details block begins fading in */
   detailsThreshold: 0.6,
-  /** Starting Y offset multiplier in world units (relative to viewport height) */
-  startOffsetYMultiplier: 1.2,
+  /** Starting vertical rise distance in pixels (60 - 80px) */
+  riseDistancePx: 70,
   /** Starting translateY in pixels for mobile DOM cards */
-  mobileStartTranslateY: 60,
+  mobileStartTranslateY: 70,
   /** Fallback timeout for preloading image assets in ms */
   preloadTimeoutMs: 2800,
 } as const

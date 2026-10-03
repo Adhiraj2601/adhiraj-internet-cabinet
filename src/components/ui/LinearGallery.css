@@ -57,25 +57,25 @@
 }
 
 /* ==========================================================================
-   MOBILE CAROUSEL ENTRANCE ANIMATION (Cards rise from translateY(60px))
+   MOBILE CAROUSEL ENTRANCE ANIMATION (Cards rise from translateY(70px))
    ========================================================================== */
 
-/* 1. Initial state: hidden at translateY(60px), opacity 0 */
+/* 1. Initial state: hidden at translateY(70px), opacity 0 */
 .linear-gallery figure.card-intro-hidden {
   opacity: 0 !important;
-  transform: translateY(60px) scale(0.92) !important;
+  transform: translateY(70px) scale(0.92) !important;
   pointer-events: none;
 }
 .linear-gallery figure.card-intro-hidden.is-active {
-  transform: translateY(60px) scale(1.04) !important;
+  transform: translateY(70px) scale(1.04) !important;
 }
 
-/* 2. Animating state: rise from translateY(60px) to y=0 with staggered delay */
+/* 2. Animating state: rise from translateY(70px) to y=0 with easeOutCubic over 900ms */
 .linear-gallery figure.card-intro-animating {
   opacity: 0.75;
   transform: translateY(0) scale(0.92);
-  transition: transform 950ms cubic-bezier(0.22, 1, 0.36, 1),
-              opacity 380ms ease-out !important;
+  transition: transform 900ms cubic-bezier(0.33, 1, 0.68, 1),
+              opacity 360ms ease-out !important;
   pointer-events: none;
   will-change: transform, opacity;
 }

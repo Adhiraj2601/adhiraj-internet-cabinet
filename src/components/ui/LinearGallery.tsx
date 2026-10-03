@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react'
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 import { GALLERY_ENTRANCE, preloadGalleryImages } from '../../lib/galleryEntrance'
 import './LinearGallery.css'
@@ -230,26 +230,37 @@ export function LinearGallery({
   )
 
   // ==========================================
+  // SYNCHRONOUS INITIAL CENTERING BEFORE PAINT
+  // ==========================================
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container || originalLength === 0) return
+
+    measureSetWidth()
+    const targetIdx = originalLength + (initialIndex % originalLength)
+    const targetEl = itemElementsRef.current.get(targetIdx)
+
+    if (targetEl) {
+      const containerWidth = container.clientWidth
+      const targetLeft = targetEl.offsetLeft
+      const targetWidth = targetEl.offsetWidth
+      const targetScrollLeft = targetLeft - (containerWidth - targetWidth) / 2
+
+      container.scrollTo({
+        left: targetScrollLeft,
+        behavior: 'auto'
+      })
+      container.scrollLeft = targetScrollLeft
+      posRef.current = targetScrollLeft
+    }
+  }, [originalLength, initialIndex, measureSetWidth])
+
+  // ==========================================
   // IMAGE PRELOAD & ENTRANCE ANIMATION LIFECYCLE
   // ==========================================
   useEffect(() => {
     if (originalLength === 0) return
     let isMounted = true
-
-    // Center the track silently while cards are still at opacity 0
-    const targetIdx = originalLength + (initialIndex % originalLength)
-    requestAnimationFrame(() => {
-      measureSetWidth()
-      const targetEl = itemElementsRef.current.get(targetIdx)
-      if (targetEl && containerRef.current) {
-        targetEl.scrollIntoView({
-          behavior: 'auto',
-          inline: 'center',
-          block: 'nearest'
-        })
-        posRef.current = containerRef.current.scrollLeft
-      }
-    })
 
     // Preload all cover images before starting entrance
     setIntroPhase('initial')
@@ -264,8 +275,8 @@ export function LinearGallery({
         setIntroPhase('animating')
 
         const isReduced = prefersReducedMotion
-        const animDuration = isReduced ? GALLERY_ENTRANCE.reducedMotionDuration : 950
-        const maxStagger = isReduced ? 0 : 4 * GALLERY_ENTRANCE.staggerMs // up to 300ms
+        const animDuration = isReduced ? GALLERY_ENTRANCE.reducedMotionDuration : GALLERY_ENTRANCE.cardDuration
+        const maxStagger = isReduced ? 0 : 5 * GALLERY_ENTRANCE.staggerMs // 300ms max stagger (left to right)
         const totalDuration = animDuration + maxStagger
         const detailsDelay = Math.round(totalDuration * GALLERY_ENTRANCE.detailsThreshold)
 
@@ -294,7 +305,7 @@ export function LinearGallery({
       if (detailsTimerRef.current !== null) clearTimeout(detailsTimerRef.current)
       if (introTimerRef.current !== null) clearTimeout(introTimerRef.current)
     }
-  }, [items, originalLength, initialIndex, measureSetWidth, prefersReducedMotion, isAutoplayConfigured, startDrift, resumeDelay])
+  }, [items, originalLength, prefersReducedMotion, isAutoplayConfigured, startDrift, resumeDelay])
 
   // ==========================================
   // RESIZE OBSERVER (ORIENTATION / RESIZE)
@@ -673,11 +684,11 @@ export function LinearGallery({
           const currentHighlight = activeIndex !== undefined ? activeIndex : activeIndexRef.current
           const isActive = origIndex === (currentHighlight % originalLength)
 
-          // Stagger calculation: center card (slot in middle repeated set) has 0ms delay,
-          // adjacent cards outward get 75ms delay per step.
+          // Stagger left to right by ~60ms per card
           const centerGlobal = originalLength + (initialIndex % originalLength)
-          const diffFromCenter = Math.abs(globalIndex - centerGlobal)
-          const staggerStep = Math.min(diffFromCenter, 4)
+          const minVisible = centerGlobal - 2
+          const diffFromLeft = Math.max(0, globalIndex - minVisible)
+          const staggerStep = Math.min(diffFromLeft, 5)
           const staggerDelay =
             introPhase === 'animating' && !prefersReducedMotion
               ? staggerStep * GALLERY_ENTRANCE.staggerMs

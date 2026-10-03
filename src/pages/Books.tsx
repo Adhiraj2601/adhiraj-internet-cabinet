@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { books, type Book } from '../content/books'
 import { SectionLabel } from '../components/ui/SectionLabel'
 import { Arrow } from '../components/ui/Arrow'
@@ -109,12 +109,20 @@ function BookCard({ book, index }: { book: Book; index: number }) {
 }
 
 export function BooksPage() {
+  const location = useLocation()
   const [detailsVisible, setDetailsVisible] = useState(false)
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0)
   const isWide = useIsWide()
+
+  // Reset details visibility during render when navigating to a new route key
+  const [prevKey, setPrevKey] = useState(location.key)
+  if (prevKey !== location.key) {
+    setPrevKey(location.key)
+    setDetailsVisible(false)
+  }
 
   const handleDetailsReady = useCallback(() => {
     setDetailsVisible(true)
@@ -182,7 +190,9 @@ export function BooksPage() {
           >
             <div className="w-full relative h-[420px] overflow-hidden flex items-center">
               <CircularGallery
+                key={`circular-${location.key || location.pathname}`}
                 items={galleryItems}
+                initialIndex={activeGalleryIndex}
                 bend={3}
                 textColor="#171717"
                 borderRadius={0.05}
@@ -270,6 +280,7 @@ export function BooksPage() {
           <div className="books-hero-content-group">
             <div className="books-hero-carousel-wrap">
               <LinearGallery
+                key={`linear-${location.key || location.pathname}`}
                 items={galleryItems}
                 activeIndex={activeGalleryIndex}
                 onActiveChange={setActiveGalleryIndex}
@@ -277,7 +288,7 @@ export function BooksPage() {
                 speed={28}
                 direction="forward"
                 resumeDelay={2500}
-                initialIndex={0}
+                initialIndex={activeGalleryIndex}
                 onDetailsReady={handleDetailsReady}
               />
             </div>

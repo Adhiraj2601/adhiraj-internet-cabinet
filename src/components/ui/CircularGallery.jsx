@@ -2,7 +2,7 @@ import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl'
 import { useEffect, useRef } from 'react';
 
 import './CircularGallery.css';
-import { GALLERY_ENTRANCE, easeOutQuint, preloadGalleryImages } from '../../lib/galleryEntrance';
+import { GALLERY_ENTRANCE, easeOutCubic, preloadGalleryImages } from '../../lib/galleryEntrance';
 
 function debounce(func, wait) {
   let timeout;
@@ -380,7 +380,7 @@ class Media {
 
   applyIntro(progress, opacity, lift) {
     this.plane.position.y = this.baseY + lift;
-    this.plane.rotation.z = this.baseRotationZ * progress;
+    this.plane.rotation.z = this.baseRotationZ;
     this.setOpacity(opacity);
   }
 
@@ -411,6 +411,19 @@ class Media {
   // ==========================================================================
   update(scroll, direction) {
     this.plane.position.x = this.x - scroll.current - this.extra;
+
+    const planeOffset = this.plane.scale.x / 2;
+    const viewportOffset = this.viewport.width / 2;
+
+    // Buffer wrap check so cards smoothly wrap completely offscreen
+    while (direction === 'right' && this.plane.position.x + planeOffset < -viewportOffset - this.padding) {
+      this.extra -= this.widthTotal;
+      this.plane.position.x = this.x - scroll.current - this.extra;
+    }
+    while (direction === 'left' && this.plane.position.x - planeOffset > viewportOffset + this.padding) {
+      this.extra += this.widthTotal;
+      this.plane.position.x = this.x - scroll.current - this.extra;
+    }
 
     const x = this.plane.position.x;
     const H = this.viewport.width / 2;
@@ -451,19 +464,6 @@ class Media {
     this.baseRotationZ = this.plane.rotation.z;
 
     this.speed = scroll.current - scroll.last;
-
-    const planeOffset = this.plane.scale.x / 2;
-    const viewportOffset = this.viewport.width / 2;
-
-    // Buffer wrap check so cards smoothly wrap completely offscreen
-    while (direction === 'right' && this.plane.position.x + planeOffset < -viewportOffset - this.padding) {
-      this.extra -= this.widthTotal;
-      this.plane.position.x = this.x - scroll.current - this.extra;
-    }
-    while (direction === 'left' && this.plane.position.x - planeOffset > viewportOffset + this.padding) {
-      this.extra += this.widthTotal;
-      this.plane.position.x = this.x - scroll.current - this.extra;
-    }
   }
 
   // ==========================================================================
@@ -555,6 +555,7 @@ class App {
     {
       items,
       loadedImagesMap,
+      initialIndex = 0,
       bend = 3,
       textColor = '#1a1a1a',
       borderRadius = 0,
@@ -574,6 +575,7 @@ class App {
   ) {
     this.container = container;
     this.loadedImagesMap = loadedImagesMap || new Map();
+    this.initialIndex = initialIndex;
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onActiveChange = onActiveChange;
@@ -592,7 +594,7 @@ class App {
     this.isVisible = true;
     this.raf = 0;
     this.samples = [];
-    this.lastActiveIndex = -1;
+    this.lastActiveIndex = (this.initialIndex || 0) % (items?.length || 1);
     this.onCheckDebounce = debounce(this.onCheck, 200);
 
     // ==========================================
@@ -603,9 +605,7 @@ class App {
     this.detailsRevealed = false;
     this.cardDelays = [];
     this.maxDelay = 0;
-    this.totalIntroDuration = this.reducedMotion
-      ? GALLERY_ENTRANCE.reducedMotionDuration
-      : GALLERY_ENTRANCE.cardDuration;
+    this.totalIntroDuration = this.reducedMotion ? 200 : 900;
 
     this.createRenderer();
     this.createCamera();
@@ -613,6 +613,19 @@ class App {
     this.onResize();
     this.createGeometry();
     this.createMedias(items, bend, textColor, borderRadius, font);
+
+    // Set scroll.current = scroll.target = finalValue in constructor synchronously
+    const cardWidthWithPadding = this.medias && this.medias[0] ? this.medias[0].width : 1;
+    const targetIdx = this.setLength + ((this.initialIndex || 0) % this.originalLength);
+    const finalValue = targetIdx * cardWidthWithPadding;
+
+    this.scroll.current = finalValue;
+    this.scroll.target = finalValue;
+    this.scroll.last = finalValue;
+
+    // Immediate layout pass so every card spawns at its final horizontal position
+    this.medias.forEach(media => media.update(this.scroll, 'right'));
+
     this.calculateCardDelays();
     this.update();
     this.addEventListeners();
@@ -623,25 +636,60 @@ class App {
   }
 
   /**
-   * Calculates stagger delay per card based on distance from the center card slot.
-   * Centers animate first, rippling outward to both edges by 75ms per card.
+   * Retriggers entrance intro animation (e.g. on route/section switch to Books).
+   * Resets only vertical progress and opacity; preserves exact horizontal scroll.
+   */
+  retriggerIntro() {
+    this.isIntroActive = true;
+    this.introStartTime = performance.now();
+    this.detailsRevealed = false;
+    this.scroll.target = this.scroll.current;
+    this.scroll.last = this.scroll.current;
+    this.calculateCardDelays();
+  }
+
+  /**
+   * Calculates stagger delay per card left-to-right (50 - 70ms per card).
    */
   calculateCardDelays() {
     if (!this.medias || this.medias.length === 0) return;
-    // Initial media layout pass to resolve wrapped coordinates
     this.medias.forEach(media => media.update(this.scroll, 'right'));
 
+    if (this.reducedMotion) {
+      this.cardDelays = this.medias.map(() => 0);
+      this.maxDelay = 0;
+      this.totalIntroDuration = 200;
+      return;
+    }
+
+    // Stagger left to right by ~60ms per card
+    const viewportHalf = (this.viewport ? this.viewport.width : 20) / 2;
     const cardWidth = Math.max(0.1, this.medias[0].width || 1);
-    this.cardDelays = this.medias.map((media) => {
-      if (this.reducedMotion) return 0;
-      const cardDist = Math.abs(media.plane.position.x) / cardWidth;
-      const steps = Math.min(Math.round(cardDist), GALLERY_ENTRANCE.maxStaggerSteps);
-      return steps * GALLERY_ENTRANCE.staggerMs;
+
+    const visibleCards = this.medias
+      .filter(m => m.plane.position.x >= -viewportHalf - cardWidth && m.plane.position.x <= viewportHalf + cardWidth)
+      .sort((a, b) => a.plane.position.x - b.plane.position.x);
+
+    const STAGGER_STEP_MS = 60;
+    const rankMap = new Map();
+    visibleCards.forEach((m, idx) => {
+      rankMap.set(m, idx);
     });
-    this.maxDelay = this.reducedMotion ? 0 : Math.max(...this.cardDelays, 0);
-    this.totalIntroDuration = this.reducedMotion
-      ? GALLERY_ENTRANCE.reducedMotionDuration
-      : GALLERY_ENTRANCE.cardDuration + this.maxDelay;
+
+    const maxRank = Math.max(0, visibleCards.length - 1);
+
+    this.cardDelays = this.medias.map((media) => {
+      if (rankMap.has(media)) {
+        return rankMap.get(media) * STAGGER_STEP_MS;
+      }
+      if (media.plane.position.x < -viewportHalf) {
+        return 0;
+      }
+      return (maxRank + 1) * STAGGER_STEP_MS;
+    });
+
+    this.maxDelay = Math.max(...this.cardDelays, 0);
+    this.totalIntroDuration = 900 + this.maxDelay;
   }
 
   // [CHANGE 6]: Cap renderer DPR at Math.min(devicePixelRatio, 2)
@@ -696,12 +744,13 @@ class App {
     const galleryItems = items && items.length ? items : defaultItems;
     this.originalLength = galleryItems.length;
 
-    // Repeat items until there are at least 8 slides to avoid broken loop
+    // Repeat items to ensure 3 sets (left, center, right) and at least 24 slides
     let repeated = [...galleryItems];
     while (repeated.length < 8) {
       repeated = repeated.concat(galleryItems);
     }
-    this.mediasImages = repeated.concat(repeated);
+    this.mediasImages = [...repeated, ...repeated, ...repeated];
+    this.setLength = repeated.length;
     this.medias = this.mediasImages.map((data, index) => {
       return new Media({
         geometry: this.planeGeometry,
@@ -1003,7 +1052,8 @@ class App {
     const direction = this.scroll.current >= this.scroll.last ? 'right' : 'left';
 
     if (this.medias) {
-      const startOffsetY = -GALLERY_ENTRANCE.startOffsetYMultiplier * (this.viewport ? this.viewport.height : 10);
+      const pxToWorld = (this.viewport ? this.viewport.height : 16.5) / Math.max(1, this.screen ? this.screen.height : 420);
+      const startOffsetY = -70 * pxToWorld;
       const elapsed = now - this.introStartTime;
 
       this.medias.forEach((media, idx) => {
@@ -1011,15 +1061,15 @@ class App {
 
         if (this.isIntroActive) {
           if (this.reducedMotion) {
-            const p = Math.min(1.0, elapsed / GALLERY_ENTRANCE.reducedMotionDuration);
+            const p = Math.min(1.0, elapsed / 200);
             media.applyIntro(1.0, p, 0);
           } else {
             const delay = this.cardDelays[idx] || 0;
             const cardElapsed = Math.max(0, elapsed - delay);
-            const t = Math.min(1.0, cardElapsed / GALLERY_ENTRANCE.cardDuration);
-            const p = easeOutQuint(t);
-            // Opacity ramps from 0 to 1 over first 40% of travel
-            const opacity = Math.min(1.0, p / GALLERY_ENTRANCE.opacityRampThreshold);
+            const t = Math.min(1.0, cardElapsed / 900);
+            const p = easeOutCubic(t);
+            // Opacity ramps from 0 to 1 over first 40% of its rise
+            const opacity = Math.min(1.0, p / 0.4);
             const lift = (1.0 - p) * startOffsetY;
             media.applyIntro(p, opacity, lift);
           }
@@ -1171,6 +1221,7 @@ class App {
 // ============================================================================
 export default function CircularGallery({
   items,
+  initialIndex = 0,
   bend = 3,
   textColor = '#1a1a1a',
   borderRadius = 0.05,
@@ -1225,6 +1276,7 @@ export default function CircularGallery({
       app = new App(containerRef.current, {
         items,
         loadedImagesMap,
+        initialIndex,
         bend,
         textColor,
         borderRadius,
@@ -1247,7 +1299,7 @@ export default function CircularGallery({
       isMounted = false;
       if (app) app.destroy();
     };
-  }, [items, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase, offsetY, autoplay, speed, pauseOnHover, direction]);
+  }, [items, initialIndex, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase, offsetY, autoplay, speed, pauseOnHover, direction]);
 
   if (!items || items.length === 0) {
     return (
