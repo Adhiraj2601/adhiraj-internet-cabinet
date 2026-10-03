@@ -199,7 +199,7 @@ export function BooksPage() {
                   {/* Status & Volume Index */}
                   <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
                     <span className="text-muted/70">
-                      Vol. #{activeBook.id} · {activeGalleryIndex + 1} of {books.length}
+                      Vol. #{activeBook.id} of {books.length}
                     </span>
                     <span className="text-muted/40">•</span>
                     <span
