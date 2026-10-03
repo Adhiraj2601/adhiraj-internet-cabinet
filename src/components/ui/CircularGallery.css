@@ -10,6 +10,16 @@
   outline: none;
 }
 
+.circular-gallery canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
+}
+
 .circular-gallery:active {
   cursor: grabbing;
 }

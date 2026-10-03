@@ -147,6 +147,8 @@ class Title {
   }
   createMesh() {
     const { texture, width, height } = createTextTexture(this.gl, this.text, this.font, this.textColor);
+    this.textureWidth = width;
+    this.textureHeight = height;
     const geometry = new Plane(this.gl);
     const program = new Program(this.gl, {
       vertex: `
@@ -174,12 +176,19 @@ class Title {
       transparent: true
     });
     this.mesh = new Mesh(this.gl, { geometry, program });
-    const aspect = width / height;
+    this.updateTransform();
+    this.mesh.setParent(this.plane);
+  }
+  updateTransform() {
+    if (!this.mesh) return;
+    const aspect = (this.textureWidth || 1) / (this.textureHeight || 1);
     const textHeight = this.plane.scale.y * 0.15;
     const textWidth = textHeight * aspect;
     this.mesh.scale.set(textWidth, textHeight, 1);
     this.mesh.position.y = -this.plane.scale.y * 0.5 - textHeight * 0.5 - 0.05;
-    this.mesh.setParent(this.plane);
+  }
+  onResize() {
+    this.updateTransform();
   }
 }
 
@@ -253,9 +262,12 @@ class Media {
         }
         
         void main() {
+          // Safeguard against division by zero on mobile OpenGL ES drivers
+          float imgAspect = (uImageSizes.y > 0.0 && uImageSizes.x > 0.0) ? (uImageSizes.x / uImageSizes.y) : (2.0 / 3.0);
+          float planeAspect = (uPlaneSizes.y > 0.0 && uPlaneSizes.x > 0.0) ? (uPlaneSizes.x / uPlaneSizes.y) : (2.0 / 3.0);
           vec2 ratio = vec2(
-            min((uPlaneSizes.x / uPlaneSizes.y) / (uImageSizes.x / uImageSizes.y), 1.0),
-            min((uPlaneSizes.y / uPlaneSizes.x) / (uImageSizes.y / uImageSizes.x), 1.0)
+            min(planeAspect / imgAspect, 1.0),
+            min(imgAspect / planeAspect, 1.0)
           );
           vec2 uv = vec2(
             vUv.x * ratio.x + (1.0 - ratio.x) * 0.5,
@@ -274,8 +286,8 @@ class Media {
       `,
       uniforms: {
         tMap: { value: texture },
-        uPlaneSizes: { value: [0, 0] },
-        uImageSizes: { value: [0, 0] },
+        uPlaneSizes: { value: [2, 3] },
+        uImageSizes: { value: [2, 3] },
         uBorderRadius: { value: this.borderRadius }
       },
       transparent: true
@@ -285,7 +297,10 @@ class Media {
     img.src = this.image;
     img.onload = () => {
       texture.image = img;
-      this.program.uniforms.uImageSizes.value = [img.naturalWidth, img.naturalHeight];
+      this.program.uniforms.uImageSizes.value = [img.naturalWidth || 200, img.naturalHeight || 300];
+    };
+    img.onerror = () => {
+      this.program.uniforms.uImageSizes.value = [200, 300];
     };
   }
   createMesh() {
@@ -315,17 +330,21 @@ class Media {
       this.plane.position.y = 0;
       this.plane.rotation.z = 0;
     } else {
-      const B_abs = Math.abs(this.bend);
+      // Scale effective bend on narrow mobile viewports so radius does not collapse
+      const isMobileScreen = this.screen && this.screen.width < 640;
+      const currentBend = isMobileScreen ? Math.min(this.bend, 1.2) : this.bend;
+      const B_abs = Math.abs(currentBend);
       const R = (H * H + B_abs * B_abs) / (2 * B_abs);
-      const effectiveX = Math.min(Math.abs(x), H);
+      const effectiveX = Math.min(Math.abs(x), H * 0.98);
 
-      const arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
-      if (this.bend > 0) {
+      const arc = R - Math.sqrt(Math.max(0, R * R - effectiveX * effectiveX));
+      const asinRatio = Math.min(0.999, Math.max(-0.999, effectiveX / R));
+      if (currentBend > 0) {
         this.plane.position.y = -arc;
-        this.plane.rotation.z = -Math.sign(x) * Math.asin(effectiveX / R);
+        this.plane.rotation.z = -Math.sign(x) * Math.asin(asinRatio);
       } else {
         this.plane.position.y = arc;
-        this.plane.rotation.z = Math.sign(x) * Math.asin(effectiveX / R);
+        this.plane.rotation.z = Math.sign(x) * Math.asin(asinRatio);
       }
     }
 
@@ -352,15 +371,22 @@ class Media {
         this.plane.program.uniforms.uViewportSizes.value = [this.viewport.width, this.viewport.height];
       }
     }
-    this.scale = this.screen.height / 1500;
+    const isSmall = this.screen.width < 640;
+    const isMedium = this.screen.width < 1024;
+    // Scale card dimensions dynamically so mobile screens fit 3 cards gracefully
+    const cardScale = isSmall ? 0.65 : (isMedium ? 0.82 : 1.0);
+    this.scale = (this.screen.height / 1500) * cardScale;
     this.plane.scale.y = (this.viewport.height * (900 * this.scale)) / this.screen.height;
-    // Factor changed from 700 to 600 so plane is 2:3 portrait aspect ratio
+    // Factor 600 maintains 2:3 portrait book aspect ratio
     this.plane.scale.x = (this.viewport.width * (600 * this.scale)) / this.screen.width;
     this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
-    this.padding = 2;
+    this.padding = isSmall ? 1.0 : (isMedium ? 1.5 : 2.0);
     this.width = this.plane.scale.x + this.padding;
     this.widthTotal = this.width * this.length;
     this.x = this.width * this.index;
+    if (this.title) {
+      this.title.onResize();
+    }
   }
 }
 
@@ -419,6 +445,9 @@ class App {
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0, 0, 0, 0);
+    this.gl.canvas.style.touchAction = 'pan-y';
+    this.gl.canvas.style.userSelect = 'none';
+    this.gl.canvas.style.webkitUserSelect = 'none';
     this.container.appendChild(this.gl.canvas);
   }
   createCamera() {
@@ -475,52 +504,84 @@ class App {
       });
     });
   }
-  onTouchDown(e) {
+  onPointerDown(e) {
+    if (e.button !== undefined && e.button !== 0) return;
     this.isDown = true;
     this.scroll.position = this.scroll.current;
-    const touch = e.touches ? e.touches[0] : e;
-    this.start = touch.clientX;
-    this.startY = touch.clientY;
+    this.start = e.clientX;
+    this.startY = e.clientY;
+    this.pointerId = e.pointerId;
     this.isScrolling = undefined;
+    this.pointerMoved = false;
   }
-  onTouchMove(e) {
+  onPointerMove(e) {
     if (!this.isDown) return;
-    const touch = e.touches ? e.touches[0] : e;
-    const x = touch.clientX;
-    const y = touch.clientY;
-    const deltaX = this.start - x;
-    const deltaY = this.startY - y;
+    if (this.pointerId !== undefined && e.pointerId !== undefined && e.pointerId !== this.pointerId) return;
+
+    const deltaX = this.start - e.clientX;
+    const deltaY = this.startY - e.clientY;
 
     // Detect if the user is swiping vertically to scroll the page
-    if (e.touches && this.isScrolling === undefined) {
-      if (Math.abs(deltaX) > 7 || Math.abs(deltaY) > 7) {
-        this.isScrolling = Math.abs(deltaY) > Math.abs(deltaX);
+    if (this.isScrolling === undefined) {
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        if (Math.abs(deltaY) > Math.abs(deltaX) * 1.15 && e.pointerType !== 'mouse') {
+          // Allow natural vertical page scroll on touch devices
+          this.isScrolling = true;
+          this.isDown = false;
+          return;
+        } else {
+          // Capture horizontal carousel gesture
+          this.isScrolling = false;
+          this.pointerMoved = true;
+          try {
+            if (this.container && this.container.setPointerCapture) {
+              this.container.setPointerCapture(e.pointerId);
+            }
+          } catch {}
+        }
+      } else {
+        return;
       }
     }
 
     if (this.isScrolling) {
-      // Allow natural vertical page scroll
       return;
     }
 
-    if (e.cancelable && e.touches) {
-      e.preventDefault();
-    }
-
-    if (Math.abs(deltaX) > 15) {
+    if (Math.abs(deltaX) > 12) {
       this.driftDir = deltaX > 0 ? 1 : -1;
     }
 
     const distance = deltaX * (this.scrollSpeed * 0.025);
     this.scroll.target = this.scroll.position + distance;
   }
-  onTouchUp() {
+  onPointerUp(e) {
+    if (this.pointerId !== undefined && e.pointerId !== undefined && e.pointerId !== this.pointerId) return;
+    if (this.pointerMoved && this.container?.hasPointerCapture?.(e.pointerId)) {
+      try {
+        this.container.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
     this.isDown = false;
+    this.pointerId = undefined;
     this.isScrolling = undefined;
+    this.pointerMoved = false;
     this.holdUntil = performance.now() + 800;
     if (this.autoplay !== 'drift') {
       this.onCheck();
     }
+  }
+  onPointerCancel(e) {
+    if (this.pointerMoved && this.container?.hasPointerCapture?.(e.pointerId)) {
+      try {
+        this.container.releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+    this.isDown = false;
+    this.pointerId = undefined;
+    this.isScrolling = undefined;
+    this.pointerMoved = false;
+    this.holdUntil = performance.now() + 800;
   }
   onWheel(e) {
     // Only intercept horizontal trackpad/wheel gestures.
@@ -657,9 +718,10 @@ class App {
   addEventListeners() {
     this.boundOnResize = this.onResize.bind(this);
     this.boundOnWheel = this.onWheel.bind(this);
-    this.boundOnTouchDown = this.onTouchDown.bind(this);
-    this.boundOnTouchMove = this.onTouchMove.bind(this);
-    this.boundOnTouchUp = this.onTouchUp.bind(this);
+    this.boundOnPointerDown = this.onPointerDown.bind(this);
+    this.boundOnPointerMove = this.onPointerMove.bind(this);
+    this.boundOnPointerUp = this.onPointerUp.bind(this);
+    this.boundOnPointerCancel = this.onPointerCancel.bind(this);
     this.boundOnKeyDown = this.onKeyDown.bind(this);
     this.boundOnMouseEnter = () => {
       this.isHovered = true;
@@ -683,10 +745,9 @@ class App {
     };
 
     window.addEventListener('resize', this.boundOnResize);
-    window.addEventListener('mousemove', this.boundOnTouchMove);
-    window.addEventListener('mouseup', this.boundOnTouchUp);
-    window.addEventListener('touchmove', this.boundOnTouchMove, { passive: false });
-    window.addEventListener('touchend', this.boundOnTouchUp);
+    window.addEventListener('pointermove', this.boundOnPointerMove);
+    window.addEventListener('pointerup', this.boundOnPointerUp);
+    window.addEventListener('pointercancel', this.boundOnPointerCancel);
     document.addEventListener('visibilitychange', this.boundOnVisibilityChange);
 
     // Attach wheel and gesture start ONLY to container, NOT window
@@ -694,8 +755,7 @@ class App {
       this.container.addEventListener('mouseenter', this.boundOnMouseEnter);
       this.container.addEventListener('mouseleave', this.boundOnMouseLeave);
       this.container.addEventListener('wheel', this.boundOnWheel, { passive: false });
-      this.container.addEventListener('mousedown', this.boundOnTouchDown);
-      this.container.addEventListener('touchstart', this.boundOnTouchDown, { passive: true });
+      this.container.addEventListener('pointerdown', this.boundOnPointerDown);
       this.container.addEventListener('keydown', this.boundOnKeyDown);
     }
   }
@@ -709,18 +769,16 @@ class App {
       this.io = null;
     }
     window.removeEventListener('resize', this.boundOnResize);
-    window.removeEventListener('mousemove', this.boundOnTouchMove);
-    window.removeEventListener('mouseup', this.boundOnTouchUp);
-    window.removeEventListener('touchmove', this.boundOnTouchMove);
-    window.removeEventListener('touchend', this.boundOnTouchUp);
+    window.removeEventListener('pointermove', this.boundOnPointerMove);
+    window.removeEventListener('pointerup', this.boundOnPointerUp);
+    window.removeEventListener('pointercancel', this.boundOnPointerCancel);
     document.removeEventListener('visibilitychange', this.boundOnVisibilityChange);
 
     if (this.container) {
       this.container.removeEventListener('mouseenter', this.boundOnMouseEnter);
       this.container.removeEventListener('mouseleave', this.boundOnMouseLeave);
       this.container.removeEventListener('wheel', this.boundOnWheel);
-      this.container.removeEventListener('mousedown', this.boundOnTouchDown);
-      this.container.removeEventListener('touchstart', this.boundOnTouchDown);
+      this.container.removeEventListener('pointerdown', this.boundOnPointerDown);
       this.container.removeEventListener('keydown', this.boundOnKeyDown);
     }
     if (this.renderer && this.renderer.gl && this.renderer.gl.canvas && this.renderer.gl.canvas.parentNode) {

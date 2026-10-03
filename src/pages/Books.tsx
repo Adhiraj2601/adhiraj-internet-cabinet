@@ -174,17 +174,17 @@ export function BooksPage() {
         >
           <div
             className="w-full relative"
-            style={{ height: isMobile ? 360 : 500, position: 'relative' }}
+            style={{ height: isMobile ? 320 : 500, position: 'relative' }}
           >
             <CircularGallery
               items={galleryItems}
-              bend={3}
+              bend={isMobile ? 1.0 : 3}
               textColor="#171717"
               borderRadius={0.05}
               scrollEase={0.05}
-              offsetY={isMobile ? 0.9 : 1.3}
+              offsetY={isMobile ? 0.6 : 1.3}
               autoplay="drift"
-              speed={isMobile ? 1.4 : 1.8}
+              speed={isMobile ? 1.2 : 1.8}
               pauseOnHover={false}
               font="600 32px Caveat, cursive"
               onActiveChange={setActiveGalleryIndex}
@@ -193,7 +193,7 @@ export function BooksPage() {
 
           {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
           {activeBook && (
-            <div className="mt-2 md:mt-3 max-w-xl mx-auto text-center px-4 min-h-[110px] flex flex-col items-center justify-center">
+            <div className="mt-1 md:mt-3 max-w-xl mx-auto text-center px-4 min-h-[90px] sm:min-h-[110px] flex flex-col items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeBook.id}-${activeGalleryIndex}`}
@@ -201,10 +201,10 @@ export function BooksPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="flex flex-col items-center gap-1.5"
+                  className="flex flex-col items-center gap-1 sm:gap-1.5"
                 >
                   {/* Status & Volume Index */}
-                  <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
+                  <div className="flex items-center gap-2 sm:gap-2.5 text-[0.68rem] sm:text-[0.7rem] font-mono tracking-widest uppercase">
                     <span className="text-muted/70">
                       Vol. #{activeBook.id} of {books.length}
                     </span>
@@ -219,7 +219,7 @@ export function BooksPage() {
                   </div>
 
                   {/* Title in Geologica font */}
-                  <h2 className="font-geologica text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-snug">
+                  <h2 className="font-geologica text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
                     {activeBook.title}
                   </h2>
 
@@ -231,7 +231,7 @@ export function BooksPage() {
                   {/* Note in handwritten italic */}
                   {activeBook.note && (
                     <p
-                      className="font-handwritten text-base sm:text-lg text-muted max-w-lg leading-relaxed italic"
+                      className="font-handwritten text-sm sm:text-base md:text-lg text-muted max-w-lg leading-relaxed italic"
                       style={{ color: 'var(--muted)' }}
                     >
                       "{activeBook.note}"
