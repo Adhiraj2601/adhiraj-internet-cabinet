@@ -28,7 +28,7 @@
     "title": "Chess",
     "slug": "js-chess",
     "category": "Game",
-    "description": "A JavaScript chess game built as a hands-on learning project to deepen my understanding of the language. I am currently experimenting with custom UI designs and integrating UNO mechanics to create a unique chess-UNO hybrid.",
+    "description": "A JavaScript chess game built as a hands-on learning project to learn the language by doing. It started as a standard chess implementation and has grown into a playground for experimenting with custom UI designs and a growing collection of variant game modes.",
     "year": "2024",
     "image": "/images/projects/Screenshot 2026-10-01 152000.png",
     "github": "https://github.com/adhirajsengar/js-chess",
