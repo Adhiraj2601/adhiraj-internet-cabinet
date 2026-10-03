@@ -212,25 +212,8 @@ export function SketchesPage() {
         <section
           id="archive-grid"
           aria-label="Complete Visual Scraps Grid Archive"
-          className="pt-12 md:pt-16 border-t border-token/60"
+          className="pt-8 md:pt-10 border-t border-token/60"
         >
-          {/* Navigation Breadcrumb */}
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-            className="mb-8"
-          >
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.15em] uppercase text-muted hover:text-foreground transition-colors group"
-            >
-              <span className="transform transition-transform duration-200 group-hover:-translate-x-1">←</span>
-              <span>Back to Archive</span>
-            </Link>
-          </motion.div>
-
           {/* Masthead Header (Shifted below carousel) */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -441,8 +424,8 @@ export function SketchesPage() {
               to="/#scrapbook"
               className="hover:text-foreground transition-colors inline-flex items-center gap-1"
             >
-              <span>Return to homepage snapshot</span>
-              <Arrow size={12} direction="up-right" />
+              <span>Return to homepage</span>
+              <Arrow size={12} direction="right" />
             </Link>
           </div>
         </div>
