@@ -15,6 +15,10 @@ export interface CircularGalleryProps {
   scrollSpeed?: number
   scrollEase?: number
   offsetY?: number
+  autoplay?: 'drift' | 'off'
+  speed?: number
+  pauseOnHover?: boolean
+  direction?: 'left' | 'right'
   onActiveChange?: (index: number) => void
   className?: string
   style?: React.CSSProperties

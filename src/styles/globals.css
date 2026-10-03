@@ -66,6 +66,10 @@
     font-family: 'Caveat', cursive;
   }
 
+  .font-geologica {
+    font-family: 'Geologica', system-ui, sans-serif;
+  }
+
   .text-muted {
     color: var(--muted);
   }

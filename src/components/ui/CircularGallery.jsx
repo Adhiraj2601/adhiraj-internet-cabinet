@@ -376,6 +376,10 @@ class App {
       scrollSpeed = 2,
       scrollEase = 0.05,
       offsetY = 1.2,
+      autoplay = 'drift',
+      speed = 1.8,
+      pauseOnHover = false,
+      direction = 'left',
       onActiveChange
     } = {}
   ) {
@@ -384,6 +388,16 @@ class App {
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onActiveChange = onActiveChange;
     this.offsetY = offsetY;
+    this.autoplay = autoplay;
+    this.speed = speed;
+    this.pauseOnHover = pauseOnHover;
+    this.driftDir = direction === 'right' ? -1 : 1;
+    this.isHovered = false;
+    this.isDown = false;
+    this.holdUntil = 0;
+    this.lastTime = 0;
+    this.isVisible = true;
+    this.raf = 0;
     this.lastActiveIndex = -1;
     this.onCheckDebounce = debounce(this.onCheck, 200);
 
@@ -395,6 +409,7 @@ class App {
     this.createMedias(items, bend, textColor, borderRadius, font);
     this.update();
     this.addEventListeners();
+    this.setupIntersectionObserver();
   }
   createRenderer() {
     this.renderer = new Renderer({
@@ -492,13 +507,20 @@ class App {
       e.preventDefault();
     }
 
+    if (Math.abs(deltaX) > 15) {
+      this.driftDir = deltaX > 0 ? 1 : -1;
+    }
+
     const distance = deltaX * (this.scrollSpeed * 0.025);
     this.scroll.target = this.scroll.position + distance;
   }
   onTouchUp() {
     this.isDown = false;
     this.isScrolling = undefined;
-    this.onCheck();
+    this.holdUntil = performance.now() + 800;
+    if (this.autoplay !== 'drift') {
+      this.onCheck();
+    }
   }
   onWheel(e) {
     // Only intercept horizontal trackpad/wheel gestures.
@@ -507,27 +529,36 @@ class App {
     if (!isHorizontal || Math.abs(e.deltaX) < 1) return;
 
     e.preventDefault();
+    this.holdUntil = performance.now() + 1500;
+    this.driftDir = e.deltaX > 0 ? 1 : -1;
     this.scroll.target += (e.deltaX > 0 ? this.scrollSpeed : -this.scrollSpeed) * 0.2;
-    this.onCheckDebounce();
+    if (this.autoplay !== 'drift') {
+      this.onCheckDebounce();
+    }
   }
   onKeyDown(e) {
     switch (e.key) {
       case 'ArrowRight':
         e.preventDefault();
+        this.holdUntil = performance.now() + 1500;
+        this.driftDir = 1;
         this.scroll.target += this.scrollSpeed * 5;
-        this.onCheckDebounce();
+        if (this.autoplay !== 'drift') this.onCheckDebounce();
         break;
 
       case 'ArrowLeft':
         e.preventDefault();
+        this.holdUntil = performance.now() + 1500;
+        this.driftDir = -1;
         this.scroll.target -= this.scrollSpeed * 5;
-        this.onCheckDebounce();
+        if (this.autoplay !== 'drift') this.onCheckDebounce();
         break;
 
       case 'Home':
         e.preventDefault();
+        this.holdUntil = performance.now() + 1500;
         this.scroll.target = 0;
-        this.onCheckDebounce();
+        if (this.autoplay !== 'drift') this.onCheckDebounce();
         break;
 
       default:
@@ -562,9 +593,25 @@ class App {
       this.medias.forEach(media => media.onResize({ screen: this.screen, viewport: this.viewport }));
     }
   }
-  update() {
+  update(time) {
+    if (!this.isVisible) return;
+
+    const now = typeof time === 'number' && time > 0 ? time : performance.now();
+    const dt = this.lastTime > 0 ? Math.min((now - this.lastTime) / 1000, 0.05) : 1 / 60;
+    this.lastTime = now;
+
+    // Autoplay drift effect (matching Sketches CircularCarousel)
+    const isPaused =
+      (this.pauseOnHover && this.isHovered) ||
+      this.isDown ||
+      now < this.holdUntil;
+
+    if (this.autoplay === 'drift' && !isPaused) {
+      this.scroll.target += this.speed * this.driftDir * dt;
+    }
+
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
-    const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
+    const direction = this.scroll.current >= this.scroll.last ? 'right' : 'left';
     if (this.medias) {
       this.medias.forEach(media => media.update(this.scroll, direction));
     }
@@ -586,6 +633,27 @@ class App {
     this.scroll.last = this.scroll.current;
     this.raf = window.requestAnimationFrame(this.update.bind(this));
   }
+  setupIntersectionObserver() {
+    this.isVisible = true;
+    if (typeof IntersectionObserver !== 'undefined' && this.container) {
+      this.io = new IntersectionObserver(([entry]) => {
+        this.isVisible = entry.isIntersecting;
+        if (this.isVisible) {
+          this.lastTime = performance.now();
+          if (!this.raf) {
+            this.raf = window.requestAnimationFrame(this.update.bind(this));
+          }
+        } else {
+          if (this.raf) {
+            window.cancelAnimationFrame(this.raf);
+            this.raf = 0;
+          }
+          this.lastTime = 0;
+        }
+      });
+      this.io.observe(this.container);
+    }
+  }
   addEventListeners() {
     this.boundOnResize = this.onResize.bind(this);
     this.boundOnWheel = this.onWheel.bind(this);
@@ -593,15 +661,38 @@ class App {
     this.boundOnTouchMove = this.onTouchMove.bind(this);
     this.boundOnTouchUp = this.onTouchUp.bind(this);
     this.boundOnKeyDown = this.onKeyDown.bind(this);
+    this.boundOnMouseEnter = () => {
+      this.isHovered = true;
+    };
+    this.boundOnMouseLeave = () => {
+      this.isHovered = false;
+    };
+    this.boundOnVisibilityChange = () => {
+      if (document.hidden) {
+        if (this.raf) {
+          window.cancelAnimationFrame(this.raf);
+          this.raf = 0;
+        }
+        this.lastTime = 0;
+      } else if (this.isVisible) {
+        this.lastTime = performance.now();
+        if (!this.raf) {
+          this.raf = window.requestAnimationFrame(this.update.bind(this));
+        }
+      }
+    };
 
     window.addEventListener('resize', this.boundOnResize);
     window.addEventListener('mousemove', this.boundOnTouchMove);
     window.addEventListener('mouseup', this.boundOnTouchUp);
     window.addEventListener('touchmove', this.boundOnTouchMove, { passive: false });
     window.addEventListener('touchend', this.boundOnTouchUp);
+    document.addEventListener('visibilitychange', this.boundOnVisibilityChange);
 
     // Attach wheel and gesture start ONLY to container, NOT window
     if (this.container) {
+      this.container.addEventListener('mouseenter', this.boundOnMouseEnter);
+      this.container.addEventListener('mouseleave', this.boundOnMouseLeave);
       this.container.addEventListener('wheel', this.boundOnWheel, { passive: false });
       this.container.addEventListener('mousedown', this.boundOnTouchDown);
       this.container.addEventListener('touchstart', this.boundOnTouchDown, { passive: true });
@@ -609,14 +700,24 @@ class App {
     }
   }
   destroy() {
-    window.cancelAnimationFrame(this.raf);
+    if (this.raf) {
+      window.cancelAnimationFrame(this.raf);
+      this.raf = 0;
+    }
+    if (this.io) {
+      this.io.disconnect();
+      this.io = null;
+    }
     window.removeEventListener('resize', this.boundOnResize);
     window.removeEventListener('mousemove', this.boundOnTouchMove);
     window.removeEventListener('mouseup', this.boundOnTouchUp);
     window.removeEventListener('touchmove', this.boundOnTouchMove);
     window.removeEventListener('touchend', this.boundOnTouchUp);
+    document.removeEventListener('visibilitychange', this.boundOnVisibilityChange);
 
     if (this.container) {
+      this.container.removeEventListener('mouseenter', this.boundOnMouseEnter);
+      this.container.removeEventListener('mouseleave', this.boundOnMouseLeave);
       this.container.removeEventListener('wheel', this.boundOnWheel);
       this.container.removeEventListener('mousedown', this.boundOnTouchDown);
       this.container.removeEventListener('touchstart', this.boundOnTouchDown);
@@ -625,6 +726,8 @@ class App {
     if (this.renderer && this.renderer.gl && this.renderer.gl.canvas && this.renderer.gl.canvas.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
     }
+    const loseContext = this.gl?.getExtension('WEBGL_lose_context');
+    if (loseContext) loseContext.loseContext();
   }
 }
 
@@ -638,6 +741,10 @@ export default function CircularGallery({
   scrollSpeed = 2,
   scrollEase = 0.05,
   offsetY = 1.2,
+  autoplay = 'drift',
+  speed = 1.8,
+  pauseOnHover = false,
+  direction = 'left',
   onActiveChange,
   className = '',
   style
@@ -665,6 +772,10 @@ export default function CircularGallery({
         scrollSpeed,
         scrollEase,
         offsetY,
+        autoplay,
+        speed,
+        pauseOnHover,
+        direction,
         onActiveChange: (index) => onActiveChangeRef.current?.(index)
       });
     });
@@ -673,7 +784,7 @@ export default function CircularGallery({
       isMounted = false;
       if (app) app.destroy();
     };
-  }, [items, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase, offsetY]);
+  }, [items, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase, offsetY, autoplay, speed, pauseOnHover, direction]);
 
   if (!items || items.length === 0) {
     return (

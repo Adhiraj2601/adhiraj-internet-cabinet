@@ -180,6 +180,9 @@ export function BooksPage() {
               borderRadius={0.05}
               scrollEase={0.05}
               offsetY={isMobile ? 0.9 : 1.3}
+              autoplay="drift"
+              speed={isMobile ? 1.4 : 1.8}
+              pauseOnHover={false}
               font="600 32px Caveat, cursive"
               onActiveChange={setActiveGalleryIndex}
             />
@@ -212,8 +215,8 @@ export function BooksPage() {
                     </span>
                   </div>
 
-                  {/* Title in handwritten font (Caveat) - exact same as Sketches */}
-                  <h2 className="font-handwritten text-2xl sm:text-3xl font-semibold tracking-tight text-foreground leading-snug">
+                  {/* Title in Geologica font */}
+                  <h2 className="font-geologica text-2xl sm:text-3xl font-bold tracking-tight text-foreground leading-snug">
                     {activeBook.title}
                   </h2>
 
