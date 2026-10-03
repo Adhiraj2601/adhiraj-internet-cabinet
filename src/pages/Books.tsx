@@ -163,15 +163,15 @@ export function BooksPage() {
   }, [])
 
   return (
-    <main id="main-content" className="pt-14 md:pt-16 pb-24 min-h-screen">
+    <main id="main-content" className="pt-20 md:pt-24 pb-24 min-h-screen">
       <div className="container-main">
         {/* =================== 1. FEATURED 3D CIRCULAR GALLERY (AT VERY TOP) =================== */}
         <section
           aria-label="Interactive 3D Book Gallery"
-          className="pt-0 pb-2 flex flex-col justify-between"
+          className="min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col justify-between pt-1 md:pt-2 pb-4 md:pb-6"
         >
           <div
-            className="w-full relative -mt-2 md:-mt-4 h-[340px] sm:h-[400px] md:h-[460px] overflow-hidden"
+            className="w-full relative h-[320px] sm:h-[380px] md:h-[450px] overflow-hidden"
           >
             <CircularGallery
               items={galleryItems}
@@ -179,7 +179,7 @@ export function BooksPage() {
               textColor="#171717"
               borderRadius={0.05}
               scrollEase={0.05}
-              offsetY={1.3}
+              offsetY={1.2}
               autoplay="drift"
               speed={1.5}
               pauseOnHover={false}
@@ -190,7 +190,7 @@ export function BooksPage() {
 
           {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
           {activeBook && (
-            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[90px] sm:min-h-[105px] flex flex-col items-center justify-center">
+            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[85px] sm:min-h-[100px] flex flex-col items-center justify-center">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeBook.id}-${activeGalleryIndex}`}
@@ -239,8 +239,8 @@ export function BooksPage() {
             </div>
           )}
 
-          {/* Scroll Down Indicator (touches bottom of visible screen) */}
-          <div className="flex flex-col items-center justify-center gap-1.5 pt-2 pb-4 text-muted">
+          {/* Scroll Down Indicator (touches bottom of visible screen, matching Sketches) */}
+          <div className="mt-auto flex flex-col items-center justify-center gap-1.5 pt-2 pb-4 md:pb-6 text-muted">
             <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
               Scroll down to explore library archive
             </span>
