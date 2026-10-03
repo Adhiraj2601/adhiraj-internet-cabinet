@@ -168,10 +168,10 @@ export function BooksPage() {
         {/* =================== 1. FEATURED 3D CIRCULAR GALLERY (AT VERY TOP) =================== */}
         <section
           aria-label="Interactive 3D Book Gallery"
-          className="min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col justify-between pt-1 md:pt-2 pb-4 md:pb-6"
+          className="relative min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col items-center pt-1 md:pt-2 pb-16 md:pb-20"
         >
           <div
-            className="w-full relative h-[320px] sm:h-[380px] md:h-[450px] overflow-hidden"
+            className="w-full relative h-[320px] sm:h-[380px] md:h-[420px] overflow-hidden"
           >
             <CircularGallery
               items={galleryItems}
@@ -188,9 +188,9 @@ export function BooksPage() {
             />
           </div>
 
-          {/* Active Book Details Under Gallery (matching Sketches aesthetic, fixed height so scroll down indicator never jumps) */}
+          {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
           {activeBook && (
-            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 h-[120px] sm:h-[130px] flex flex-col items-center justify-start pt-1 shrink-0">
+            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[90px] sm:min-h-[105px] flex flex-col items-center justify-start">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeBook.id}-${activeGalleryIndex}`}
@@ -239,9 +239,9 @@ export function BooksPage() {
             </div>
           )}
 
-          {/* Scroll Down Indicator (touches bottom of visible screen, matching Sketches, unaffected by book description) */}
-          <div className="mt-auto flex flex-col items-center justify-center gap-1.5 pt-2 pb-4 md:pb-6 text-muted shrink-0">
-            <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
+          {/* Scroll Down Indicator (anchored to bottom of viewport, matching Sketches, unaffected by book text) */}
+          <div className="absolute bottom-3 md:bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center gap-1.5 text-muted pointer-events-none z-10">
+            <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70 whitespace-nowrap">
               Scroll down to explore library archive
             </span>
             <motion.span
