@@ -1,22 +1,44 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { SectionLabel } from '../ui/SectionLabel'
+import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
+import './Hero.css'
 
 const heroLines = [
   { text: "hey,", delay: 0.55 },
   { text: "i'm adi.", delay: 0.7 },
 ]
 
-const supportingLines = [
-  { text: "welcome to my Space :>", delay: 0.9 },
-  { text: "i build things,", delay: 1.0 },
-  { text: "collect ideas,", delay: 1.1 },
-  { text: "read too many books", delay: 1.2 },
-  { text: "and occasionally draw.", delay: 1.3 },
-]
+/**
+ * ADDITION 1: Interactive Hero Copy Link Component
+ * Turns supporting phrases into subtle interactive gateways to /blog, /books, and /sketches.
+ * - 1px underline in green accent (#7EA84D, offset 4px)
+ * - 180ms hover/focus transition where text turns dark green (#477224, WCAG AA compliant)
+ *   and underline thickens to 2px
+ * - Small "↗" indicator slides and fades into place on hover/focus with 0 layout shift
+ * - Always-visible underline on touch screens where hover does not exist
+ * - High-contrast focus-visible outline for keyboard navigation accessibility
+ */
+interface HeroCopyLinkProps {
+  to: string
+  children: React.ReactNode
+}
+
+function HeroCopyLink({ to, children }: HeroCopyLinkProps) {
+  return (
+    <Link to={to} className="hero-copy-link group">
+      <span>{children}</span>
+      <span className="hero-copy-link-arrow" aria-hidden="true">
+        ↗
+      </span>
+    </Link>
+  )
+}
 
 export function Hero() {
   const [imgError, setImgError] = useState(false)
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   const handleImgError = () => {
     setImgError(true)
@@ -74,20 +96,62 @@ export function Hero() {
               ))}
             </h1>
 
-            {/* Supporting text */}
+            {/* Supporting text with interactive section links (ADDITION 1) */}
             <div className="mt-8 md:mt-10">
-              {supportingLines.map((line) => (
-                <motion.p
-                  key={line.text}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: line.delay, ease: 'easeOut' }}
-                  className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
-                  style={{ color: 'var(--muted)' }}
-                >
-                  {line.text}
-                </motion.p>
-              ))}
+              {/* Line 1: Welcome message */}
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.9, ease: 'easeOut' }}
+                className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
+                style={{ color: 'var(--muted)' }}
+              >
+                welcome to my Space :&gt;
+              </motion.p>
+
+              {/* Line 2: What I build */}
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.0, ease: 'easeOut' }}
+                className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
+                style={{ color: 'var(--muted)' }}
+              >
+                i build things,
+              </motion.p>
+
+              {/* Line 3: "collect ideas" links to /blog */}
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.1, ease: 'easeOut' }}
+                className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
+                style={{ color: 'var(--muted)' }}
+              >
+                <HeroCopyLink to="/blog">collect ideas</HeroCopyLink>,
+              </motion.p>
+
+              {/* Line 4: "read too many books" links to /books */}
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.2, ease: 'easeOut' }}
+                className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
+                style={{ color: 'var(--muted)' }}
+              >
+                <HeroCopyLink to="/books">read too many books</HeroCopyLink>
+              </motion.p>
+
+              {/* Line 5: "occasionally draw" links to /sketches */}
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 1.3, ease: 'easeOut' }}
+                className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
+                style={{ color: 'var(--muted)' }}
+              >
+                and <HeroCopyLink to="/sketches">occasionally draw</HeroCopyLink>.
+              </motion.p>
             </div>
           </div>
 
@@ -99,11 +163,73 @@ export function Hero() {
             className="lg:col-span-5 flex flex-col justify-center"
           >
             <div className="relative group">
-              {/* Handwritten tape note on top */}
+              {/* Handwritten tape note on top + Hand-drawn Nudge Arrow (ADDITION 2) */}
               <div className="flex justify-between items-center mb-2 px-1">
-                <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
-                  welcome to my little corner{' '}
-                </span>
+                <div className="relative inline-flex items-center">
+                  <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
+                    welcome to my little corner{' '}
+                  </span>
+
+                  {/* ADDITION 2: Handwritten nudge arrow toward hero copy links
+                      - Hand-drawn style SVG with 1.5px stroke in green accent (#7EA84D)
+                      - Swoops gently down and left from the tape note toward the hero copy links
+                      - Draws in once on page load using stroke-dashoffset (pathLength) animation
+                      - Hidden on narrow viewports (hidden lg:block) where columns stack vertically */}
+                  <div
+                    className="hidden lg:block absolute pointer-events-none -left-28 -top-3 w-28 h-16 hero-nudge-arrow-wrap"
+                    aria-hidden="true"
+                  >
+                    <svg
+                      viewBox="0 0 110 60"
+                      fill="none"
+                      className="w-full h-full overflow-visible"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      {/* Arrow shaft: smooth organic curve toward left column links */}
+                      <motion.path
+                        d="M 102 12 C 78 8, 46 22, 12 42"
+                        stroke="#7EA84D"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        initial={{
+                          pathLength: prefersReducedMotion ? 1 : 0,
+                          opacity: prefersReducedMotion ? 1 : 0,
+                        }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{
+                          pathLength: prefersReducedMotion
+                            ? { duration: 0 }
+                            : { duration: 0.85, delay: 1.4, ease: [0.65, 0, 0.35, 1] },
+                          opacity: prefersReducedMotion
+                            ? { duration: 0 }
+                            : { duration: 0.15, delay: 1.4 },
+                        }}
+                      />
+                      {/* Arrowhead barbs: flicking in as the shaft completes */}
+                      <motion.path
+                        d="M 23 33 L 12 42 L 20 52"
+                        stroke="#7EA84D"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        initial={{
+                          pathLength: prefersReducedMotion ? 1 : 0,
+                          opacity: prefersReducedMotion ? 1 : 0,
+                        }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{
+                          pathLength: prefersReducedMotion
+                            ? { duration: 0 }
+                            : { duration: 0.3, delay: 2.15, ease: 'easeOut' },
+                          opacity: prefersReducedMotion
+                            ? { duration: 0 }
+                            : { duration: 0.1, delay: 2.15 },
+                        }}
+                      />
+                    </svg>
+                  </div>
+                </div>
+
                 <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
                   FIG. 01 / ARTIFACT
                 </span>
