@@ -25,7 +25,7 @@
   {
     "id": "03",
     "number": "03",
-    "title": "Chess",
+    "title": "Chaos Chess",
     "slug": "js-chess",
     "category": "Game",
     "description": "A JavaScript chess game built as a hands-on learning project to learn the language by doing. It started as a standard chess implementation and has grown into a playground for experimenting with custom UI designs and a growing collection of variant game modes.",
