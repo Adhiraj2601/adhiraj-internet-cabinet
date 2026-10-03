@@ -7,6 +7,7 @@ import { Arrow } from '../components/ui/Arrow'
 import { fadeUp, stagger } from '../lib/animations'
 import CircularGallery from '../components/ui/CircularGallery'
 import { LinearGallery } from '../components/ui/LinearGallery'
+import '../components/ui/LinearGallery.css'
 import { useIsWide } from '../hooks/useMediaQuery'
 
 type StatusFilter = 'all' | 'reading' | 'read' | 'want-to-read'
@@ -223,10 +224,7 @@ export function BooksPage() {
                   </p>
 
                   {activeBook.note && (
-                    <p
-                      className="font-handwritten text-base text-muted max-w-lg leading-relaxed italic"
-                      style={{ color: 'var(--muted)' }}
-                    >
+                    <p className="books-hero-tagline">
                       "{activeBook.note}"
                     </p>
                   )}
@@ -309,12 +307,9 @@ export function BooksPage() {
                     by {activeBook.author}
                   </p>
 
-                  {/* Note in handwritten italic */}
+                  {/* Note in handwritten script - legible, unslanted, solid contrast */}
                   {activeBook.note && (
-                    <p
-                      className="font-handwritten text-xs text-muted max-w-xs leading-snug italic mt-1.5"
-                      style={{ color: 'var(--muted)' }}
-                    >
+                    <p className="books-hero-tagline">
                       "{activeBook.note}"
                     </p>
                   )}

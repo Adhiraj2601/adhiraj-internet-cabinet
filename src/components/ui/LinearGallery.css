@@ -161,8 +161,46 @@
   gap: 4px;
   pointer-events: none;
   z-index: 10;
-  padding-top: 6px;
+  padding-top: 16px; /* Minimum 16px clearance between details block and scroll hint */
   flex-shrink: 0;
+}
+
+/* ==========================================================================
+   BOOKS HERO TAGLINE (Legible handwritten note for mobile & desktop)
+   ========================================================================== */
+
+:root {
+  /* Solid color token: > 10.8:1 contrast against #F4F1EA background (no opacity) */
+  --books-tagline-color: #383530;
+}
+
+.books-hero-tagline {
+  /* Use Caveat script font at weight 500 with normal style (removes double slant) */
+  font-family: 'Caveat', cursive;
+  font-weight: 500;
+  font-style: normal;
+  /* Mobile: clamp(16px, 4.4vw, 19px) - never below 16px */
+  font-size: clamp(16px, 4.4vw, 19px);
+  line-height: 1.5;
+  color: var(--books-tagline-color, #383530);
+  /* Balanced wrap into up to two even lines; capped at 32ch or ~85% width */
+  max-width: min(32ch, 85vw);
+  margin-inline: auto;
+  text-wrap: balance;
+  /* 8px margin separating from author line */
+  margin-top: 8px;
+  text-align: center;
+  letter-spacing: normal;
+}
+
+/* Desktop / Wide screens: modest bump to 18-20px */
+@media (min-width: 768px) {
+  .books-hero-tagline {
+    font-size: clamp(18px, 1.25vw, 20px);
+    max-width: 36ch;
+    line-height: 1.55;
+    margin-top: 8px;
+  }
 }
 
 /* Tall phones (above 850px height): let cards grow up to 280px cap */
@@ -184,7 +222,7 @@
 
   .books-hero-mobile {
     padding-top: clamp(2rem, 4svh, 2.75rem);
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.35rem; /* Trimmed bottom padding to preserve clearance */
   }
 
   .books-hero-header-spacer {
@@ -197,5 +235,10 @@
 
   .books-hero-details-wrap {
     margin-top: 10px;
+  }
+
+  .books-hero-tagline {
+    margin-top: 6px; /* Tightened margin on short viewports */
+    line-height: 1.45;
   }
 }
