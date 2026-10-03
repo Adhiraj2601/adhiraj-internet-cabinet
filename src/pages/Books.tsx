@@ -5,7 +5,6 @@ import { books, type Book } from '../content/books'
 import { SectionLabel } from '../components/ui/SectionLabel'
 import { Arrow } from '../components/ui/Arrow'
 import { fadeUp, stagger } from '../lib/animations'
-import { useIsMobile } from '../hooks/useMediaQuery'
 import CircularGallery from '../components/ui/CircularGallery'
 
 type StatusFilter = 'all' | 'reading' | 'read' | 'want-to-read'
@@ -111,7 +110,6 @@ export function BooksPage() {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0)
-  const isMobile = useIsMobile()
 
   // Gallery items for the 3D top hero (stable reference across all 22 books)
   const galleryItems = useMemo(() => {
@@ -173,18 +171,17 @@ export function BooksPage() {
           className="min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col justify-between pt-2 md:pt-4 pb-4 md:pb-6"
         >
           <div
-            className="w-full relative"
-            style={{ height: isMobile ? 320 : 500, position: 'relative' }}
+            className="w-full relative h-[clamp(320px,46vh,500px)] overflow-hidden"
           >
             <CircularGallery
               items={galleryItems}
-              bend={isMobile ? 1.0 : 3}
+              bend={3}
               textColor="#171717"
               borderRadius={0.05}
               scrollEase={0.05}
-              offsetY={isMobile ? 0.6 : 1.3}
+              offsetY={1.2}
               autoplay="drift"
-              speed={isMobile ? 1.2 : 1.8}
+              speed={1.5}
               pauseOnHover={false}
               font="600 32px Caveat, cursive"
               onActiveChange={setActiveGalleryIndex}

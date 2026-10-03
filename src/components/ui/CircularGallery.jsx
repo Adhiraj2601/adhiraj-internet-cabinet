@@ -98,6 +98,7 @@ async function resolveFont(font, fontUrl) {
     if (document.fonts && document.fonts.load) {
       try {
         await document.fonts.load(resolved);
+        await document.fonts.ready;
       } catch {
         // Fall back
       }
@@ -114,26 +115,13 @@ function getFontSize(font) {
   return match ? parseInt(match[1], 10) : 30;
 }
 
-function createTextTexture(gl, text, font = "600 32px 'Caveat', cursive", color = '#171717') {
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  context.font = font;
-  const metrics = context.measureText(text);
-  const textWidth = Math.ceil(metrics.width);
-  const textHeight = Math.ceil(getFontSize(font) * 1.4);
-  canvas.width = textWidth + 30;
-  canvas.height = textHeight + 24;
-  context.font = font;
-  context.fillStyle = color;
-  context.textBaseline = 'middle';
-  context.textAlign = 'center';
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillText(text, canvas.width / 2, canvas.height / 2);
-  const texture = new Texture(gl, { generateMipmaps: false });
-  texture.image = canvas;
-  return { texture, width: canvas.width, height: canvas.height };
-}
-
+// ============================================================================
+// [CHANGE 4: DPR-Scaled, Aspect-Locked, Regenerated Text Texture]
+// The Title class manages the title mesh for each card. It renders to a 2D
+// canvas at high-DPI resolution, scales the font size relative to the card's
+// world scale, locks the mesh aspect ratio to the texture aspect ratio (no stretch),
+// and sits at a consistent offset directly beneath the card.
+// ============================================================================
 class Title {
   constructor({ gl, plane, renderer, text, textColor = '#171717', font = "600 32px 'Caveat', cursive" }) {
     autoBind(this);
@@ -142,13 +130,14 @@ class Title {
     this.renderer = renderer;
     this.text = text;
     this.textColor = textColor;
-    this.font = font;
+    this.baseFont = font;
+    this.canvas = document.createElement('canvas');
+    this.context = this.canvas.getContext('2d');
+    this.texture = new Texture(this.gl, { generateMipmaps: false });
     this.createMesh();
   }
+
   createMesh() {
-    const { texture, width, height } = createTextTexture(this.gl, this.text, this.font, this.textColor);
-    this.textureWidth = width;
-    this.textureHeight = height;
     const geometry = new Plane(this.gl);
     const program = new Program(this.gl, {
       vertex: `
@@ -168,30 +157,77 @@ class Title {
         varying vec2 vUv;
         void main() {
           vec4 color = texture2D(tMap, vUv);
-          if (color.a < 0.1) discard;
+          if (color.a < 0.05) discard;
           gl_FragColor = color;
         }
       `,
-      uniforms: { tMap: { value: texture } },
+      uniforms: { tMap: { value: this.texture } },
       transparent: true
     });
     this.mesh = new Mesh(this.gl, { geometry, program });
-    this.updateTransform();
     this.mesh.setParent(this.plane);
+    this.renderTextTexture();
   }
-  updateTransform() {
-    if (!this.mesh) return;
-    const aspect = (this.textureWidth || 1) / (this.textureHeight || 1);
-    const textHeight = this.plane.scale.y * 0.15;
-    const textWidth = textHeight * aspect;
-    this.mesh.scale.set(textWidth, textHeight, 1);
-    this.mesh.position.y = -this.plane.scale.y * 0.5 - textHeight * 0.5 - 0.05;
+
+  renderTextTexture() {
+    if (!this.mesh || !this.plane || !this.context) return;
+
+    // [CHANGE 4]: Render resolution based on DPR and card width
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const baseFontSize = getFontSize(this.baseFont);
+
+    // Scale font size proportionally to card height in world units (desktop base ~9.94)
+    const cardScaleRatio = Math.max(0.45, this.plane.scale.y / 9.94);
+    const scaledFontSize = Math.max(14, Math.round(baseFontSize * cardScaleRatio));
+    const renderFontSize = Math.round(scaledFontSize * dpr);
+    const fontSpec = this.baseFont.replace(/\d+px/, `${renderFontSize}px`);
+
+    this.context.font = fontSpec;
+    const metrics = this.context.measureText(this.text);
+    const textWidth = Math.ceil(metrics.width);
+    const textHeight = Math.ceil(renderFontSize * 1.35);
+
+    const canvasWidth = Math.max(64, textWidth + Math.round(28 * dpr));
+    const canvasHeight = Math.max(32, textHeight + Math.round(16 * dpr));
+
+    if (this.canvas.width !== canvasWidth || this.canvas.height !== canvasHeight) {
+      this.canvas.width = canvasWidth;
+      this.canvas.height = canvasHeight;
+    }
+
+    this.context.font = fontSpec;
+    this.context.fillStyle = this.textColor;
+    this.context.textBaseline = 'middle';
+    this.context.textAlign = 'center';
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.context.fillText(this.text, this.canvas.width / 2, this.canvas.height / 2);
+
+    this.texture.image = this.canvas;
+    this.texture.needsUpdate = true;
+
+    // [CHANGE 4]: Keep text plane aspect ratio strictly locked to the canvas texture so it NEVER stretches
+    const textureAspect = canvasWidth / canvasHeight;
+    const desiredWorldTextHeight = this.plane.scale.y * 0.12;
+    const desiredWorldTextWidth = desiredWorldTextHeight * textureAspect;
+
+    // Account for parent transform scale so world scale is exact and undistorted
+    this.mesh.scale.x = desiredWorldTextWidth / Math.max(0.001, this.plane.scale.x);
+    this.mesh.scale.y = desiredWorldTextHeight / Math.max(0.001, this.plane.scale.y);
+
+    // In parent local space: parent bottom is at y = -0.5
+    // Maintain a consistent gap below card bottom in world units
+    const gapInWorld = 0.14;
+    this.mesh.position.y = -0.5 - (this.mesh.scale.y * 0.5) - (gapInWorld / Math.max(0.001, this.plane.scale.y));
   }
+
   onResize() {
-    this.updateTransform();
+    this.renderTextTexture();
   }
 }
 
+// ============================================================================
+// Media (Book Card) Class
+// ============================================================================
 class Media {
   constructor({
     geometry,
@@ -229,6 +265,7 @@ class Media {
     this.createTitle();
     this.onResize();
   }
+
   createShader() {
     const texture = new Texture(this.gl, {
       generateMipmaps: true
@@ -303,6 +340,7 @@ class Media {
       this.program.uniforms.uImageSizes.value = [200, 300];
     };
   }
+
   createMesh() {
     this.plane = new Mesh(this.gl, {
       geometry: this.geometry,
@@ -310,6 +348,7 @@ class Media {
     });
     this.plane.setParent(this.scene);
   }
+
   createTitle() {
     this.title = new Title({
       gl: this.gl,
@@ -320,6 +359,13 @@ class Media {
       font: this.font
     });
   }
+
+  // ==========================================================================
+  // [CHANGE 3: Aspect-Ratio Scaled & Clamped Bend]
+  // Scales the curve radius proportionally with the viewport aspect ratio so
+  // that mobile and desktop curvature look harmonious. Clamps the turn angle
+  // to avoid steep edge cuts or leaving the visible area.
+  // ==========================================================================
   update(scroll, direction) {
     this.plane.position.x = this.x - scroll.current - this.extra;
 
@@ -330,21 +376,31 @@ class Media {
       this.plane.position.y = 0;
       this.plane.rotation.z = 0;
     } else {
-      // Scale effective bend on narrow mobile viewports so radius does not collapse
-      const isMobileScreen = this.screen && this.screen.width < 640;
-      const currentBend = isMobileScreen ? Math.min(this.bend, 1.2) : this.bend;
-      const B_abs = Math.abs(currentBend);
+      // Reference aspect ratio for desktop (~2.4)
+      const desktopAspect = 2.4;
+      const currentAspect = Math.max(0.4, (this.screen.width || 1) / (this.screen.height || 1));
+      const aspectFactor = Math.min(1.0, currentAspect / desktopAspect);
+
+      // Scale bend smoothly with aspect ratio (clamped between 0.35 and 1.0 of base bend)
+      const responsiveBend = this.bend * Math.max(0.35, aspectFactor);
+      const B_abs = Math.max(0.001, Math.abs(responsiveBend));
       const R = (H * H + B_abs * B_abs) / (2 * B_abs);
-      const effectiveX = Math.min(Math.abs(x), H * 0.98);
+
+      // Clamp turn angle to ~26 degrees (0.45 rad) so cards on narrow viewports never rotate too sharply
+      const maxTurnAngle = 0.45;
+      const maxEffectiveX = Math.min(H * 0.95, R * Math.sin(maxTurnAngle));
+      const effectiveX = Math.min(Math.abs(x), maxEffectiveX);
 
       const arc = R - Math.sqrt(Math.max(0, R * R - effectiveX * effectiveX));
-      const asinRatio = Math.min(0.999, Math.max(-0.999, effectiveX / R));
-      if (currentBend > 0) {
+      const asinArg = Math.min(0.999, Math.max(-0.999, effectiveX / R));
+      const turnAngle = Math.asin(asinArg);
+
+      if (responsiveBend > 0) {
         this.plane.position.y = -arc;
-        this.plane.rotation.z = -Math.sign(x) * Math.asin(asinRatio);
+        this.plane.rotation.z = -Math.sign(x) * turnAngle;
       } else {
         this.plane.position.y = arc;
-        this.plane.rotation.z = Math.sign(x) * Math.asin(asinRatio);
+        this.plane.rotation.z = Math.sign(x) * turnAngle;
       }
     }
 
@@ -352,17 +408,27 @@ class Media {
 
     const planeOffset = this.plane.scale.x / 2;
     const viewportOffset = this.viewport.width / 2;
-    this.isBefore = this.plane.position.x + planeOffset < -viewportOffset;
-    this.isAfter = this.plane.position.x - planeOffset > viewportOffset;
-    if (direction === 'right' && this.isBefore) {
+
+    // Buffer wrap check so cards smoothly wrap completely offscreen
+    while (direction === 'right' && this.plane.position.x + planeOffset < -viewportOffset - this.padding) {
       this.extra -= this.widthTotal;
-      this.isBefore = this.isAfter = false;
+      this.plane.position.x = this.x - scroll.current - this.extra;
     }
-    if (direction === 'left' && this.isAfter) {
+    while (direction === 'left' && this.plane.position.x - planeOffset > viewportOffset + this.padding) {
       this.extra += this.widthTotal;
-      this.isBefore = this.isAfter = false;
+      this.plane.position.x = this.x - scroll.current - this.extra;
     }
   }
+
+  // ==========================================================================
+  // [CHANGE 1: Responsive Sizing (No hardcoded pixel dimensions)]
+  // Recalculates card scale relative to container width:
+  // - On mobile (< 640px): card width is ~55% of container width.
+  // - On desktop (> 1024px): card fits ~58% of viewport height at 2:3 ratio.
+  // - Between 640px and 1024px: smoothly interpolates.
+  // - Maintains exact 2:3 portrait book aspect ratio everywhere.
+  // - Sets padding proportionally to card width.
+  // ==========================================================================
   onResize({ screen, viewport } = {}) {
     if (screen) this.screen = screen;
     if (viewport) {
@@ -371,36 +437,68 @@ class Media {
         this.plane.program.uniforms.uViewportSizes.value = [this.viewport.width, this.viewport.height];
       }
     }
-    const isSmall = this.screen.width < 640;
-    const isMedium = this.screen.width < 1024;
-    // Scale card dimensions dynamically so mobile screens fit 3 cards gracefully
-    const cardScale = isSmall ? 0.65 : (isMedium ? 0.82 : 1.0);
-    this.scale = (this.screen.height / 1500) * cardScale;
-    this.plane.scale.y = (this.viewport.height * (900 * this.scale)) / this.screen.height;
-    // Factor 600 maintains 2:3 portrait book aspect ratio
-    this.plane.scale.x = (this.viewport.width * (600 * this.scale)) / this.screen.width;
-    this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
-    this.padding = isSmall ? 1.0 : (isMedium ? 1.5 : 2.0);
-    this.width = this.plane.scale.x + this.padding;
+    if (!this.screen || !this.viewport) return;
+
+    const widthPx = this.screen.width;
+
+    // Desktop base dimensions: 58% of viewport height at 2:3 aspect ratio
+    const desktopHeight = this.viewport.height * 0.58;
+    const desktopWidth = desktopHeight * (2 / 3);
+
+    // Mobile target: card width is ~55% of viewport width
+    let mobileWidth = this.viewport.width * 0.55;
+    let mobileHeight = mobileWidth * 1.5; // exact 2:3 ratio
+
+    // Clamp mobile height so it never exceeds 62% of viewport height (keeps titles within canvas)
+    const maxMobileHeight = this.viewport.height * 0.62;
+    if (mobileHeight > maxMobileHeight) {
+      mobileHeight = maxMobileHeight;
+      mobileWidth = mobileHeight * (2 / 3);
+    }
+
+    let cardWidth = desktopWidth;
+    let cardHeight = desktopHeight;
+
+    if (widthPx < 640) {
+      cardWidth = mobileWidth;
+      cardHeight = mobileHeight;
+    } else if (widthPx < 1024) {
+      const t = (widthPx - 640) / (1024 - 640);
+      cardWidth = mobileWidth * (1 - t) + desktopWidth * t;
+      cardHeight = mobileHeight * (1 - t) + desktopHeight * t;
+    }
+
+    this.plane.scale.x = cardWidth;
+    this.plane.scale.y = cardHeight;
+    this.plane.program.uniforms.uPlaneSizes.value = [cardWidth, cardHeight];
+
+    // Proportional padding relative to card width (approx 22% of card width, no hardcoded pixels)
+    this.padding = cardWidth * 0.22;
+    this.width = cardWidth + this.padding;
     this.widthTotal = this.width * this.length;
     this.x = this.width * this.index;
+
+    // Regenerate and reposition text texture to match new card size and DPR
     if (this.title) {
       this.title.onResize();
     }
   }
 }
 
+// ============================================================================
+// App Class: Orchestrates OGL Renderer, Camera, Scene, and Gestures
+// ============================================================================
 class App {
   constructor(
     container,
     {
       items,
-      bend,
+      bend = 3,
       textColor = '#1a1a1a',
       borderRadius = 0,
       font = 'bold 30px Figtree',
       scrollSpeed = 2,
-      scrollEase = 0.05,
+      scrollEase = 0.06,
       offsetY = 1.2,
       autoplay = 'drift',
       speed = 1.8,
@@ -424,6 +522,7 @@ class App {
     this.lastTime = 0;
     this.isVisible = true;
     this.raf = 0;
+    this.samples = [];
     this.lastActiveIndex = -1;
     this.onCheckDebounce = debounce(this.onCheck, 200);
 
@@ -435,8 +534,13 @@ class App {
     this.createMedias(items, bend, textColor, borderRadius, font);
     this.update();
     this.addEventListeners();
+    // [CHANGE 2]: ResizeObserver handling
+    this.setupResizeObserver();
+    // [CHANGE 6]: IntersectionObserver performance pause
     this.setupIntersectionObserver();
   }
+
+  // [CHANGE 6]: Cap renderer DPR at Math.min(devicePixelRatio, 2)
   createRenderer() {
     this.renderer = new Renderer({
       alpha: true,
@@ -445,27 +549,36 @@ class App {
     });
     this.gl = this.renderer.gl;
     this.gl.clearColor(0, 0, 0, 0);
+
+    // [CHANGE 5 & 7]: Ensure canvas fills container with pan-y touch action
+    this.gl.canvas.style.width = '100%';
+    this.gl.canvas.style.height = '100%';
+    this.gl.canvas.style.display = 'block';
     this.gl.canvas.style.touchAction = 'pan-y';
     this.gl.canvas.style.userSelect = 'none';
     this.gl.canvas.style.webkitUserSelect = 'none';
     this.container.appendChild(this.gl.canvas);
   }
+
   createCamera() {
     this.camera = new Camera(this.gl);
     this.camera.fov = 45;
     this.camera.position.z = 20;
   }
+
   createScene() {
     this.scene = new Transform();
     this.scene.position.y = this.offsetY;
   }
+
   createGeometry() {
     this.planeGeometry = new Plane(this.gl, {
       heightSegments: 1,
       widthSegments: 1
     });
   }
-  createMedias(items, bend = 1, textColor, borderRadius, font) {
+
+  createMedias(items, bend = 3, textColor, borderRadius, font) {
     const defaultItems = [
       { image: `https://picsum.photos/seed/1/800/600?grayscale`, text: 'Bridge' },
       { image: `https://picsum.photos/seed/2/800/600?grayscale`, text: 'Desk Setup' },
@@ -504,6 +617,10 @@ class App {
       });
     });
   }
+
+  // ==========================================================================
+  // [CHANGE 5: Unified Pointer Events with Pan-Y, Inertia & Card Snapping]
+  // ==========================================================================
   onPointerDown(e) {
     if (e.button !== undefined && e.button !== 0) return;
     this.isDown = true;
@@ -513,7 +630,9 @@ class App {
     this.pointerId = e.pointerId;
     this.isScrolling = undefined;
     this.pointerMoved = false;
+    this.samples = [{ time: performance.now(), target: this.scroll.current }];
   }
+
   onPointerMove(e) {
     if (!this.isDown) return;
     if (this.pointerId !== undefined && e.pointerId !== undefined && e.pointerId !== this.pointerId) return;
@@ -521,16 +640,14 @@ class App {
     const deltaX = this.start - e.clientX;
     const deltaY = this.startY - e.clientY;
 
-    // Detect if the user is swiping vertically to scroll the page
+    // Detect gesture axis: if vertical swipe, allow natural vertical page scroll
     if (this.isScrolling === undefined) {
       if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
         if (Math.abs(deltaY) > Math.abs(deltaX) * 1.15 && e.pointerType !== 'mouse') {
-          // Allow natural vertical page scroll on touch devices
           this.isScrolling = true;
           this.isDown = false;
           return;
         } else {
-          // Capture horizontal carousel gesture
           this.isScrolling = false;
           this.pointerMoved = true;
           try {
@@ -552,9 +669,18 @@ class App {
       this.driftDir = deltaX > 0 ? 1 : -1;
     }
 
-    const distance = deltaX * (this.scrollSpeed * 0.025);
+    // Touch sensitivity tuned: responsive and 1:1 feel with finger
+    const touchFactor = e.pointerType === 'touch' ? 0.032 : 0.025;
+    const distance = deltaX * (this.scrollSpeed * touchFactor);
     this.scroll.target = this.scroll.position + distance;
+
+    const now = performance.now();
+    this.samples.push({ time: now, target: this.scroll.target });
+    while (this.samples.length > 2 && now - this.samples[0].time > 120) {
+      this.samples.shift();
+    }
   }
+
   onPointerUp(e) {
     if (this.pointerId !== undefined && e.pointerId !== undefined && e.pointerId !== this.pointerId) return;
     if (this.pointerMoved && this.container?.hasPointerCapture?.(e.pointerId)) {
@@ -565,12 +691,37 @@ class App {
     this.isDown = false;
     this.pointerId = undefined;
     this.isScrolling = undefined;
-    this.pointerMoved = false;
-    this.holdUntil = performance.now() + 800;
-    if (this.autoplay !== 'drift') {
-      this.onCheck();
+
+    // Calculate release velocity for inertia scrolling
+    let velocity = 0;
+    if (this.samples && this.samples.length >= 2) {
+      const first = this.samples[0];
+      const last = this.samples[this.samples.length - 1];
+      const span = (last.time - first.time) / 1000;
+      if (span > 0.01) {
+        velocity = (last.target - first.target) / span;
+      }
     }
+    this.samples = [];
+
+    // [CHANGE 5]: Snap to nearest card on release with inertia
+    if (this.medias && this.medias[0]) {
+      const cardWidth = this.medias[0].width;
+      if (cardWidth > 0) {
+        const maxInertia = cardWidth * 2.2;
+        const rawInertia = velocity * 0.22;
+        const inertia = Math.sign(rawInertia) * Math.min(Math.abs(rawInertia), maxInertia);
+
+        const projected = this.scroll.target + inertia;
+        const nearestIndex = Math.round(projected / cardWidth);
+        this.scroll.target = nearestIndex * cardWidth;
+      }
+    }
+
+    this.pointerMoved = false;
+    this.holdUntil = performance.now() + 1600;
   }
+
   onPointerCancel(e) {
     if (this.pointerMoved && this.container?.hasPointerCapture?.(e.pointerId)) {
       try {
@@ -581,8 +732,10 @@ class App {
     this.pointerId = undefined;
     this.isScrolling = undefined;
     this.pointerMoved = false;
-    this.holdUntil = performance.now() + 800;
+    this.samples = [];
+    this.holdUntil = performance.now() + 1000;
   }
+
   onWheel(e) {
     // Only intercept horizontal trackpad/wheel gestures.
     // Allow natural vertical page scroll when rolling mouse wheel up/down over gallery.
@@ -597,6 +750,7 @@ class App {
       this.onCheckDebounce();
     }
   }
+
   onKeyDown(e) {
     switch (e.key) {
       case 'ArrowRight':
@@ -634,26 +788,68 @@ class App {
     const itemIndex = Math.round(this.scroll.target / width);
     this.scroll.target = width * itemIndex;
   }
+
+  // ==========================================================================
+  // [CHANGE 2: Debounced ResizeObserver & Dynamic Viewport Recalculation]
+  // ==========================================================================
+  setupResizeObserver() {
+    if (typeof ResizeObserver === 'undefined' || !this.container) return;
+    this.resizeRaf = 0;
+    this.resizeObserver = new ResizeObserver(() => {
+      if (this.resizeRaf) cancelAnimationFrame(this.resizeRaf);
+      this.resizeRaf = requestAnimationFrame(() => {
+        this.onResize();
+      });
+    });
+    this.resizeObserver.observe(this.container);
+  }
+
   onResize() {
     if (!this.container) return;
-    this.screen = {
-      width: this.container.clientWidth,
-      height: this.container.clientHeight
-    };
-    if (this.renderer && this.screen.width && this.screen.height) {
-      this.renderer.setSize(this.screen.width, this.screen.height);
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
+    if (!width || !height) return;
+
+    const oldCardWidth = this.medias && this.medias[0] ? this.medias[0].width : null;
+
+    this.screen = { width, height };
+
+    if (this.renderer) {
+      this.renderer.setSize(width, height);
     }
-    this.camera.perspective({
-      aspect: (this.screen.width || 1) / (this.screen.height || 1)
-    });
-    const fov = (this.camera.fov * Math.PI) / 180;
-    const height = 2 * Math.tan(fov / 2) * this.camera.position.z;
-    const width = height * this.camera.aspect;
-    this.viewport = { width, height };
+
+    if (this.camera) {
+      this.camera.perspective({
+        aspect: width / height
+      });
+      const fov = (this.camera.fov * Math.PI) / 180;
+      const camHeight = 2 * Math.tan(fov / 2) * this.camera.position.z;
+      const camWidth = camHeight * this.camera.aspect;
+      this.viewport = { width: camWidth, height: camHeight };
+    }
+
+    if (this.scene) {
+      // Responsive vertical positioning: scales with container height so cards and labels stay visible
+      const heightRatio = Math.min(1.0, Math.max(0.45, height / 500));
+      this.scene.position.y = this.offsetY * heightRatio;
+    }
+
     if (this.medias) {
       this.medias.forEach(media => media.onResize({ screen: this.screen, viewport: this.viewport }));
     }
+
+    const newCardWidth = this.medias && this.medias[0] ? this.medias[0].width : null;
+    if (oldCardWidth && newCardWidth && oldCardWidth !== newCardWidth) {
+      const ratio = newCardWidth / oldCardWidth;
+      this.scroll.current *= ratio;
+      this.scroll.target *= ratio;
+      this.scroll.last *= ratio;
+    }
   }
+
+  // ==========================================================================
+  // [CHANGE 6: Render Loop & Off-Screen Pausing]
+  // ==========================================================================
   update(time) {
     if (!this.isVisible) return;
 
@@ -661,7 +857,7 @@ class App {
     const dt = this.lastTime > 0 ? Math.min((now - this.lastTime) / 1000, 0.05) : 1 / 60;
     this.lastTime = now;
 
-    // Autoplay drift effect (matching Sketches CircularCarousel)
+    // Autoplay drift effect
     const isPaused =
       (this.pauseOnHover && this.isHovered) ||
       this.isDown ||
@@ -677,7 +873,7 @@ class App {
       this.medias.forEach(media => media.update(this.scroll, direction));
     }
 
-    // Determine active centered slide
+    // Determine centered active slide
     if (this.medias && this.medias[0] && this.originalLength > 0) {
       const mediaWidth = this.medias[0].width;
       if (mediaWidth > 0) {
@@ -694,6 +890,7 @@ class App {
     this.scroll.last = this.scroll.current;
     this.raf = window.requestAnimationFrame(this.update.bind(this));
   }
+
   setupIntersectionObserver() {
     this.isVisible = true;
     if (typeof IntersectionObserver !== 'undefined' && this.container) {
@@ -715,6 +912,7 @@ class App {
       this.io.observe(this.container);
     }
   }
+
   addEventListeners() {
     this.boundOnResize = this.onResize.bind(this);
     this.boundOnWheel = this.onWheel.bind(this);
@@ -750,7 +948,6 @@ class App {
     window.addEventListener('pointercancel', this.boundOnPointerCancel);
     document.addEventListener('visibilitychange', this.boundOnVisibilityChange);
 
-    // Attach wheel and gesture start ONLY to container, NOT window
     if (this.container) {
       this.container.addEventListener('mouseenter', this.boundOnMouseEnter);
       this.container.addEventListener('mouseleave', this.boundOnMouseLeave);
@@ -759,10 +956,19 @@ class App {
       this.container.addEventListener('keydown', this.boundOnKeyDown);
     }
   }
+
   destroy() {
     if (this.raf) {
       window.cancelAnimationFrame(this.raf);
       this.raf = 0;
+    }
+    if (this.resizeRaf) {
+      cancelAnimationFrame(this.resizeRaf);
+      this.resizeRaf = 0;
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
     }
     if (this.io) {
       this.io.disconnect();
@@ -789,6 +995,9 @@ class App {
   }
 }
 
+// ============================================================================
+// React Component Wrapper
+// ============================================================================
 export default function CircularGallery({
   items,
   bend = 3,
@@ -797,7 +1006,7 @@ export default function CircularGallery({
   font = "600 32px 'Caveat', cursive",
   fontUrl,
   scrollSpeed = 2,
-  scrollEase = 0.05,
+  scrollEase = 0.06,
   offsetY = 1.2,
   autoplay = 'drift',
   speed = 1.8,
