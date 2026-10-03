@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link, useSearchParams } from 'react-router-dom'
-import { scrapItems } from '../content/scraps'
+import { Link } from 'react-router-dom'
+import { scrapItems, type ScrapItem } from '../content/scraps'
 import { SectionLabel } from '../components/ui/SectionLabel'
 import { Arrow } from '../components/ui/Arrow'
 import { fadeUp } from '../lib/animations'
@@ -15,34 +15,29 @@ const aspectRatios: Record<string, string> = {
 }
 
 type SizeFilter = 'all' | 'tall' | 'wide' | 'square'
-type ViewMode = 'grid' | 'carousel'
-
-/** Minimum items required for the carousel ring to look sensible */
-const MIN_CAROUSEL_ITEMS = 5
 
 /** Cream background colour (matches --background CSS var) */
 const CREAM = '#F4F1EA'
 
 export function SketchesPage() {
-  const [searchParams, setSearchParams] = useSearchParams()
   const [filter, setFilter] = useState<SizeFilter>('all')
   const [search, setSearch] = useState('')
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [viewMode, setViewMode] = useState<ViewMode>(() =>
-    searchParams.get('view') === 'carousel' ? 'carousel' : 'grid'
-  )
+  const [selectedSketch, setSelectedSketch] = useState<ScrapItem | null>(null)
   const isMobile = useIsMobile()
 
-  const handleViewChange = (mode: ViewMode) => {
-    setViewMode(mode)
-    if (mode === 'carousel') {
-      setSearchParams({ view: 'carousel' }, { replace: true })
-    } else {
-      setSearchParams({}, { replace: true })
-    }
-  }
+  // Full set of sketches mapped for the carousel ring on top
+  const carouselItems = useMemo(
+    () =>
+      scrapItems.map((item) => ({
+        src: item.src,
+        alt: item.alt,
+        title: item.note || item.alt,
+        subtitle: `#${item.id}${item.date ? ' · ' + item.date : ''}`,
+      })),
+    []
+  )
 
-  // Filtered sketches — single source of truth for both views
+  // Filtered sketches for the masonry grid below
   const filteredSketches = useMemo(() => {
     let result = [...scrapItems]
 
@@ -64,50 +59,44 @@ export function SketchesPage() {
     return result
   }, [filter, search])
 
-  // Map sketch data to the shape CircularCarousel expects
-  const carouselItems = useMemo(
-    () =>
-      filteredSketches.map((item) => ({
-        src: item.src,
-        alt: item.alt,
-        title: item.note || item.alt,
-        subtitle: `#${item.id}${item.date ? ' · ' + item.date : ''}`,
-      })),
-    [filteredSketches]
-  )
+  // Active list for lightbox navigation (prev/next)
+  const activeList = useMemo(() => {
+    if (selectedSketch && filteredSketches.some((s) => s.id === selectedSketch.id)) {
+      return filteredSketches
+    }
+    return scrapItems
+  }, [selectedSketch, filteredSketches])
 
-  // If a filter narrows below MIN_CAROUSEL_ITEMS, fall back to grid automatically
-  const effectiveView: ViewMode =
-    viewMode === 'carousel' && filteredSketches.length < MIN_CAROUSEL_ITEMS ? 'grid' : viewMode
-
-  const selectedSketch = selectedIndex !== null ? filteredSketches[selectedIndex] : null
+  const currentIndex = selectedSketch ? activeList.findIndex((s) => s.id === selectedSketch.id) : -1
 
   // Lightbox keyboard navigation (Esc, ArrowLeft, ArrowRight)
   const handlePrev = useCallback(() => {
-    if (selectedIndex === null) return
-    setSelectedIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : filteredSketches.length - 1))
-  }, [selectedIndex, filteredSketches.length])
+    if (!selectedSketch || currentIndex === -1) return
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : activeList.length - 1
+    setSelectedSketch(activeList[prevIndex])
+  }, [selectedSketch, currentIndex, activeList])
 
   const handleNext = useCallback(() => {
-    if (selectedIndex === null) return
-    setSelectedIndex((prev) => (prev !== null && prev < filteredSketches.length - 1 ? prev + 1 : 0))
-  }, [selectedIndex, filteredSketches.length])
+    if (!selectedSketch || currentIndex === -1) return
+    const nextIndex = currentIndex < activeList.length - 1 ? currentIndex + 1 : 0
+    setSelectedSketch(activeList[nextIndex])
+  }, [selectedSketch, currentIndex, activeList])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (selectedIndex === null) return
-      if (e.key === 'Escape') setSelectedIndex(null)
+      if (!selectedSketch) return
+      if (e.key === 'Escape') setSelectedSketch(null)
       if (e.key === 'ArrowLeft') handlePrev()
       if (e.key === 'ArrowRight') handleNext()
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedIndex, handlePrev, handleNext])
+  }, [selectedSketch, handlePrev, handleNext])
 
   // Prevent background scroll when lightbox is open
   useEffect(() => {
-    if (selectedIndex !== null) {
+    if (selectedSketch) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
@@ -115,7 +104,7 @@ export function SketchesPage() {
     return () => {
       document.body.style.overflow = ''
     }
-  }, [selectedIndex])
+  }, [selectedSketch])
 
   return (
     <main id="main-content" className="pt-28 md:pt-36 pb-24 min-h-screen">
@@ -141,7 +130,7 @@ export function SketchesPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="border-b border-token pb-10 md:pb-14 mb-10 md:mb-12"
+          className="border-b border-token pb-10 md:pb-14 mb-8"
         >
           <SectionLabel>05 / Visual Scraps Archive</SectionLabel>
           <div className="mt-3 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -166,22 +155,60 @@ export function SketchesPage() {
           </div>
         </motion.div>
 
-        {/* Controls Bar: Filters + View Mode Toggle + Search */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-10 pb-6 border-b border-token/60"
+        {/* =================== 1. FEATURED 3D CAROUSEL (ON TOP) =================== */}
+        <section aria-label="Interactive 3D Sketchbook Carousel" className="pt-2 pb-6">
+          <div className="w-full relative h-[440px] md:h-[580px]">
+            <CircularCarousel
+              items={carouselItems}
+              preset="cylinder"
+              intro="rise"
+              cardWidth={isMobile ? 150 : 210}
+              aspectRatio={0.8}
+              gap={isMobile ? 16 : 22}
+              speed={8}
+              autoplay="drift"
+              pauseOnHover
+              focusOnClick
+              captions
+              depthFade={0.55}
+              fadeColor={CREAM}
+              innerShade={0.25}
+              cornerRadius={8}
+              onItemClick={(_item, index) => setSelectedSketch(scrapItems[index])}
+            />
+          </div>
+
+          {/* Scroll Down Indicator */}
+          <div className="flex flex-col items-center justify-center gap-2 pt-6 pb-8 text-muted">
+            <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
+              Scroll down to explore masonry archive
+            </span>
+            <motion.span
+              animate={{ y: [0, 5, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+              className="text-muted/60 text-sm select-none"
+              aria-hidden="true"
+            >
+              ↓
+            </motion.span>
+          </div>
+        </section>
+
+        {/* =================== 2. MASONRY GRID (BELOW CAROUSEL) =================== */}
+        <section
+          id="archive-grid"
+          aria-label="Complete Visual Scraps Grid Archive"
+          className="pt-10 md:pt-14 border-t border-token/60"
         >
-          {/* Left: Format Filters + View Mode Toggle directly beside it */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Controls Bar: Filters + Search */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 pb-6 border-b border-token/60">
             {/* Format / Aspect Ratio Filters */}
             <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1">
               <button
                 onClick={() => setFilter('all')}
                 className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                   filter === 'all'
-                    ? 'bg-foreground text-background font-bold'
+                    ? 'bg-foreground text-background font-bold shadow-xs'
                     : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
                 }`}
               >
@@ -191,7 +218,7 @@ export function SketchesPage() {
                 onClick={() => setFilter('tall')}
                 className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                   filter === 'tall'
-                    ? 'bg-foreground text-background font-bold'
+                    ? 'bg-foreground text-background font-bold shadow-xs'
                     : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
                 }`}
               >
@@ -201,7 +228,7 @@ export function SketchesPage() {
                 onClick={() => setFilter('wide')}
                 className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                   filter === 'wide'
-                    ? 'bg-foreground text-background font-bold'
+                    ? 'bg-foreground text-background font-bold shadow-xs'
                     : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
                 }`}
               >
@@ -211,7 +238,7 @@ export function SketchesPage() {
                 onClick={() => setFilter('square')}
                 className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                   filter === 'square'
-                    ? 'bg-foreground text-background font-bold'
+                    ? 'bg-foreground text-background font-bold shadow-xs'
                     : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
                 }`}
               >
@@ -219,217 +246,129 @@ export function SketchesPage() {
               </button>
             </div>
 
-            {/* Separator */}
-            <div className="hidden sm:block h-4 w-px bg-token" />
-
-            {/* View Mode Toggle: Grid | Carousel */}
-            <div
-              className="flex items-center border border-token rounded-xs overflow-hidden shrink-0 bg-[rgba(23,23,23,0.03)]"
-              role="group"
-              aria-label="View mode"
-            >
-              <button
-                onClick={() => handleViewChange('grid')}
-                className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all ${
-                  viewMode === 'grid'
-                    ? 'bg-foreground text-background font-bold'
-                    : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
-                }`}
-                aria-pressed={viewMode === 'grid'}
-              >
-                Grid
-              </button>
-              <button
-                onClick={() => handleViewChange('carousel')}
-                className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all border-l border-token ${
-                  viewMode === 'carousel'
-                    ? 'bg-foreground text-background font-bold'
-                    : 'text-muted hover:text-foreground hover:bg-neutral-200/50'
-                }`}
-                aria-pressed={viewMode === 'carousel'}
-              >
-                Carousel
-              </button>
-            </div>
-          </div>
-
-          {/* Right side: Search Input */}
-          <div className="relative w-full lg:w-64">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search notes or sketches..."
-              className="w-full text-xs px-3 py-1.5 bg-transparent border border-token rounded-xs focus:outline-none focus:border-foreground placeholder:text-muted/60"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
-                aria-label="Clear search"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        </motion.div>
-
-        {/* =================== CAROUSEL VIEW =================== */}
-        {effectiveView === 'carousel' && filteredSketches.length >= MIN_CAROUSEL_ITEMS && (
-          <motion.div
-            key="carousel-view"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            {/* Carousel container — fixed height, responsive */}
-            <div className="w-full relative h-[420px] md:h-[560px]">
-              <CircularCarousel
-                key={carouselItems.map((i) => i.src).join('|')}
-                items={carouselItems}
-                preset="cylinder"
-                intro="rise"
-                cardWidth={isMobile ? 150 : 210}
-                aspectRatio={0.8}
-                gap={isMobile ? 16 : 22}
-                speed={8}
-                autoplay="drift"
-                pauseOnHover
-                focusOnClick
-                captions
-                depthFade={0.55}
-                fadeColor={CREAM}
-                innerShade={0.25}
-                cornerRadius={8}
-                onItemClick={(_item, index) => setSelectedIndex(index)}
+            {/* Search Input */}
+            <div className="relative w-full md:w-64">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search notes or sketches..."
+                className="w-full text-xs px-3 py-1.5 bg-transparent border border-token rounded-xs focus:outline-none focus:border-foreground placeholder:text-muted/60"
               />
-            </div>
-
-            {/* Showing count — visible in carousel view too */}
-            <div className="mt-6 text-center text-xs text-muted font-mono">
-              Showing {filteredSketches.length} of {scrapItems.length} visual fragments
-              {viewMode === 'carousel' && filteredSketches.length < MIN_CAROUSEL_ITEMS && (
-                <span className="ml-2 text-accent">(switching to grid — too few items for carousel)</span>
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
               )}
             </div>
-          </motion.div>
-        )}
-
-        {/* Fallback message when carousel is selected but too few items */}
-        {viewMode === 'carousel' && filteredSketches.length < MIN_CAROUSEL_ITEMS && filteredSketches.length > 0 && (
-          <div className="py-6 mb-6 text-center border border-dashed border-token rounded-sm">
-            <p className="text-xs text-muted font-mono">
-              Carousel needs at least {MIN_CAROUSEL_ITEMS} sketches — showing grid instead.
-            </p>
           </div>
-        )}
 
-        {/* =================== GRID VIEW =================== */}
-        {effectiveView === 'grid' && (
-          <>
-            {filteredSketches.length > 0 ? (
-              <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
-                {filteredSketches.map((item, index) => (
-                  <motion.figure
-                    key={item.id}
-                    variants={fadeUp}
-                    initial="hidden"
-                    animate="visible"
-                    custom={index % 8}
-                    className="break-inside-avoid group cursor-pointer flex flex-col gap-2.5 p-3 rounded-xs border border-token/60 bg-[rgba(23,23,23,0.015)] hover:border-foreground/40 transition-colors"
-                    onClick={() => setSelectedIndex(index)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        setSelectedIndex(index)
-                      }
-                    }}
-                    aria-label={`View scrap: ${item.note || item.alt}`}
-                  >
-                    {/* Image Container with organic rotation */}
-                    <motion.div
-                      className="overflow-hidden relative bg-[rgba(23,23,23,0.06)] rounded-2xs"
-                      style={{
-                        aspectRatio: aspectRatios[item.size] || '1/1',
-                        rotate: item.rotation,
-                      }}
-                      whileHover={{
-                        rotate: 0,
-                        scale: 1.02,
-                        boxShadow: '0 12px 32px rgba(23,23,23,0.14)',
-                        transition: { duration: 0.25, ease: 'easeOut' },
-                      }}
-                    >
-                      <img
-                        src={item.src}
-                        alt={item.alt || 'Visual scrap sketch'}
-                        width={400}
-                        height={400}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover select-none"
-                        onError={(e) => {
-                          const target = e.currentTarget
-                          target.style.display = 'none'
-                          const parent = target.parentElement
-                          if (parent && !parent.querySelector('.img-fallback')) {
-                            const span = document.createElement('span')
-                            span.className = 'img-fallback text-[11px] text-muted text-center p-3 font-mono'
-                            span.textContent = item.alt || 'Visual scrap'
-                            parent.appendChild(span)
-                          }
-                        }}
-                      />
-
-                      {/* Hover overlay hint */}
-                      <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--background)]/90 backdrop-blur-xs px-2 py-1 rounded-xs border border-token text-foreground">
-                          Inspect ↗
-                        </span>
-                      </div>
-                    </motion.div>
-
-                    {/* Caption / Note & Metadata */}
-                    <figcaption className="pt-1 flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-handwritten text-[0.95rem] leading-snug text-foreground/90 group-hover:text-accent transition-colors">
-                          {item.note || item.alt}
-                        </p>
-                        {item.date && (
-                          <p className="text-[0.65rem] font-mono text-muted/70 uppercase tracking-wider mt-0.5">
-                            {item.date}
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-[0.65rem] font-mono text-muted uppercase shrink-0 pt-0.5">
-                        #{item.id}
-                      </span>
-                    </figcaption>
-                  </motion.figure>
-                ))}
-              </div>
-            ) : (
-              <div className="py-20 text-center border border-dashed border-token rounded-sm">
-                <p className="text-sm font-semibold text-foreground">No scraps found</p>
-                <p className="text-xs text-muted mt-1">
-                  No sketches match your current filter and search query.
-                </p>
-                <button
-                  onClick={() => {
-                    setFilter('all')
-                    setSearch('')
+          {/* Responsive Masonry Gallery */}
+          {filteredSketches.length > 0 ? (
+            <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
+              {filteredSketches.map((item, index) => (
+                <motion.figure
+                  key={item.id}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  custom={index % 8}
+                  className="break-inside-avoid group cursor-pointer flex flex-col gap-2.5 p-3 rounded-xs border border-token/60 bg-[rgba(23,23,23,0.015)] hover:border-foreground/40 transition-colors"
+                  onClick={() => setSelectedSketch(item)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setSelectedSketch(item)
+                    }
                   }}
-                  className="mt-4 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider border border-token hover:border-foreground transition-colors"
+                  aria-label={`View scrap: ${item.note || item.alt}`}
                 >
-                  Reset Filters
-                </button>
-              </div>
-            )}
-          </>
-        )}
+                  {/* Image Container with organic rotation */}
+                  <motion.div
+                    className="overflow-hidden relative bg-[rgba(23,23,23,0.06)] rounded-2xs"
+                    style={{
+                      aspectRatio: aspectRatios[item.size] || '1/1',
+                      rotate: item.rotation,
+                    }}
+                    whileHover={{
+                      rotate: 0,
+                      scale: 1.02,
+                      boxShadow: '0 12px 32px rgba(23,23,23,0.14)',
+                      transition: { duration: 0.25, ease: 'easeOut' },
+                    }}
+                  >
+                    <img
+                      src={item.src}
+                      alt={item.alt || 'Visual scrap sketch'}
+                      width={400}
+                      height={400}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover select-none"
+                      onError={(e) => {
+                        const target = e.currentTarget
+                        target.style.display = 'none'
+                        const parent = target.parentElement
+                        if (parent && !parent.querySelector('.img-fallback')) {
+                          const span = document.createElement('span')
+                          span.className = 'img-fallback text-[11px] text-muted text-center p-3 font-mono'
+                          span.textContent = item.alt || 'Visual scrap'
+                          parent.appendChild(span)
+                        }
+                      }}
+                    />
+
+                    {/* Hover overlay hint */}
+                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-[10px] uppercase font-bold tracking-widest bg-[var(--background)]/90 backdrop-blur-xs px-2 py-1 rounded-xs border border-token text-foreground">
+                        Inspect ↗
+                      </span>
+                    </div>
+                  </motion.div>
+
+                  {/* Caption / Note & Metadata */}
+                  <figcaption className="pt-1 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-handwritten text-[0.95rem] leading-snug text-foreground/90 group-hover:text-accent transition-colors">
+                        {item.note || item.alt}
+                      </p>
+                      {item.date && (
+                        <p className="text-[0.65rem] font-mono text-muted/70 uppercase tracking-wider mt-0.5">
+                          {item.date}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-[0.65rem] font-mono text-muted uppercase shrink-0 pt-0.5">
+                      #{item.id}
+                    </span>
+                  </figcaption>
+                </motion.figure>
+              ))}
+            </div>
+          ) : (
+            <div className="py-20 text-center border border-dashed border-token rounded-sm">
+              <p className="text-sm font-semibold text-foreground">No scraps found</p>
+              <p className="text-xs text-muted mt-1">
+                No sketches match your current filter and search query.
+              </p>
+              <button
+                onClick={() => {
+                  setFilter('all')
+                  setSearch('')
+                }}
+                className="mt-4 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider border border-token hover:border-foreground transition-colors"
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
+        </section>
 
         {/* Scalability Footer */}
         <div className="mt-16 pt-8 border-t border-token flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted">
@@ -450,14 +389,14 @@ export function SketchesPage() {
 
       {/* ===================== LIGHTBOX MODAL ===================== */}
       <AnimatePresence>
-        {selectedSketch && selectedIndex !== null && (
+        {selectedSketch && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/80 backdrop-blur-md"
-            onClick={() => setSelectedIndex(null)}
+            onClick={() => setSelectedSketch(null)}
           >
             {/* Modal Content Dialog */}
             <motion.div
@@ -476,7 +415,7 @@ export function SketchesPage() {
                   </span>
                   <span className="text-muted/60">•</span>
                   <span className="text-xs font-mono text-muted uppercase tracking-wider">
-                    {selectedIndex + 1} of {filteredSketches.length}
+                    {currentIndex >= 0 ? currentIndex + 1 : 1} of {activeList.length}
                   </span>
                 </div>
 
@@ -503,7 +442,7 @@ export function SketchesPage() {
                   </div>
 
                   <button
-                    onClick={() => setSelectedIndex(null)}
+                    onClick={() => setSelectedSketch(null)}
                     className="text-xs font-mono uppercase tracking-wider text-muted hover:text-foreground px-2 py-1 border border-token rounded-xs hover:bg-neutral-200/60 transition-colors"
                     aria-label="Close dialog (Escape)"
                   >
