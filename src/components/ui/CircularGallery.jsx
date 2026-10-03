@@ -215,9 +215,8 @@ class Title {
     this.mesh.scale.y = desiredWorldTextHeight / Math.max(0.001, this.plane.scale.y);
 
     // In parent local space: parent bottom is at y = -0.5
-    // Maintain a consistent gap below card bottom in world units
-    const gapInWorld = 0.14;
-    this.mesh.position.y = -0.5 - (this.mesh.scale.y * 0.5) - (gapInWorld / Math.max(0.001, this.plane.scale.y));
+    // Maintain a consistent proportional gap below card bottom in local space
+    this.mesh.position.y = -0.5 - (this.mesh.scale.y * 0.5) - 0.03;
   }
 
   onResize() {
@@ -421,13 +420,12 @@ class Media {
   }
 
   // ==========================================================================
-  // [CHANGE 1: Responsive Sizing (No hardcoded pixel dimensions)]
+  // [CHANGE 1: Responsive Sizing (3 books on Android/mobile, 5 books on PC)]
   // Recalculates card scale relative to container width:
-  // - On mobile (< 640px): card width is ~55% of container width.
-  // - On desktop (> 1024px): card fits ~58% of viewport height at 2:3 ratio.
-  // - Between 640px and 1024px: smoothly interpolates.
+  // - On Android / mobile (< 640px): 3 books visible across screen without side clipping.
+  // - On PC / desktop (>= 1024px): 5 large books across screen with 2.0 padding (matching black book reference).
+  // - Between 640px and 1024px: smoothly interpolates for tablets.
   // - Maintains exact 2:3 portrait book aspect ratio everywhere.
-  // - Sets padding proportionally to card width.
   // ==========================================================================
   onResize({ screen, viewport } = {}) {
     if (screen) this.screen = screen;
@@ -440,40 +438,46 @@ class Media {
     if (!this.screen || !this.viewport) return;
 
     const widthPx = this.screen.width;
+    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+    const isMobileDevice = typeof navigator !== 'undefined' && (
+      /Android|iPhone|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+      (navigator.maxTouchPoints > 0 && widthPx < 768)
+    );
+    const isSmall = isAndroid || isMobileDevice || widthPx < 640;
 
-    // Desktop base dimensions: 58% of viewport height at 2:3 aspect ratio
-    const desktopHeight = this.viewport.height * 0.58;
+    // Desktop base dimensions (PC): 5 large prominent books across screen (matching black book reference)
+    const desktopHeight = this.viewport.height * 0.61;
     const desktopWidth = desktopHeight * (2 / 3);
+    const desktopPadding = 2.0;
 
-    // Mobile target: card width is ~55% of viewport width
-    let mobileWidth = this.viewport.width * 0.55;
-    let mobileHeight = mobileWidth * 1.5; // exact 2:3 ratio
+    // Mobile / Android target: exactly 3 books visible across screen without side clipping
+    const mobileWidth = this.viewport.width * 0.265;
+    const mobileHeight = mobileWidth * 1.5;
+    const mobilePadding = mobileWidth * 0.20;
 
-    // Clamp mobile height so it never exceeds 62% of viewport height (keeps titles within canvas)
-    const maxMobileHeight = this.viewport.height * 0.62;
-    if (mobileHeight > maxMobileHeight) {
-      mobileHeight = maxMobileHeight;
-      mobileWidth = mobileHeight * (2 / 3);
-    }
+    let cardWidth, cardHeight, padding;
 
-    let cardWidth = desktopWidth;
-    let cardHeight = desktopHeight;
-
-    if (widthPx < 640) {
+    if (isSmall) {
       cardWidth = mobileWidth;
       cardHeight = mobileHeight;
+      padding = mobilePadding;
     } else if (widthPx < 1024) {
+      // Smooth interpolation for intermediate tablets between mobile 3-card and desktop 5-card layout
       const t = (widthPx - 640) / (1024 - 640);
       cardWidth = mobileWidth * (1 - t) + desktopWidth * t;
       cardHeight = mobileHeight * (1 - t) + desktopHeight * t;
+      padding = mobilePadding * (1 - t) + desktopPadding * t;
+    } else {
+      cardWidth = desktopWidth;
+      cardHeight = desktopHeight;
+      padding = desktopPadding;
     }
 
     this.plane.scale.x = cardWidth;
     this.plane.scale.y = cardHeight;
     this.plane.program.uniforms.uPlaneSizes.value = [cardWidth, cardHeight];
 
-    // Proportional padding relative to card width (approx 22% of card width, no hardcoded pixels)
-    this.padding = cardWidth * 0.22;
+    this.padding = padding;
     this.width = cardWidth + this.padding;
     this.widthTotal = this.width * this.length;
     this.x = this.width * this.index;

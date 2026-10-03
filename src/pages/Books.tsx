@@ -171,7 +171,7 @@ export function BooksPage() {
           className="min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col justify-between pt-2 md:pt-4 pb-4 md:pb-6"
         >
           <div
-            className="w-full relative h-[clamp(320px,46vh,500px)] overflow-hidden"
+            className="w-full relative h-[340px] sm:h-[420px] md:h-[500px] overflow-hidden"
           >
             <CircularGallery
               items={galleryItems}
