@@ -24,8 +24,8 @@ function autoBind(instance) {
   });
 }
 
-const DEFAULT_FONT = 'bold 30px Figtree';
-const DEFAULT_FONT_URL = 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&display=swap';
+const DEFAULT_FONT = '600 32px Caveat, cursive';
+const DEFAULT_FONT_URL = 'https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&display=swap';
 
 function deriveFontFamilyFromUrl(url) {
   const fileName = (url.split('/').pop() || 'custom-font').split('?')[0];
@@ -114,15 +114,15 @@ function getFontSize(font) {
   return match ? parseInt(match[1], 10) : 30;
 }
 
-function createTextTexture(gl, text, font = 'bold 30px monospace', color = 'black') {
+function createTextTexture(gl, text, font = "600 32px 'Caveat', cursive", color = '#171717') {
   const canvas = document.createElement('canvas');
   const context = canvas.getContext('2d');
   context.font = font;
   const metrics = context.measureText(text);
   const textWidth = Math.ceil(metrics.width);
-  const textHeight = Math.ceil(getFontSize(font) * 1.2);
-  canvas.width = textWidth + 20;
-  canvas.height = textHeight + 20;
+  const textHeight = Math.ceil(getFontSize(font) * 1.4);
+  canvas.width = textWidth + 30;
+  canvas.height = textHeight + 24;
   context.font = font;
   context.fillStyle = color;
   context.textBaseline = 'middle';
@@ -135,7 +135,7 @@ function createTextTexture(gl, text, font = 'bold 30px monospace', color = 'blac
 }
 
 class Title {
-  constructor({ gl, plane, renderer, text, textColor = '#1a1a1a', font = '30px sans-serif' }) {
+  constructor({ gl, plane, renderer, text, textColor = '#171717', font = "600 32px 'Caveat', cursive" }) {
     autoBind(this);
     this.gl = gl;
     this.plane = plane;
@@ -506,14 +506,14 @@ class App {
     this.onCheck();
   }
   onWheel(e) {
-    // Only wheel over the container is intercepted. Normal vertical page scroll works elsewhere.
+    // Only intercept horizontal trackpad/wheel gestures.
+    // Allow natural vertical page scroll when rolling mouse wheel up/down over gallery.
     const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
-    const delta = isHorizontal ? e.deltaX : (e.deltaY || e.detail);
-    if (delta) {
-      e.preventDefault();
-      this.scroll.target += (delta > 0 ? this.scrollSpeed : -this.scrollSpeed) * 0.2;
-      this.onCheckDebounce();
-    }
+    if (!isHorizontal || Math.abs(e.deltaX) < 1) return;
+
+    e.preventDefault();
+    this.scroll.target += (e.deltaX > 0 ? this.scrollSpeed : -this.scrollSpeed) * 0.2;
+    this.onCheckDebounce();
   }
   onKeyDown(e) {
     switch (e.key) {
@@ -638,7 +638,7 @@ export default function CircularGallery({
   bend = 3,
   textColor = '#1a1a1a',
   borderRadius = 0.05,
-  font = 'bold 30px Figtree',
+  font = "600 32px 'Caveat', cursive",
   fontUrl,
   scrollSpeed = 2,
   scrollEase = 0.05,
