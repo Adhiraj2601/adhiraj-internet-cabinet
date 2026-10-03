@@ -1,6 +1,6 @@
 .linear-gallery-wrapper {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -8,8 +8,9 @@
 }
 
 .linear-gallery {
-  --card-width: 44vw;
-  --max-card-width: 175px;
+  /* Default card width: 62 to 66vw, capped at 260px (grows to 280px on tall phones) */
+  --card-width: 64vw;
+  --max-card-width: 260px;
   --card-size: min(var(--card-width), var(--max-card-width));
   display: flex;
   gap: 16px;
@@ -21,11 +22,12 @@
   align-items: center;
   touch-action: pan-x pan-y;
   overscroll-behavior-x: contain;
-  /* Pad track so first and last cards can reach the center */
+  /* Symmetrical vertical padding */
+  padding-top: 10px;
+  padding-bottom: 10px;
+  /* Track padding so first and last cards reach dead-center */
   padding-left: calc((100% - var(--card-size)) / 2);
   padding-right: calc((100% - var(--card-size)) / 2);
-  padding-top: 12px;
-  padding-bottom: 16px;
   box-sizing: border-box;
 }
 
@@ -82,11 +84,118 @@
   font-size: 1.15rem;
   font-weight: 600;
   color: #171717;
-  margin-top: 8px;
+  margin-top: 8px; /* caption to cover 8px */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 4px;
   letter-spacing: -0.01em;
   line-height: 1.2;
+}
+
+/* ==========================================================================
+   MOBILE HERO REBALANCED VERTICAL LAYOUT (Narrow touch screens only)
+   ========================================================================== */
+
+.books-hero-mobile {
+  min-height: 100svh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+  padding-top: clamp(2.5rem, 5svh, 3.5rem); /* Header clearance for navbar */
+  padding-bottom: clamp(0.75rem, 1.5svh, 1rem); /* Bottom pad for scroll hint */
+  overflow: hidden;
+  width: 100%;
+}
+
+.books-hero-header-spacer {
+  height: clamp(0.75rem, 1.5svh, 1.25rem);
+  flex-shrink: 0;
+}
+
+/* Center the content group in the space between header and scroll hint with slight downward bias */
+.books-hero-content-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-block: auto;
+  /* Downward bias: padding-top about 2 to 4svh larger than padding-bottom */
+  padding-top: clamp(2svh, 3.5svh, 4.5svh);
+  padding-bottom: 0;
+}
+
+.books-hero-carousel-wrap {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+}
+
+/* Tighten spacing: carousel to details about 16px */
+.books-hero-details-wrap {
+  margin-top: 16px;
+  width: 100%;
+  max-width: 22rem;
+  padding-inline: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Scroll hint pinned near bottom with margin-top: auto */
+.books-hero-scroll-hint {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+  z-index: 10;
+  padding-top: 6px;
+  flex-shrink: 0;
+}
+
+/* Tall phones (above 850px height): let cards grow up to 280px cap */
+@media (min-height: 850px) {
+  .linear-gallery {
+    --card-width: 65vw;
+    --max-card-width: 280px;
+  }
+}
+
+/* Short phones (max-height: 700px): shrink card width to ~52vw and trim paddings */
+@media (max-height: 700px) {
+  .linear-gallery {
+    --card-width: 52vw;
+    --max-card-width: 210px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .books-hero-mobile {
+    padding-top: clamp(2rem, 4svh, 2.75rem);
+    padding-bottom: 0.5rem;
+  }
+
+  .books-hero-header-spacer {
+    height: 0.5rem;
+  }
+
+  .books-hero-content-group {
+    padding-top: 1.5svh;
+  }
+
+  .books-hero-details-wrap {
+    margin-top: 10px;
+  }
 }

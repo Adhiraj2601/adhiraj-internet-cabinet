@@ -166,17 +166,15 @@ export function BooksPage() {
   }, [])
 
   return (
-    <main id="main-content" className="pt-20 md:pt-24 pb-24 min-h-screen">
-      <div className="container-main">
-        {/* =================== 1. FEATURED 3D CIRCULAR GALLERY (AT VERY TOP) =================== */}
-        <section
-          aria-label="Interactive 3D Book Gallery"
-          className="relative min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col items-center pt-1 md:pt-2 pb-16 md:pb-20"
-        >
-          <div
-            className="w-full relative h-[320px] sm:h-[380px] md:h-[420px] overflow-hidden flex items-center"
+    <main id="main-content" className="pt-0 md:pt-24 pb-24 min-h-screen">
+      {isWide ? (
+        <div className="container-main pt-20 md:pt-0">
+          {/* =================== 1. FEATURED 3D CIRCULAR GALLERY (DESKTOP) =================== */}
+          <section
+            aria-label="Interactive 3D Book Gallery"
+            className="relative min-h-[calc(100vh-6rem)] flex flex-col items-center pt-2 pb-20"
           >
-            {isWide ? (
+            <div className="w-full relative h-[420px] overflow-hidden flex items-center">
               <CircularGallery
                 items={galleryItems}
                 bend={3}
@@ -190,7 +188,80 @@ export function BooksPage() {
                 font="600 32px Caveat, cursive"
                 onActiveChange={setActiveGalleryIndex}
               />
-            ) : (
+            </div>
+
+            {/* Active Book Details Under Gallery */}
+            {activeBook && (
+              <div className="mt-2 max-w-xl mx-auto text-center px-4 min-h-[105px] flex flex-col items-center justify-start">
+                <motion.div
+                  key={activeBook.id}
+                  initial={{ opacity: 0.6 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="flex flex-col items-center gap-1.5 w-full"
+                >
+                  <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
+                    <span className="text-muted/70">
+                      Vol. #{activeBook.id} of {books.length}
+                    </span>
+                    <span className="text-muted/40">•</span>
+                    <span
+                      className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
+                      style={{ color: activeStatus.color }}
+                    >
+                      <span>{activeStatus.symbol}</span>
+                      <span>{activeStatus.label}</span>
+                    </span>
+                  </div>
+
+                  <h2 className="font-geologica text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
+                    {activeBook.title}
+                  </h2>
+
+                  <p className="text-sm text-muted font-medium tracking-wide">
+                    by {activeBook.author}
+                  </p>
+
+                  {activeBook.note && (
+                    <p
+                      className="font-handwritten text-base text-muted max-w-lg leading-relaxed italic"
+                      style={{ color: 'var(--muted)' }}
+                    >
+                      "{activeBook.note}"
+                    </p>
+                  )}
+                </motion.div>
+              </div>
+            )}
+
+            {/* Scroll Down Indicator */}
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center gap-1.5 text-muted pointer-events-none z-10">
+              <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70 whitespace-nowrap">
+                Scroll down to explore library archive
+              </span>
+              <motion.span
+                animate={{ y: [0, 5, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                className="text-muted/60 text-sm select-none"
+                aria-hidden="true"
+              >
+                ↓
+              </motion.span>
+            </div>
+          </section>
+        </div>
+      ) : (
+        /* =================== 1. REBALANCED MOBILE HERO (NARROW TOUCH SCREENS - 100svh) =================== */
+        <section
+          aria-label="Interactive Book Gallery"
+          className="books-hero-mobile"
+        >
+          {/* Header clearance space */}
+          <div className="books-hero-header-spacer" />
+
+          {/* Content Group (Carousel + Details Block) centered with downward bias */}
+          <div className="books-hero-content-group">
+            <div className="books-hero-carousel-wrap">
               <LinearGallery
                 items={galleryItems}
                 activeIndex={activeGalleryIndex}
@@ -201,64 +272,64 @@ export function BooksPage() {
                 resumeDelay={2500}
                 initialIndex={0}
               />
+            </div>
+
+            {/* Active Book Details Under Gallery */}
+            {activeBook && (
+              <div className="books-hero-details-wrap">
+                <motion.div
+                  key={activeBook.id}
+                  initial={{ opacity: 0.6 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="flex flex-col items-center w-full"
+                >
+                  {/* Status & Volume Index */}
+                  <div className="flex items-center gap-2 text-[0.68rem] font-mono tracking-widest uppercase">
+                    <span className="text-muted/70">
+                      Vol. #{activeBook.id} of {books.length}
+                    </span>
+                    <span className="text-muted/40">•</span>
+                    <span
+                      className="inline-flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
+                      style={{ color: activeStatus.color }}
+                    >
+                      <span>{activeStatus.symbol}</span>
+                      <span>{activeStatus.label}</span>
+                    </span>
+                  </div>
+
+                  {/* Title in Geologica font (readable, not below 20px) */}
+                  <h2 className="font-geologica text-[1.25rem] font-bold tracking-tight text-foreground leading-snug mt-1">
+                    {activeBook.title}
+                  </h2>
+
+                  {/* Author */}
+                  <p className="text-xs text-muted font-medium tracking-wide mt-0.5">
+                    by {activeBook.author}
+                  </p>
+
+                  {/* Note in handwritten italic */}
+                  {activeBook.note && (
+                    <p
+                      className="font-handwritten text-xs text-muted max-w-xs leading-snug italic mt-1.5"
+                      style={{ color: 'var(--muted)' }}
+                    >
+                      "{activeBook.note}"
+                    </p>
+                  )}
+                </motion.div>
+              </div>
             )}
           </div>
 
-          {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
-          {activeBook && (
-            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[90px] sm:min-h-[105px] flex flex-col items-center justify-start">
-              <motion.div
-                key={activeBook.id}
-                initial={{ opacity: 0.6 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="flex flex-col items-center gap-1 sm:gap-1.5 w-full"
-              >
-                {/* Status & Volume Index */}
-                <div className="flex items-center gap-2 sm:gap-2.5 text-[0.68rem] sm:text-[0.7rem] font-mono tracking-widest uppercase">
-                  <span className="text-muted/70">
-                    Vol. #{activeBook.id} of {books.length}
-                  </span>
-                  <span className="text-muted/40">•</span>
-                  <span
-                    className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
-                    style={{ color: activeStatus.color }}
-                  >
-                    <span>{activeStatus.symbol}</span>
-                    <span>{activeStatus.label}</span>
-                  </span>
-                </div>
-
-                {/* Title in Geologica font */}
-                <h2 className="font-geologica text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
-                  {activeBook.title}
-                </h2>
-
-                {/* Author */}
-                <p className="text-xs sm:text-sm text-muted font-medium tracking-wide">
-                  by {activeBook.author}
-                </p>
-
-                {/* Note in handwritten italic */}
-                {activeBook.note && (
-                  <p
-                    className="font-handwritten text-sm sm:text-base text-muted max-w-lg leading-relaxed italic"
-                    style={{ color: 'var(--muted)' }}
-                  >
-                    "{activeBook.note}"
-                  </p>
-                )}
-              </motion.div>
-            </div>
-          )}
-
-          {/* Scroll Down Indicator (anchored to bottom of viewport, matching Sketches, unaffected by book text) */}
-          <div className="absolute bottom-3 md:bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center gap-1.5 text-muted pointer-events-none z-10">
+          {/* Scroll Down Indicator Pinned Near Bottom with margin-top: auto */}
+          <div className="books-hero-scroll-hint">
             <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70 whitespace-nowrap">
               Scroll down to explore library archive
             </span>
             <motion.span
-              animate={{ y: [0, 5, 0] }}
+              animate={{ y: [0, 4, 0] }}
               transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
               className="text-muted/60 text-sm select-none"
               aria-hidden="true"
@@ -267,7 +338,9 @@ export function BooksPage() {
             </motion.span>
           </div>
         </section>
+      )}
 
+      <div className="container-main">
         {/* =================== 2. MASTHEAD HEADER & COMPLETE BOOK GRID (BELOW GALLERY) =================== */}
         <section
           id="archive-grid"
