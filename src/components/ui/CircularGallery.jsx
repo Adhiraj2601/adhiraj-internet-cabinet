@@ -438,21 +438,31 @@ class Media {
     if (!this.screen || !this.viewport) return;
 
     const widthPx = this.screen.width;
-    const isAndroid = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
-    const isMobileDevice = typeof navigator !== 'undefined' && (
-      /Android|iPhone|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-      (navigator.maxTouchPoints > 0 && widthPx < 768)
-    );
-    const isSmall = isAndroid || isMobileDevice || widthPx < 640;
+    const heightPx = this.screen.height;
 
-    // Desktop base dimensions (PC): 5 large prominent books across screen (matching black book reference)
+    // Portrait-mode mobile/Android detection:
+    // Only treat as "small" (3-card layout) when device is in portrait orientation
+    // (width < height) AND it's actually a small handheld device (width < 640px).
+    // Landscape mobile falls through to the width-based interpolation logic instead,
+    // which produces a natural wide gallery layout like iPad landscape.
+    const isPortraitMobile = widthPx < heightPx && widthPx < 640;
+    const isSmall = isPortraitMobile;
+
+    // Desktop base dimensions (PC): 5 prominent books across screen.
+    // Adaptive padding = force ~5 books regardless of monitor width (handles 1920px etc.)
     const desktopHeight = this.viewport.height * 0.61;
     const desktopWidth = desktopHeight * (2 / 3);
-    const desktopPadding = 2.0;
+    const desktopPadding = Math.max(2.0, this.viewport.width / 5 - desktopWidth);
 
-    // Mobile / Android target: exactly 3 books visible across screen without side clipping
-    const mobileWidth = this.viewport.width * 0.265;
-    const mobileHeight = mobileWidth * 1.5;
+    // Mobile / Android portrait target: exactly 3 books visible across screen without side clipping.
+    // Card height is capped to 55% of camera height so it's safe in landscape too.
+    let mobileWidth = this.viewport.width * 0.265;
+    let mobileHeight = mobileWidth * 1.5;
+    const maxMobileHeight = this.viewport.height * 0.55;
+    if (mobileHeight > maxMobileHeight) {
+      mobileHeight = maxMobileHeight;
+      mobileWidth = mobileHeight * (2 / 3);
+    }
     const mobilePadding = mobileWidth * 0.20;
 
     let cardWidth, cardHeight, padding;
@@ -462,8 +472,8 @@ class Media {
       cardHeight = mobileHeight;
       padding = mobilePadding;
     } else if (widthPx < 1024) {
-      // Smooth interpolation for intermediate tablets between mobile 3-card and desktop 5-card layout
-      const t = (widthPx - 640) / (1024 - 640);
+      // Smooth interpolation for landscape mobile and tablets between 3-card and 5-card layout
+      const t = Math.max(0, Math.min(1, (widthPx - 640) / (1024 - 640)));
       cardWidth = mobileWidth * (1 - t) + desktopWidth * t;
       cardHeight = mobileHeight * (1 - t) + desktopHeight * t;
       padding = mobilePadding * (1 - t) + desktopPadding * t;
