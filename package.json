@@ -14,6 +14,7 @@
     "framer-motion": "^13.4.4",
     "lenis": "^1.3.26",
     "lucide-react": "^1.48.0",
+    "ogl": "^1.0.11",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4"

@@ -4,111 +4,40 @@ import { Link } from 'react-router-dom'
 import { books } from '../content/books'
 import { SectionLabel } from '../components/ui/SectionLabel'
 import { Arrow } from '../components/ui/Arrow'
-import { fadeUp, stagger } from '../lib/animations'
+import { useIsMobile } from '../hooks/useMediaQuery'
+import CircularGallery from '../components/ui/CircularGallery'
 
 type StatusFilter = 'all' | 'reading' | 'read' | 'want-to-read'
 type SortOption = 'default' | 'title' | 'author'
 
-function BookCard({ book, index }: { book: typeof books[0]; index: number }) {
-  const [imgError, setImgError] = useState(false)
-
-  const statusConfig = {
-    'reading': { label: 'Reading', symbol: '→', color: 'var(--accent)' },
-    'read': { label: 'Finished', symbol: '✓', color: 'var(--muted)' },
-    'want-to-read': { label: 'Want to read', symbol: '○', color: 'rgba(23,23,23,0.4)' },
-  }
-
-  const currentStatus = statusConfig[book.status] || statusConfig.read
-
-  return (
-    <motion.article
-      layout
-      variants={fadeUp}
-      custom={index % 12}
-      initial="hidden"
-      animate="visible"
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
-      className="flex flex-col gap-3 group"
-    >
-      {/* Book Cover Frame */}
-      <motion.div
-        className="overflow-hidden border border-token/60 relative"
-        style={{
-          aspectRatio: '2/3',
-          background: 'rgba(23,23,23,0.05)',
-        }}
-        whileHover={{
-          scale: 1.03,
-          boxShadow: '0 14px 35px rgba(23,23,23,0.12)',
-          transition: { duration: 0.25, ease: 'easeOut' },
-        }}
-      >
-        {book.cover && !imgError ? (
-          <img
-            src={book.cover}
-            alt={`${book.title} cover`}
-            width={200}
-            height={300}
-            className="w-full h-full object-cover select-none"
-            onError={() => setImgError(true)}
-            loading="lazy"
-            decoding="async"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-between p-4 text-center">
-            <span className="text-[0.6rem] font-mono tracking-widest uppercase text-muted">
-              {book.id}
-            </span>
-            <span className="text-[0.75rem] font-bold tracking-wider uppercase text-foreground leading-snug">
-              {book.title}
-            </span>
-            <span className="text-[0.65rem] text-muted font-medium">
-              {book.author}
-            </span>
-          </div>
-        )}
-
-        {/* Small subtle badge on cover */}
-        <div className="absolute top-2 right-2 pointer-events-none">
-          <span
-            className="text-[0.65rem] font-bold px-1.5 py-0.5 rounded-xs bg-[var(--background)]/90 backdrop-blur-xs border border-token shadow-2xs"
-            style={{ color: currentStatus.color }}
-            title={currentStatus.label}
-          >
-            {currentStatus.symbol}
-          </span>
-        </div>
-      </motion.div>
-
-      {/* Book Meta */}
-      <div className="flex flex-col flex-1 justify-between">
-        <div>
-          <div className="flex items-start justify-between gap-1.5">
-            <h3 className="font-bold text-[0.9rem] leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors">
-              {book.title}
-            </h3>
-          </div>
-          <p className="text-[0.75rem] text-muted mt-0.5 font-medium">{book.author}</p>
-        </div>
-
-        {book.note && (
-          <p
-            className="font-handwritten text-[0.85rem] mt-2.5 leading-snug"
-            style={{ color: 'var(--muted)' }}
-          >
-            "{book.note}"
-          </p>
-        )}
-      </div>
-    </motion.article>
-  )
+const statusConfig: Record<string, { label: string; symbol: string; color: string }> = {
+  reading: { label: 'Reading', symbol: '→', color: 'var(--accent)' },
+  read: { label: 'Finished', symbol: '✓', color: 'var(--muted)' },
+  'want-to-read': { label: 'Want to read', symbol: '○', color: 'rgba(23,23,23,0.4)' },
 }
 
 export function BooksPage() {
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const isMobile = useIsMobile()
+
+  // Reset activeIndex when filter, search, or sort changes during interaction
+  const handleFilterChange = (f: StatusFilter) => {
+    setFilter(f)
+    setActiveIndex(0)
+  }
+
+  const handleSearchChange = (s: string) => {
+    setSearch(s)
+    setActiveIndex(0)
+  }
+
+  const handleSortChange = (s: SortOption) => {
+    setSort(s)
+    setActiveIndex(0)
+  }
 
   // Counts for tabs
   const counts = useMemo(() => {
@@ -149,6 +78,16 @@ export function BooksPage() {
 
     return result
   }, [filter, search, sort])
+
+  // Memoized gallery items for CircularGallery (stable reference)
+  const galleryItems = useMemo(() => {
+    return filteredBooks.map((b) => ({
+      image: b.cover || '',
+      text: b.title,
+    }))
+  }, [filteredBooks])
+
+  const activeBook = filteredBooks[activeIndex] || filteredBooks[0]
 
   return (
     <main id="main-content" className="pt-28 md:pt-36 pb-24 min-h-screen">
@@ -209,7 +148,7 @@ export function BooksPage() {
           {/* Status Tabs */}
           <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-1">
             <button
-              onClick={() => setFilter('all')}
+              onClick={() => handleFilterChange('all')}
               className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                 filter === 'all'
                   ? 'bg-foreground text-background font-bold'
@@ -219,7 +158,7 @@ export function BooksPage() {
               All ({counts.all})
             </button>
             <button
-              onClick={() => setFilter('reading')}
+              onClick={() => handleFilterChange('reading')}
               className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                 filter === 'reading'
                   ? 'bg-foreground text-background font-bold'
@@ -229,7 +168,7 @@ export function BooksPage() {
               Reading ({counts.reading})
             </button>
             <button
-              onClick={() => setFilter('read')}
+              onClick={() => handleFilterChange('read')}
               className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                 filter === 'read'
                   ? 'bg-foreground text-background font-bold'
@@ -239,7 +178,7 @@ export function BooksPage() {
               Finished ({counts.read})
             </button>
             <button
-              onClick={() => setFilter('want-to-read')}
+              onClick={() => handleFilterChange('want-to-read')}
               className={`px-3 py-1.5 text-xs font-semibold tracking-wider uppercase transition-all rounded-xs shrink-0 ${
                 filter === 'want-to-read'
                   ? 'bg-foreground text-background font-bold'
@@ -257,13 +196,13 @@ export function BooksPage() {
               <input
                 type="text"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search title, author, note..."
                 className="w-full text-xs px-3 py-1.5 bg-transparent border border-token rounded-xs focus:outline-none focus:border-foreground placeholder:text-muted/60"
               />
               {search && (
                 <button
-                  onClick={() => setSearch('')}
+                  onClick={() => handleSearchChange('')}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted hover:text-foreground"
                   aria-label="Clear search"
                 >
@@ -275,7 +214,7 @@ export function BooksPage() {
             {/* Sort Selector */}
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortOption)}
+              onChange={(e) => handleSortChange(e.target.value as SortOption)}
               className="text-xs px-2.5 py-1.5 bg-transparent border border-token rounded-xs focus:outline-none focus:border-foreground text-muted font-medium"
             >
               <option value="default">Sort: Default</option>
@@ -285,23 +224,78 @@ export function BooksPage() {
           </div>
         </motion.div>
 
-        {/* Books Grid */}
+        {/* Circular Book Gallery & Active Book Details */}
         {filteredBooks.length > 0 ? (
-          <motion.div
-            variants={stagger}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-7"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredBooks.map((book, index) => (
-                <BookCard key={book.id} book={book} index={index} />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <div>
+            <div
+              className="library-gallery w-full relative"
+              style={{ height: isMobile ? 420 : 600, position: 'relative' }}
+            >
+              <CircularGallery
+                items={galleryItems}
+                bend={3}
+                textColor="#1a1a1a"
+                borderRadius={0.05}
+                scrollEase={0.05}
+                font="bold 28px Manrope"
+                onActiveChange={setActiveIndex}
+              />
+            </div>
+
+            {/* Active Book Details Under Gallery */}
+            {activeBook && (
+              <div className="mt-8 md:mt-10 max-w-xl mx-auto text-center px-4 min-h-[140px] flex flex-col items-center justify-center">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${activeBook.id}-${activeIndex}`}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="flex flex-col items-center gap-2.5"
+                  >
+                    {/* Status & Catalog Position */}
+                    <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
+                      <span className="text-muted/70">
+                        Vol. #{activeBook.id} · {activeIndex + 1} of {filteredBooks.length}
+                      </span>
+                      <span className="text-muted/40">•</span>
+                      <span
+                        className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
+                        style={{ color: (statusConfig[activeBook.status] || statusConfig.read).color }}
+                      >
+                        <span>{(statusConfig[activeBook.status] || statusConfig.read).symbol}</span>
+                        <span>{(statusConfig[activeBook.status] || statusConfig.read).label}</span>
+                      </span>
+                    </div>
+
+                    {/* Book Title */}
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-snug">
+                      {activeBook.title}
+                    </h2>
+
+                    {/* Author */}
+                    <p className="text-xs sm:text-sm text-muted font-medium tracking-wide">
+                      by {activeBook.author}
+                    </p>
+
+                    {/* Note in handwritten / italic style */}
+                    {activeBook.note && (
+                      <p
+                        className="font-handwritten text-base sm:text-lg mt-1 text-muted max-w-lg leading-relaxed italic"
+                        style={{ color: 'var(--muted)' }}
+                      >
+                        "{activeBook.note}"
+                      </p>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="py-20 text-center border border-dashed border-token rounded-sm">
-            <p className="text-sm font-semibold text-foreground">No books found</p>
+            <p className="text-sm font-semibold text-foreground">Nothing here yet</p>
             <p className="text-xs text-muted mt-1">
               No titles match your current filter and search query.
             </p>

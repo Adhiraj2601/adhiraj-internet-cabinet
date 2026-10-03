@@ -1,0 +1,20 @@
+/* React Bits CircularGallery CSS */
+.circular-gallery {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+
+.circular-gallery:active {
+  cursor: grabbing;
+}
+
+.circular-gallery:focus-visible {
+  outline: 2px solid var(--accent, #315CFF);
+  outline-offset: 4px;
+}
