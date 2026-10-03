@@ -25,18 +25,19 @@ export function SketchesPage() {
   const [selectedSketch, setSelectedSketch] = useState<ScrapItem | null>(null)
   const isMobile = useIsMobile()
 
-  // Carousel displays 11 featured sketches selected via admin dashboard
+  // Carousel displays 11 featured sketches on desktop, and 8 on mobile/small screens
   const carouselItems = useMemo(() => {
     const featured = scrapItems.filter((item) => item.inCarousel ?? true)
     const list = featured.length >= 5 ? featured : scrapItems
-    return list.slice(0, 11).map((item) => ({
+    const count = isMobile ? 8 : 11
+    return list.slice(0, count).map((item) => ({
       src: item.src,
       alt: item.alt,
       title: item.note || item.alt,
       subtitle: `#${item.id}${item.date ? ' · ' + item.date : ''}`,
       id: item.id,
     }))
-  }, [])
+  }, [isMobile])
 
   // Filtered sketches for the masonry grid below
   const filteredSketches = useMemo(() => {
