@@ -2,6 +2,7 @@ import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl'
 import { useEffect, useRef } from 'react';
 
 import './CircularGallery.css';
+import { GALLERY_ENTRANCE, easeOutQuint, preloadGalleryImages } from '../../lib/galleryEntrance';
 
 function debounce(func, wait) {
   let timeout;
@@ -154,19 +155,29 @@ class Title {
       fragment: `
         precision highp float;
         uniform sampler2D tMap;
+        uniform float uOpacity;
         varying vec2 vUv;
         void main() {
           vec4 color = texture2D(tMap, vUv);
           if (color.a < 0.05) discard;
-          gl_FragColor = color;
+          gl_FragColor = vec4(color.rgb, color.a * uOpacity);
         }
       `,
-      uniforms: { tMap: { value: this.texture } },
+      uniforms: {
+        tMap: { value: this.texture },
+        uOpacity: { value: 0.0 }
+      },
       transparent: true
     });
     this.mesh = new Mesh(this.gl, { geometry, program });
     this.mesh.setParent(this.plane);
     this.renderTextTexture();
+  }
+
+  setOpacity(opacity) {
+    if (this.mesh && this.mesh.program && this.mesh.program.uniforms && this.mesh.program.uniforms.uOpacity) {
+      this.mesh.program.uniforms.uOpacity.value = opacity;
+    }
   }
 
   renderTextTexture() {
@@ -232,6 +243,7 @@ class Media {
     geometry,
     gl,
     image,
+    preloadedImg,
     index,
     length,
     renderer,
@@ -248,6 +260,7 @@ class Media {
     this.geometry = geometry;
     this.gl = gl;
     this.image = image;
+    this.preloadedImg = preloadedImg;
     this.index = index;
     this.length = length;
     this.renderer = renderer;
@@ -259,6 +272,8 @@ class Media {
     this.textColor = textColor;
     this.borderRadius = borderRadius;
     this.font = font;
+    this.baseY = 0;
+    this.baseRotationZ = 0;
     this.createShader();
     this.createMesh();
     this.createTitle();
@@ -269,6 +284,10 @@ class Media {
     const texture = new Texture(this.gl, {
       generateMipmaps: true
     });
+    if (this.preloadedImg) {
+      texture.image = this.preloadedImg;
+    }
+
     this.program = new Program(this.gl, {
       depthTest: false,
       depthWrite: false,
@@ -290,6 +309,7 @@ class Media {
         uniform vec2 uPlaneSizes;
         uniform sampler2D tMap;
         uniform float uBorderRadius;
+        uniform float uOpacity;
         varying vec2 vUv;
         
         float roundedBoxSDF(vec2 p, vec2 b, float r) {
@@ -317,27 +337,51 @@ class Media {
           float edgeSmooth = 0.002;
           float alpha = 1.0 - smoothstep(-edgeSmooth, edgeSmooth, d);
           
-          gl_FragColor = vec4(color.rgb, alpha);
+          // FragColor scaled by uOpacity so cards never flash black before entrance
+          gl_FragColor = vec4(color.rgb, alpha * uOpacity);
         }
       `,
       uniforms: {
         tMap: { value: texture },
         uPlaneSizes: { value: [2, 3] },
-        uImageSizes: { value: [2, 3] },
-        uBorderRadius: { value: this.borderRadius }
+        uImageSizes: {
+          value: this.preloadedImg
+            ? [this.preloadedImg.naturalWidth || 200, this.preloadedImg.naturalHeight || 300]
+            : [200, 300]
+        },
+        uBorderRadius: { value: this.borderRadius },
+        uOpacity: { value: 0.0 }
       },
       transparent: true
     });
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = this.image;
-    img.onload = () => {
-      texture.image = img;
-      this.program.uniforms.uImageSizes.value = [img.naturalWidth || 200, img.naturalHeight || 300];
-    };
-    img.onerror = () => {
-      this.program.uniforms.uImageSizes.value = [200, 300];
-    };
+
+    if (!this.preloadedImg) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = this.image;
+      img.onload = () => {
+        texture.image = img;
+        this.program.uniforms.uImageSizes.value = [img.naturalWidth || 200, img.naturalHeight || 300];
+      };
+      img.onerror = () => {
+        this.program.uniforms.uImageSizes.value = [200, 300];
+      };
+    }
+  }
+
+  setOpacity(opacity) {
+    if (this.program && this.program.uniforms && this.program.uniforms.uOpacity) {
+      this.program.uniforms.uOpacity.value = opacity;
+    }
+    if (this.title) {
+      this.title.setOpacity(opacity);
+    }
+  }
+
+  applyIntro(progress, opacity, lift) {
+    this.plane.position.y = this.baseY + lift;
+    this.plane.rotation.z = this.baseRotationZ * progress;
+    this.setOpacity(opacity);
   }
 
   createMesh() {
@@ -402,6 +446,9 @@ class Media {
         this.plane.rotation.z = Math.sign(x) * turnAngle;
       }
     }
+
+    this.baseY = this.plane.position.y;
+    this.baseRotationZ = this.plane.rotation.z;
 
     this.speed = scroll.current - scroll.last;
 
@@ -507,6 +554,7 @@ class App {
     container,
     {
       items,
+      loadedImagesMap,
       bend = 3,
       textColor = '#1a1a1a',
       borderRadius = 0,
@@ -518,13 +566,20 @@ class App {
       speed = 1.8,
       pauseOnHover = false,
       direction = 'left',
-      onActiveChange
+      onActiveChange,
+      onDetailsReady,
+      onIntroComplete,
+      reducedMotion = false
     } = {}
   ) {
     this.container = container;
+    this.loadedImagesMap = loadedImagesMap || new Map();
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
     this.onActiveChange = onActiveChange;
+    this.onDetailsReady = onDetailsReady;
+    this.onIntroComplete = onIntroComplete;
+    this.reducedMotion = reducedMotion;
     this.offsetY = offsetY;
     this.autoplay = autoplay;
     this.speed = speed;
@@ -540,18 +595,53 @@ class App {
     this.lastActiveIndex = -1;
     this.onCheckDebounce = debounce(this.onCheck, 200);
 
+    // ==========================================
+    // ENTRANCE ANIMATION STATE
+    // ==========================================
+    this.isIntroActive = true;
+    this.introStartTime = performance.now();
+    this.detailsRevealed = false;
+    this.cardDelays = [];
+    this.maxDelay = 0;
+    this.totalIntroDuration = this.reducedMotion
+      ? GALLERY_ENTRANCE.reducedMotionDuration
+      : GALLERY_ENTRANCE.cardDuration;
+
     this.createRenderer();
     this.createCamera();
     this.createScene();
     this.onResize();
     this.createGeometry();
     this.createMedias(items, bend, textColor, borderRadius, font);
+    this.calculateCardDelays();
     this.update();
     this.addEventListeners();
     // [CHANGE 2]: ResizeObserver handling
     this.setupResizeObserver();
     // [CHANGE 6]: IntersectionObserver performance pause
     this.setupIntersectionObserver();
+  }
+
+  /**
+   * Calculates stagger delay per card based on distance from the center card slot.
+   * Centers animate first, rippling outward to both edges by 75ms per card.
+   */
+  calculateCardDelays() {
+    if (!this.medias || this.medias.length === 0) return;
+    // Initial media layout pass to resolve wrapped coordinates
+    this.medias.forEach(media => media.update(this.scroll, 'right'));
+
+    const cardWidth = Math.max(0.1, this.medias[0].width || 1);
+    this.cardDelays = this.medias.map((media) => {
+      if (this.reducedMotion) return 0;
+      const cardDist = Math.abs(media.plane.position.x) / cardWidth;
+      const steps = Math.min(Math.round(cardDist), GALLERY_ENTRANCE.maxStaggerSteps);
+      return steps * GALLERY_ENTRANCE.staggerMs;
+    });
+    this.maxDelay = this.reducedMotion ? 0 : Math.max(...this.cardDelays, 0);
+    this.totalIntroDuration = this.reducedMotion
+      ? GALLERY_ENTRANCE.reducedMotionDuration
+      : GALLERY_ENTRANCE.cardDuration + this.maxDelay;
   }
 
   // [CHANGE 6]: Cap renderer DPR at Math.min(devicePixelRatio, 2)
@@ -617,6 +707,7 @@ class App {
         geometry: this.planeGeometry,
         gl: this.gl,
         image: data.image,
+        preloadedImg: this.loadedImagesMap.get(data.image),
         index,
         length: this.mediasImages.length,
         renderer: this.renderer,
@@ -636,6 +727,7 @@ class App {
   // [CHANGE 5: Unified Pointer Events with Pan-Y, Inertia & Card Snapping]
   // ==========================================================================
   onPointerDown(e) {
+    if (this.isIntroActive) return;
     if (e.button !== undefined && e.button !== 0) return;
     this.isDown = true;
     this.scroll.position = this.scroll.current;
@@ -648,6 +740,7 @@ class App {
   }
 
   onPointerMove(e) {
+    if (this.isIntroActive) return;
     if (!this.isDown) return;
     if (this.pointerId !== undefined && e.pointerId !== undefined && e.pointerId !== this.pointerId) return;
 
@@ -751,6 +844,7 @@ class App {
   }
 
   onWheel(e) {
+    if (this.isIntroActive) return;
     // Only intercept horizontal trackpad/wheel gestures.
     // Allow natural vertical page scroll when rolling mouse wheel up/down over gallery.
     const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
@@ -766,6 +860,7 @@ class App {
   }
 
   onKeyDown(e) {
+    if (this.isIntroActive) return;
     switch (e.key) {
       case 'ArrowRight':
         e.preventDefault();
@@ -871,24 +966,69 @@ class App {
     const dt = this.lastTime > 0 ? Math.min((now - this.lastTime) / 1000, 0.05) : 1 / 60;
     this.lastTime = now;
 
-    // Autoplay drift effect
+    // Handle entrance animation lifecycle
+    if (this.isIntroActive) {
+      const elapsed = now - this.introStartTime;
+      const overallProgress = Math.min(1.0, elapsed / Math.max(1, this.totalIntroDuration));
+
+      if (!this.detailsRevealed && overallProgress >= GALLERY_ENTRANCE.detailsThreshold) {
+        this.detailsRevealed = true;
+        this.onDetailsReady?.();
+      }
+
+      if (elapsed >= this.totalIntroDuration) {
+        this.isIntroActive = false;
+        if (!this.detailsRevealed) {
+          this.detailsRevealed = true;
+          this.onDetailsReady?.();
+        }
+        this.onIntroComplete?.();
+        if (this.medias) {
+          this.medias.forEach(media => media.setOpacity(1.0));
+        }
+      }
+    }
+
+    // Autoplay drift effect (only runs after entrance intro finishes)
     const isPaused =
       (this.pauseOnHover && this.isHovered) ||
       this.isDown ||
       now < this.holdUntil;
 
-    if (this.autoplay === 'drift' && !isPaused) {
+    if (this.autoplay === 'drift' && !isPaused && !this.isIntroActive) {
       this.scroll.target += this.speed * this.driftDir * dt;
     }
 
     this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
     const direction = this.scroll.current >= this.scroll.last ? 'right' : 'left';
+
     if (this.medias) {
-      this.medias.forEach(media => media.update(this.scroll, direction));
+      const startOffsetY = -GALLERY_ENTRANCE.startOffsetYMultiplier * (this.viewport ? this.viewport.height : 10);
+      const elapsed = now - this.introStartTime;
+
+      this.medias.forEach((media, idx) => {
+        media.update(this.scroll, direction);
+
+        if (this.isIntroActive) {
+          if (this.reducedMotion) {
+            const p = Math.min(1.0, elapsed / GALLERY_ENTRANCE.reducedMotionDuration);
+            media.applyIntro(1.0, p, 0);
+          } else {
+            const delay = this.cardDelays[idx] || 0;
+            const cardElapsed = Math.max(0, elapsed - delay);
+            const t = Math.min(1.0, cardElapsed / GALLERY_ENTRANCE.cardDuration);
+            const p = easeOutQuint(t);
+            // Opacity ramps from 0 to 1 over first 40% of travel
+            const opacity = Math.min(1.0, p / GALLERY_ENTRANCE.opacityRampThreshold);
+            const lift = (1.0 - p) * startOffsetY;
+            media.applyIntro(p, opacity, lift);
+          }
+        }
+      });
     }
 
-    // Determine centered active slide
-    if (this.medias && this.medias[0] && this.originalLength > 0) {
+    // Determine centered active slide (only when intro has completed)
+    if (!this.isIntroActive && this.medias && this.medias[0] && this.originalLength > 0) {
       const mediaWidth = this.medias[0].width;
       if (mediaWidth > 0) {
         const rawIndex = Math.round(this.scroll.current / mediaWidth);
@@ -1001,6 +1141,23 @@ class App {
       this.container.removeEventListener('pointerdown', this.boundOnPointerDown);
       this.container.removeEventListener('keydown', this.boundOnKeyDown);
     }
+    if (this.medias) {
+      this.medias.forEach(media => {
+        try {
+          if (media.title && media.title.texture && media.title.texture.texture && this.gl) {
+            this.gl.deleteTexture(media.title.texture.texture);
+          }
+          if (media.program && media.program.uniforms && media.program.uniforms.tMap && media.program.uniforms.tMap.value) {
+            const tex = media.program.uniforms.tMap.value;
+            if (tex.texture && this.gl) {
+              this.gl.deleteTexture(tex.texture);
+            }
+          }
+        } catch {}
+      });
+      this.medias = [];
+    }
+
     if (this.renderer && this.renderer.gl && this.renderer.gl.canvas && this.renderer.gl.canvas.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
     }
@@ -1027,25 +1184,47 @@ export default function CircularGallery({
   pauseOnHover = false,
   direction = 'left',
   onActiveChange,
+  onDetailsReady,
+  onIntroComplete,
   className = '',
   style
 }) {
   const containerRef = useRef(null);
   const onActiveChangeRef = useRef(onActiveChange);
+  const onDetailsReadyRef = useRef(onDetailsReady);
+  const onIntroCompleteRef = useRef(onIntroComplete);
 
   useEffect(() => {
     onActiveChangeRef.current = onActiveChange;
   }, [onActiveChange]);
 
   useEffect(() => {
+    onDetailsReadyRef.current = onDetailsReady;
+  }, [onDetailsReady]);
+
+  useEffect(() => {
+    onIntroCompleteRef.current = onIntroComplete;
+  }, [onIntroComplete]);
+
+  const prefersReducedMotion = typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  useEffect(() => {
     if (!containerRef.current || !items || items.length === 0) return;
     let app;
     let isMounted = true;
 
-    resolveFont(font, fontUrl).then(resolvedFont => {
+    const imageUrls = items.map(item => item.image);
+
+    // Preload font and all cover textures prior to initializing App
+    Promise.all([
+      resolveFont(font, fontUrl),
+      preloadGalleryImages(imageUrls)
+    ]).then(([resolvedFont, loadedImagesMap]) => {
       if (!isMounted || !containerRef.current) return;
       app = new App(containerRef.current, {
         items,
+        loadedImagesMap,
         bend,
         textColor,
         borderRadius,
@@ -1057,7 +1236,10 @@ export default function CircularGallery({
         speed,
         pauseOnHover,
         direction,
-        onActiveChange: (index) => onActiveChangeRef.current?.(index)
+        reducedMotion: prefersReducedMotion,
+        onActiveChange: (index) => onActiveChangeRef.current?.(index),
+        onDetailsReady: () => onDetailsReadyRef.current?.(),
+        onIntroComplete: () => onIntroCompleteRef.current?.()
       });
     });
 

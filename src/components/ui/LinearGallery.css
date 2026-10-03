@@ -56,12 +56,65 @@
   transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease;
 }
 
-.linear-gallery figure:not(.is-active) {
+/* ==========================================================================
+   MOBILE CAROUSEL ENTRANCE ANIMATION (Cards rise from translateY(60px))
+   ========================================================================== */
+
+/* 1. Initial state: hidden at translateY(60px), opacity 0 */
+.linear-gallery figure.card-intro-hidden {
+  opacity: 0 !important;
+  transform: translateY(60px) scale(0.92) !important;
+  pointer-events: none;
+}
+.linear-gallery figure.card-intro-hidden.is-active {
+  transform: translateY(60px) scale(1.04) !important;
+}
+
+/* 2. Animating state: rise from translateY(60px) to y=0 with staggered delay */
+.linear-gallery figure.card-intro-animating {
+  opacity: 0.75;
+  transform: translateY(0) scale(0.92);
+  transition: transform 950ms cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 380ms ease-out !important;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.linear-gallery figure.card-intro-animating.is-active {
+  opacity: 1;
+  transform: translateY(0) scale(1.04);
+}
+
+/* 3. Settled state */
+.linear-gallery figure.card-intro-settled {
+  pointer-events: auto;
+}
+
+/* Respect prefers-reduced-motion: skip translateY travel */
+@media (prefers-reduced-motion: reduce) {
+  .linear-gallery figure.card-intro-hidden {
+    transform: scale(0.92) !important;
+    opacity: 0 !important;
+  }
+  .linear-gallery figure.card-intro-hidden.is-active {
+    transform: scale(1.04) !important;
+  }
+  .linear-gallery figure.card-intro-animating {
+    transform: scale(0.92) !important;
+    opacity: 0.75 !important;
+    transition: opacity 200ms ease-out !important;
+  }
+  .linear-gallery figure.card-intro-animating.is-active {
+    transform: scale(1.04) !important;
+    opacity: 1 !important;
+  }
+}
+
+.linear-gallery figure:not(.is-active):not(.card-intro-hidden) {
   opacity: 0.75;
   transform: scale(0.92);
 }
 
-.linear-gallery figure.is-active {
+.linear-gallery figure.is-active:not(.card-intro-hidden) {
   opacity: 1;
   transform: scale(1.04);
 }

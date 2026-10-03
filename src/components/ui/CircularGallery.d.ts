@@ -20,6 +20,8 @@ export interface CircularGalleryProps {
   pauseOnHover?: boolean
   direction?: 'left' | 'right'
   onActiveChange?: (index: number) => void
+  onDetailsReady?: () => void
+  onIntroComplete?: () => void
   className?: string
   style?: React.CSSProperties
 }

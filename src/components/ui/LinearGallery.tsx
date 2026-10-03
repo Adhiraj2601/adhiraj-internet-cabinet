@@ -1,5 +1,6 @@
-import { useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
+import { GALLERY_ENTRANCE, preloadGalleryImages } from '../../lib/galleryEntrance'
 import './LinearGallery.css'
 
 export interface LinearGalleryItem {
@@ -19,6 +20,8 @@ export interface LinearGalleryProps {
   activeIndex?: number
   onActiveChange?: (index: number) => void
   onSelect?: (item: LinearGalleryItem, index: number) => void
+  onDetailsReady?: () => void
+  onIntroComplete?: () => void
   className?: string
 }
 
@@ -32,6 +35,8 @@ export function LinearGallery({
   activeIndex,
   onActiveChange,
   onSelect,
+  onDetailsReady,
+  onIntroComplete,
   className = ''
 }: LinearGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -50,6 +55,19 @@ export function LinearGallery({
   const activeRafIdRef = useRef<number | null>(null)
   const resumeTimerRef = useRef<number | null>(null)
   const visResumeTimerRef = useRef<number | null>(null)
+
+  // ==========================================
+  // ENTRANCE ANIMATION STATE & REFS
+  // ==========================================
+  const [introPhase, setIntroPhase] = useState<'initial' | 'animating' | 'done'>('initial')
+  const introPhaseRef = useRef<'initial' | 'animating' | 'done'>('initial')
+  introPhaseRef.current = introPhase
+  const onDetailsReadyRef = useRef(onDetailsReady)
+  const onIntroCompleteRef = useRef(onIntroComplete)
+  onDetailsReadyRef.current = onDetailsReady
+  onIntroCompleteRef.current = onIntroComplete
+  const detailsTimerRef = useRef<number | null>(null)
+  const introTimerRef = useRef<number | null>(null)
 
   // Drag vs Tap detection refs (ignore clicks if finger moved > 8px)
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null)
@@ -119,6 +137,7 @@ export function LinearGallery({
   // AUTOPLAY LOGIC: START & STOP DRIFT
   // ==========================================
   const startDrift = useCallback(() => {
+    if (introPhaseRef.current !== 'done') return
     if (!isAutoplayConfigured || isTouchingRef.current) return
     if (isDriftingRef.current) return
 
@@ -211,13 +230,15 @@ export function LinearGallery({
   )
 
   // ==========================================
-  // INITIAL CENTERING ON MOUNT
+  // IMAGE PRELOAD & ENTRANCE ANIMATION LIFECYCLE
   // ==========================================
   useEffect(() => {
     if (originalLength === 0) return
+    let isMounted = true
 
+    // Center the track silently while cards are still at opacity 0
     const targetIdx = originalLength + (initialIndex % originalLength)
-    const id = requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
       measureSetWidth()
       const targetEl = itemElementsRef.current.get(targetIdx)
       if (targetEl && containerRef.current) {
@@ -228,17 +249,52 @@ export function LinearGallery({
         })
         posRef.current = containerRef.current.scrollLeft
       }
-
-      // Kick off autoplay drift after initial centering
-      if (isAutoplayConfigured) {
-        resumeTimerRef.current = window.setTimeout(() => {
-          startDrift()
-        }, 800)
-      }
     })
 
-    return () => cancelAnimationFrame(id)
-  }, [originalLength, initialIndex, measureSetWidth, isAutoplayConfigured, startDrift])
+    // Preload all cover images before starting entrance
+    setIntroPhase('initial')
+    const imageUrls = items.map(item => item.image)
+
+    preloadGalleryImages(imageUrls).then(() => {
+      if (!isMounted) return
+
+      // Preload complete: trigger staggered entrance on next frame
+      requestAnimationFrame(() => {
+        if (!isMounted) return
+        setIntroPhase('animating')
+
+        const isReduced = prefersReducedMotion
+        const animDuration = isReduced ? GALLERY_ENTRANCE.reducedMotionDuration : 950
+        const maxStagger = isReduced ? 0 : 4 * GALLERY_ENTRANCE.staggerMs // up to 300ms
+        const totalDuration = animDuration + maxStagger
+        const detailsDelay = Math.round(totalDuration * GALLERY_ENTRANCE.detailsThreshold)
+
+        // Fade in details block once cards are 60% into travel
+        detailsTimerRef.current = window.setTimeout(() => {
+          if (!isMounted) return
+          onDetailsReadyRef.current?.()
+        }, detailsDelay)
+
+        // Complete entrance intro and enable full interactions + autoplay drift
+        introTimerRef.current = window.setTimeout(() => {
+          if (!isMounted) return
+          setIntroPhase('done')
+          onIntroCompleteRef.current?.()
+          if (isAutoplayConfigured) {
+            resumeTimerRef.current = window.setTimeout(() => {
+              if (isMounted) startDrift()
+            }, resumeDelayRef.current)
+          }
+        }, totalDuration)
+      })
+    })
+
+    return () => {
+      isMounted = false
+      if (detailsTimerRef.current !== null) clearTimeout(detailsTimerRef.current)
+      if (introTimerRef.current !== null) clearTimeout(introTimerRef.current)
+    }
+  }, [items, originalLength, initialIndex, measureSetWidth, prefersReducedMotion, isAutoplayConfigured, startDrift, resumeDelay])
 
   // ==========================================
   // RESIZE OBSERVER (ORIENTATION / RESIZE)
@@ -285,6 +341,7 @@ export function LinearGallery({
     if (!container) return
 
     const handlePointerDown = (e: PointerEvent) => {
+      if (introPhaseRef.current !== 'done') return
       isTouchingRef.current = true
       pointerStartRef.current = { x: e.clientX, y: e.clientY }
       isDragRef.current = false
@@ -292,6 +349,7 @@ export function LinearGallery({
     }
 
     const handlePointerMove = (e: PointerEvent) => {
+      if (introPhaseRef.current !== 'done') return
       if (pointerStartRef.current) {
         const dx = e.clientX - pointerStartRef.current.x
         const dy = e.clientY - pointerStartRef.current.y
@@ -302,6 +360,7 @@ export function LinearGallery({
     }
 
     const handlePointerUp = () => {
+      if (introPhaseRef.current !== 'done') return
       isTouchingRef.current = false
       // Schedule resume only after finger release
       if (isAutoplayConfigured) {
@@ -319,6 +378,7 @@ export function LinearGallery({
     }
 
     const handleTouchStart = (e: TouchEvent) => {
+      if (introPhaseRef.current !== 'done') return
       isTouchingRef.current = true
       if (e.touches[0]) {
         pointerStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
@@ -400,6 +460,7 @@ export function LinearGallery({
     if (!container || originalLength === 0) return
 
     const computeActiveIndex = () => {
+      if (introPhaseRef.current !== 'done') return
       const c = containerRef.current
       if (!c) return
 
@@ -446,6 +507,7 @@ export function LinearGallery({
     }
 
     const handleScroll = () => {
+      if (introPhaseRef.current !== 'done') return
       // While not drifting, reschedule resume timer on every scroll event
       // (drag, momentum fling, snap settle). Wait until all scroll events stop for resumeDelay.
       if (!isDriftingRef.current) {
@@ -559,6 +621,8 @@ export function LinearGallery({
       if (activeRafIdRef.current !== null) cancelAnimationFrame(activeRafIdRef.current)
       if (resumeTimerRef.current !== null) clearTimeout(resumeTimerRef.current)
       if (visResumeTimerRef.current !== null) clearTimeout(visResumeTimerRef.current)
+      if (detailsTimerRef.current !== null) clearTimeout(detailsTimerRef.current)
+      if (introTimerRef.current !== null) clearTimeout(introTimerRef.current)
     }
   }, [])
 
@@ -566,6 +630,9 @@ export function LinearGallery({
   // CARD TAP / CLICK HANDLER (DRAG-SAFE)
   // ==========================================
   const handleCardClick = (item: LinearGalleryItem, globalIndex: number) => {
+    if (introPhaseRef.current !== 'done') {
+      return
+    }
     // If the pointer moved more than 8px, it was a drag gesture — do not count as a tap!
     if (isDragRef.current) {
       return
@@ -590,12 +657,31 @@ export function LinearGallery({
 
   return (
     <div className={`linear-gallery-wrapper ${className}`}>
-      <div ref={containerRef} className="linear-gallery">
+      <div
+        ref={containerRef}
+        className={`linear-gallery ${
+          introPhase === 'initial'
+            ? 'intro-initial'
+            : introPhase === 'animating'
+            ? 'intro-animating'
+            : 'intro-done'
+        }`}
+      >
         {repeatedItems.map((item, globalIndex) => {
           const origIndex = globalIndex % originalLength
           const title = item.text || item.title || ''
           const currentHighlight = activeIndex !== undefined ? activeIndex : activeIndexRef.current
           const isActive = origIndex === (currentHighlight % originalLength)
+
+          // Stagger calculation: center card (slot in middle repeated set) has 0ms delay,
+          // adjacent cards outward get 75ms delay per step.
+          const centerGlobal = originalLength + (initialIndex % originalLength)
+          const diffFromCenter = Math.abs(globalIndex - centerGlobal)
+          const staggerStep = Math.min(diffFromCenter, 4)
+          const staggerDelay =
+            introPhase === 'animating' && !prefersReducedMotion
+              ? staggerStep * GALLERY_ENTRANCE.staggerMs
+              : 0
 
           return (
             <figure
@@ -606,7 +692,18 @@ export function LinearGallery({
               }}
               data-global-index={globalIndex}
               data-original-index={origIndex}
-              className={isActive ? 'is-active' : ''}
+              className={`${isActive ? 'is-active' : ''} ${
+                introPhase === 'initial'
+                  ? 'card-intro-hidden'
+                  : introPhase === 'animating'
+                  ? 'card-intro-animating'
+                  : 'card-intro-settled'
+              }`}
+              style={
+                introPhase === 'animating' && staggerDelay > 0
+                  ? { transitionDelay: `${staggerDelay}ms` }
+                  : undefined
+              }
               onClick={() => handleCardClick(item, globalIndex)}
             >
               <img

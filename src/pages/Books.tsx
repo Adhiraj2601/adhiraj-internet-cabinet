@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { books, type Book } from '../content/books'
@@ -109,11 +109,16 @@ function BookCard({ book, index }: { book: Book; index: number }) {
 }
 
 export function BooksPage() {
+  const [detailsVisible, setDetailsVisible] = useState(false)
   const [filter, setFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0)
   const isWide = useIsWide()
+
+  const handleDetailsReady = useCallback(() => {
+    setDetailsVisible(true)
+  }, [])
 
   // Gallery items for the 3D top hero (stable reference across all 22 books)
   const galleryItems = useMemo(() => {
@@ -188,17 +193,21 @@ export function BooksPage() {
                 pauseOnHover={false}
                 font="600 32px Caveat, cursive"
                 onActiveChange={setActiveGalleryIndex}
+                onDetailsReady={handleDetailsReady}
               />
             </div>
 
-            {/* Active Book Details Under Gallery */}
+            {/* Active Book Details Under Gallery (Fades in when entrance reaches 60%) */}
             {activeBook && (
               <div className="mt-2 max-w-xl mx-auto text-center px-4 min-h-[105px] flex flex-col items-center justify-start">
                 <motion.div
                   key={activeBook.id}
-                  initial={{ opacity: 0.6 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{
+                    opacity: detailsVisible ? 1 : 0,
+                    y: detailsVisible ? 0 : 8
+                  }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
                   className="flex flex-col items-center gap-1.5 w-full"
                 >
                   <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
@@ -269,17 +278,21 @@ export function BooksPage() {
                 direction="forward"
                 resumeDelay={2500}
                 initialIndex={0}
+                onDetailsReady={handleDetailsReady}
               />
             </div>
 
-            {/* Active Book Details Under Gallery */}
+            {/* Active Book Details Under Gallery (Fades in when entrance reaches 60%) */}
             {activeBook && (
               <div className="books-hero-details-wrap">
                 <motion.div
                   key={activeBook.id}
-                  initial={{ opacity: 0.6 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{
+                    opacity: detailsVisible ? 1 : 0,
+                    y: detailsVisible ? 0 : 8
+                  }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
                   className="flex flex-col items-center w-full"
                 >
                   {/* Status & Volume Index */}
