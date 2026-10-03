@@ -448,11 +448,11 @@ class Media {
     const isPortraitMobile = widthPx < heightPx && widthPx < 640;
     const isSmall = isPortraitMobile;
 
-    // Desktop base dimensions (PC): 5 prominent books across screen.
-    // Adaptive padding = force ~5 books regardless of monitor width (handles 1920px etc.)
+    // Desktop base dimensions (PC): ~5 prominent books visible at 1440px, more at ultrawide.
+    // Fixed padding keeps the gallery consistent and the scroll indicator visible below.
     const desktopHeight = this.viewport.height * 0.61;
     const desktopWidth = desktopHeight * (2 / 3);
-    const desktopPadding = Math.max(2.0, this.viewport.width / 5 - desktopWidth);
+    const desktopPadding = 2.0;
 
     // Mobile / Android portrait target: exactly 3 books visible across screen without side clipping.
     // Card height is capped to 55% of camera height so it's safe in landscape too.
