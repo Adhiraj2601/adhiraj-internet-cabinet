@@ -30,3 +30,7 @@ export function useIsTouch() {
 export function usePrefersReducedMotion() {
   return useMediaQuery('(prefers-reduced-motion: reduce)')
 }
+
+export function useIsWide() {
+  return useMediaQuery('(min-width: 768px)')
+}

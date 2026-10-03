@@ -6,6 +6,8 @@ import { SectionLabel } from '../components/ui/SectionLabel'
 import { Arrow } from '../components/ui/Arrow'
 import { fadeUp, stagger } from '../lib/animations'
 import CircularGallery from '../components/ui/CircularGallery'
+import { LinearGallery } from '../components/ui/LinearGallery'
+import { useIsWide } from '../hooks/useMediaQuery'
 
 type StatusFilter = 'all' | 'reading' | 'read' | 'want-to-read'
 type SortOption = 'default' | 'title' | 'author'
@@ -110,6 +112,7 @@ export function BooksPage() {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortOption>('default')
   const [activeGalleryIndex, setActiveGalleryIndex] = useState(0)
+  const isWide = useIsWide()
 
   // Gallery items for the 3D top hero (stable reference across all 22 books)
   const galleryItems = useMemo(() => {
@@ -171,21 +174,29 @@ export function BooksPage() {
           className="relative min-h-[calc(100vh-5rem)] md:min-h-[calc(100vh-6rem)] flex flex-col items-center pt-1 md:pt-2 pb-16 md:pb-20"
         >
           <div
-            className="w-full relative h-[320px] sm:h-[380px] md:h-[420px] overflow-hidden"
+            className="w-full relative h-[320px] sm:h-[380px] md:h-[420px] overflow-hidden flex items-center"
           >
-            <CircularGallery
-              items={galleryItems}
-              bend={3}
-              textColor="#171717"
-              borderRadius={0.05}
-              scrollEase={0.05}
-              offsetY={1.2}
-              autoplay="drift"
-              speed={1.5}
-              pauseOnHover={false}
-              font="600 32px Caveat, cursive"
-              onActiveChange={setActiveGalleryIndex}
-            />
+            {isWide ? (
+              <CircularGallery
+                items={galleryItems}
+                bend={3}
+                textColor="#171717"
+                borderRadius={0.05}
+                scrollEase={0.05}
+                offsetY={1.2}
+                autoplay="drift"
+                speed={1.5}
+                pauseOnHover={false}
+                font="600 32px Caveat, cursive"
+                onActiveChange={setActiveGalleryIndex}
+              />
+            ) : (
+              <LinearGallery
+                items={galleryItems}
+                activeIndex={activeGalleryIndex}
+                onActiveChange={setActiveGalleryIndex}
+              />
+            )}
           </div>
 
           {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
