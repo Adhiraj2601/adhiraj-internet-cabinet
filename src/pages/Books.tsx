@@ -188,9 +188,9 @@ export function BooksPage() {
             />
           </div>
 
-          {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
+          {/* Active Book Details Under Gallery (matching Sketches aesthetic, fixed height so scroll down indicator never jumps) */}
           {activeBook && (
-            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[85px] sm:min-h-[100px] flex flex-col items-center justify-center">
+            <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 h-[120px] sm:h-[130px] flex flex-col items-center justify-start pt-1 shrink-0">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeBook.id}-${activeGalleryIndex}`}
@@ -198,7 +198,7 @@ export function BooksPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="flex flex-col items-center gap-1 sm:gap-1.5"
+                  className="flex flex-col items-center gap-1 sm:gap-1.5 w-full"
                 >
                   {/* Status & Volume Index */}
                   <div className="flex items-center gap-2 sm:gap-2.5 text-[0.68rem] sm:text-[0.7rem] font-mono tracking-widest uppercase">
@@ -228,7 +228,7 @@ export function BooksPage() {
                   {/* Note in handwritten italic */}
                   {activeBook.note && (
                     <p
-                      className="font-handwritten text-sm sm:text-base md:text-lg text-muted max-w-lg leading-relaxed italic"
+                      className="font-handwritten text-sm sm:text-base text-muted max-w-lg leading-relaxed italic"
                       style={{ color: 'var(--muted)' }}
                     >
                       "{activeBook.note}"
@@ -239,8 +239,8 @@ export function BooksPage() {
             </div>
           )}
 
-          {/* Scroll Down Indicator (touches bottom of visible screen, matching Sketches) */}
-          <div className="mt-auto flex flex-col items-center justify-center gap-1.5 pt-2 pb-4 md:pb-6 text-muted">
+          {/* Scroll Down Indicator (touches bottom of visible screen, matching Sketches, unaffected by book description) */}
+          <div className="mt-auto flex flex-col items-center justify-center gap-1.5 pt-2 pb-4 md:pb-6 text-muted shrink-0">
             <span className="text-[0.68rem] font-mono tracking-widest uppercase text-muted/70">
               Scroll down to explore library archive
             </span>
