@@ -8,20 +8,24 @@
 }
 
 .linear-gallery {
+  --card-width: 44vw;
+  --max-card-width: 175px;
+  --card-size: min(var(--card-width), var(--max-card-width));
   display: flex;
-  gap: 14px;
+  gap: 16px;
   overflow-x: auto;
-  scroll-snap-type: none; /* Toggled to 'x mandatory' during user interaction */
-  padding: 12px calc((100vw - 45vw) / 2) 16px;
+  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   width: 100%;
   align-items: center;
   touch-action: pan-x pan-y;
-}
-
-.linear-gallery.is-snapping {
-  scroll-snap-type: x mandatory;
+  /* Pad the track by (100% - cardWidth) / 2 on both sides so first and last cards can reach the center */
+  padding-left: calc((100% - var(--card-size)) / 2);
+  padding-right: calc((100% - var(--card-size)) / 2);
+  padding-top: 12px;
+  padding-bottom: 16px;
+  box-sizing: border-box;
 }
 
 .linear-gallery::-webkit-scrollbar {
@@ -29,25 +33,27 @@
 }
 
 .linear-gallery figure {
-  flex: 0 0 45vw;
-  max-width: 175px;
+  flex: 0 0 var(--card-size);
+  width: var(--card-size);
+  max-width: var(--card-size);
   margin: 0;
   scroll-snap-align: center;
+  scroll-snap-stop: always;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s ease;
   user-select: none;
   -webkit-user-select: none;
+  transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.22s ease;
 }
 
 .linear-gallery figure:not(.is-active) {
-  opacity: 0.82;
-  transform: scale(0.94);
+  opacity: 0.75;
+  transform: scale(0.92);
 }
 
 .linear-gallery figure.is-active {
   opacity: 1;
-  transform: scale(1.03);
+  transform: scale(1.04);
 }
 
 .linear-gallery img {
@@ -55,7 +61,7 @@
   aspect-ratio: 2 / 3;
   object-fit: cover;
   border-radius: 10px;
-  box-shadow: 0 8px 22px -3px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.22);
   pointer-events: none;
   display: block;
 }

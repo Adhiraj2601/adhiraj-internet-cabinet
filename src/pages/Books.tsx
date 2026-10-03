@@ -195,8 +195,6 @@ export function BooksPage() {
                 items={galleryItems}
                 activeIndex={activeGalleryIndex}
                 onActiveChange={setActiveGalleryIndex}
-                autoplay="drift"
-                speed={35}
               />
             )}
           </div>
@@ -204,51 +202,45 @@ export function BooksPage() {
           {/* Active Book Details Under Gallery (matching Sketches aesthetic) */}
           {activeBook && (
             <div className="mt-1 md:mt-2 max-w-xl mx-auto text-center px-4 min-h-[90px] sm:min-h-[105px] flex flex-col items-center justify-start">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${activeBook.id}-${activeGalleryIndex}`}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
-                  className="flex flex-col items-center gap-1 sm:gap-1.5 w-full"
-                >
-                  {/* Status & Volume Index */}
-                  <div className="flex items-center gap-2 sm:gap-2.5 text-[0.68rem] sm:text-[0.7rem] font-mono tracking-widest uppercase">
-                    <span className="text-muted/70">
-                      Vol. #{activeBook.id} of {books.length}
-                    </span>
-                    <span className="text-muted/40">•</span>
-                    <span
-                      className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
-                      style={{ color: activeStatus.color }}
-                    >
-                      <span>{activeStatus.symbol}</span>
-                      <span>{activeStatus.label}</span>
-                    </span>
-                  </div>
+              <div
+                key={activeBook.id}
+                className="flex flex-col items-center gap-1 sm:gap-1.5 w-full"
+              >
+                {/* Status & Volume Index */}
+                <div className="flex items-center gap-2 sm:gap-2.5 text-[0.68rem] sm:text-[0.7rem] font-mono tracking-widest uppercase">
+                  <span className="text-muted/70">
+                    Vol. #{activeBook.id} of {books.length}
+                  </span>
+                  <span className="text-muted/40">•</span>
+                  <span
+                    className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
+                    style={{ color: activeStatus.color }}
+                  >
+                    <span>{activeStatus.symbol}</span>
+                    <span>{activeStatus.label}</span>
+                  </span>
+                </div>
 
-                  {/* Title in Geologica font */}
-                  <h2 className="font-geologica text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
-                    {activeBook.title}
-                  </h2>
+                {/* Title in Geologica font */}
+                <h2 className="font-geologica text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
+                  {activeBook.title}
+                </h2>
 
-                  {/* Author */}
-                  <p className="text-xs sm:text-sm text-muted font-medium tracking-wide">
-                    by {activeBook.author}
+                {/* Author */}
+                <p className="text-xs sm:text-sm text-muted font-medium tracking-wide">
+                  by {activeBook.author}
+                </p>
+
+                {/* Note in handwritten italic */}
+                {activeBook.note && (
+                  <p
+                    className="font-handwritten text-sm sm:text-base text-muted max-w-lg leading-relaxed italic"
+                    style={{ color: 'var(--muted)' }}
+                  >
+                    "{activeBook.note}"
                   </p>
-
-                  {/* Note in handwritten italic */}
-                  {activeBook.note && (
-                    <p
-                      className="font-handwritten text-sm sm:text-base text-muted max-w-lg leading-relaxed italic"
-                      style={{ color: 'var(--muted)' }}
-                    >
-                      "{activeBook.note}"
-                    </p>
-                  )}
-                </motion.div>
-              </AnimatePresence>
+                )}
+              </div>
             </div>
           )}
 

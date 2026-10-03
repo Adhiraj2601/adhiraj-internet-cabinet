@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef } from 'react'
 import './LinearGallery.css'
 
 export interface LinearGalleryItem {
@@ -14,8 +14,6 @@ export interface LinearGalleryProps {
   onActiveChange?: (index: number) => void
   onSelect?: (item: LinearGalleryItem, index: number) => void
   autoplay?: 'drift' | 'off'
-  speed?: number // pixels per second
-  pauseOnHover?: boolean
   className?: string
 }
 
@@ -24,54 +22,72 @@ export function LinearGallery({
   activeIndex = 0,
   onActiveChange,
   onSelect,
-  autoplay = 'drift',
-  speed = 34,
-  pauseOnHover = false,
+  autoplay = 'off',
   className = ''
 }: LinearGalleryProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const itemElementsRef = useRef<Map<number, HTMLElement>>(new Map())
-  const isDownRef = useRef(false)
-  const isHoveredRef = useRef(false)
+  const rafIdRef = useRef<number | null>(null)
+  const activeIndexRef = useRef(activeIndex)
+  const isInteractingRef = useRef(false)
   const isVisibleRef = useRef(true)
-  const holdUntilRef = useRef(0)
-  const singleSetWidthRef = useRef(0)
 
-  // Repeat items 3 times for seamless infinite drift wrapping
-  const repeatedItems = useMemo(() => {
-    if (items.length === 0) return []
-    return [...items, ...items, ...items]
-  }, [items])
-
-  const originalLength = items.length
-
-  // Measure single set width dynamically
-  const measureSetWidth = () => {
-    if (originalLength === 0) return
-    const el0 = itemElementsRef.current.get(0)
-    const elN = itemElementsRef.current.get(originalLength)
-    if (el0 && elN) {
-      singleSetWidthRef.current = elN.offsetLeft - el0.offsetLeft
-    }
-  }
-
-  // Initial centering to set 1 on mount
+  // Keep activeIndexRef in sync with prop
   useEffect(() => {
-    if (originalLength === 0) return
-    measureSetWidth()
+    activeIndexRef.current = activeIndex
+  }, [activeIndex])
 
-    const targetIndex = originalLength + (activeIndex % originalLength)
-    const targetEl = itemElementsRef.current.get(targetIndex)
-    if (targetEl) {
-      targetEl.scrollIntoView({
-        behavior: 'auto',
-        inline: 'center',
-        block: 'nearest'
-      })
+  // Center initial activeIndex on mount
+  useEffect(() => {
+    if (items.length === 0) return
+    const id = requestAnimationFrame(() => {
+      const initialEl = itemElementsRef.current.get(activeIndex)
+      if (initialEl) {
+        initialEl.scrollIntoView({
+          behavior: 'auto',
+          inline: 'center',
+          block: 'nearest'
+        })
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [])
+
+  // Recenter on resize / orientation change with a ResizeObserver
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    let isFirst = true
+    const ro = new ResizeObserver(() => {
+      if (isFirst) {
+        isFirst = false
+        return
+      }
+      const currentEl = itemElementsRef.current.get(activeIndexRef.current)
+      if (currentEl) {
+        currentEl.scrollIntoView({
+          behavior: 'auto',
+          inline: 'center',
+          block: 'nearest'
+        })
+      }
+    })
+
+    ro.observe(container)
+    return () => ro.disconnect()
+  }, [])
+
+  // Prune deleted items from map if items list shrinks
+  useEffect(() => {
+    for (const key of itemElementsRef.current.keys()) {
+      if (key >= items.length) {
+        itemElementsRef.current.delete(key)
+      }
     }
-  }, [originalLength])
+  }, [items.length])
 
-  // Pause drift loop when offscreen or tab hidden to save mobile battery
+  // Visibility tracking to pause autoplay when off-screen or tab hidden
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
@@ -81,174 +97,128 @@ export function LinearGallery({
     })
     io.observe(container)
 
-    const handleVisChange = () => {
-      if (document.hidden) {
-        isVisibleRef.current = false
-      } else {
-        isVisibleRef.current = true
-        holdUntilRef.current = performance.now() + 500
-      }
+    const handleVis = () => {
+      isVisibleRef.current = !document.hidden
     }
-    document.addEventListener('visibilitychange', handleVisChange)
+    document.addEventListener('visibilitychange', handleVis)
 
     return () => {
       io.disconnect()
-      document.removeEventListener('visibilitychange', handleVisChange)
+      document.removeEventListener('visibilitychange', handleVis)
     }
   }, [])
 
-  // Touch and interaction listeners to pause drift and toggle native scroll snap
+  // Compute active index via getBoundingClientRect (closest card center to container center)
   useEffect(() => {
     const container = containerRef.current
-    if (!container) return
+    if (!container || items.length === 0) return
 
-    const handleTouchStart = () => {
-      isDownRef.current = true
-      holdUntilRef.current = performance.now() + 2000
-      container.classList.add('is-snapping')
+    const computeActiveIndex = () => {
+      const containerRect = container.getBoundingClientRect()
+      const containerCenter = containerRect.left + containerRect.width / 2
+
+      let closestIndex = -1
+      let minDistance = Infinity
+
+      itemElementsRef.current.forEach((el, index) => {
+        if (!el) return
+        const rect = el.getBoundingClientRect()
+        const cardCenter = rect.left + rect.width / 2
+        const distance = Math.abs(cardCenter - containerCenter)
+
+        if (distance < minDistance) {
+          minDistance = distance
+          closestIndex = index
+        }
+      })
+
+      if (closestIndex !== -1 && closestIndex !== activeIndexRef.current) {
+        activeIndexRef.current = closestIndex
+        onActiveChange?.(closestIndex)
+      }
     }
 
-    const handleTouchMove = () => {
-      if (isDownRef.current) {
-        holdUntilRef.current = performance.now() + 2000
+    const handleScroll = () => {
+      if (rafIdRef.current !== null) return
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null
+        computeActiveIndex()
+      })
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    container.addEventListener('scrollend', computeActiveIndex, { passive: true })
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+      container.removeEventListener('scrollend', computeActiveIndex)
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
+        rafIdRef.current = null
       }
+    }
+  }, [items.length, onActiveChange])
+
+  // Track touch/interaction to pause autoplay if enabled
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container || autoplay !== 'drift') return
+
+    let touchTimeout: number
+
+    const handleTouchStart = () => {
+      isInteractingRef.current = true
+      clearTimeout(touchTimeout)
     }
 
     const handleTouchEnd = () => {
-      isDownRef.current = false
-      // Keep snapping enabled during momentum fling
-      holdUntilRef.current = performance.now() + 1800
-    }
-
-    const handleMouseEnter = () => {
-      if (pauseOnHover) isHoveredRef.current = true
-    }
-
-    const handleMouseLeave = () => {
-      if (pauseOnHover) isHoveredRef.current = false
+      clearTimeout(touchTimeout)
+      touchTimeout = window.setTimeout(() => {
+        isInteractingRef.current = false
+      }, 3500)
     }
 
     container.addEventListener('touchstart', handleTouchStart, { passive: true })
-    container.addEventListener('touchmove', handleTouchMove, { passive: true })
     container.addEventListener('touchend', handleTouchEnd, { passive: true })
     container.addEventListener('touchcancel', handleTouchEnd, { passive: true })
-    container.addEventListener('mousedown', handleTouchStart)
-    container.addEventListener('mousemove', handleTouchMove)
-    container.addEventListener('mouseup', handleTouchEnd)
-    container.addEventListener('mouseenter', handleMouseEnter)
-    container.addEventListener('mouseleave', handleMouseLeave)
 
     return () => {
       container.removeEventListener('touchstart', handleTouchStart)
-      container.removeEventListener('touchmove', handleTouchMove)
       container.removeEventListener('touchend', handleTouchEnd)
       container.removeEventListener('touchcancel', handleTouchEnd)
-      container.removeEventListener('mousedown', handleTouchStart)
-      container.removeEventListener('mousemove', handleTouchMove)
-      container.removeEventListener('mouseup', handleTouchEnd)
-      container.removeEventListener('mouseenter', handleMouseEnter)
-      container.removeEventListener('mouseleave', handleMouseLeave)
+      clearTimeout(touchTimeout)
     }
-  }, [pauseOnHover])
+  }, [autoplay])
 
-  // Continuous Autoplay Drift Loop with seamless wrapping
+  // Autoplay auto-advance loop (discrete smooth scroll-snap steps without resting between cards)
   useEffect(() => {
-    if (autoplay !== 'drift') return
+    if (autoplay !== 'drift' || items.length <= 1) return
 
-    let rafId: number
-    let lastTime = performance.now()
-
-    const step = (time: number) => {
-      const dt = Math.min((time - lastTime) / 1000, 0.05)
-      lastTime = time
-
-      const isInteracting =
-        isDownRef.current ||
-        (pauseOnHover && isHoveredRef.current) ||
-        time < holdUntilRef.current
-
-      const container = containerRef.current
-
-      if (container) {
-        if (!isInteracting && isVisibleRef.current) {
-          // Disable CSS scroll-snap during drift for buttery smooth subpixel scrolling
-          if (container.classList.contains('is-snapping')) {
-            container.classList.remove('is-snapping')
-          }
-
-          if (singleSetWidthRef.current <= 0) {
-            measureSetWidth()
-          }
-
-          container.scrollLeft += speed * dt
-
-          const setWidth = singleSetWidthRef.current
-          if (setWidth > 0) {
-            if (container.scrollLeft >= setWidth * 2) {
-              container.scrollLeft -= setWidth
-            } else if (container.scrollLeft < setWidth * 0.5) {
-              container.scrollLeft += setWidth
-            }
-          }
-        }
+    const interval = setInterval(() => {
+      if (isInteractingRef.current || !isVisibleRef.current) return
+      const nextIndex = (activeIndexRef.current + 1) % items.length
+      const el = itemElementsRef.current.get(nextIndex)
+      if (el) {
+        el.scrollIntoView({
+          behavior: 'smooth',
+          inline: 'center',
+          block: 'nearest'
+        })
       }
+    }, 4500)
 
-      rafId = requestAnimationFrame(step)
+    return () => clearInterval(interval)
+  }, [autoplay, items.length])
+
+  // Tapping any card scrolls it to center (smooth) and selects it
+  const handleCardClick = (item: LinearGalleryItem, index: number) => {
+    if (activeIndexRef.current !== index) {
+      activeIndexRef.current = index
+      onActiveChange?.(index)
     }
+    onSelect?.(item, index)
 
-    rafId = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(rafId)
-  }, [autoplay, speed, pauseOnHover])
-
-  // Active book syncing with IntersectionObserver
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container || repeatedItems.length === 0) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntries = entries.filter((e) => e.isIntersecting)
-        if (visibleEntries.length > 0) {
-          let best = visibleEntries[0]
-          for (let i = 1; i < visibleEntries.length; i++) {
-            if (visibleEntries[i].intersectionRatio > best.intersectionRatio) {
-              best = visibleEntries[i]
-            }
-          }
-          const origIdxStr = best.target.getAttribute('data-original-index')
-          if (origIdxStr !== null) {
-            const origIdx = parseInt(origIdxStr, 10)
-            if (!isNaN(origIdx)) {
-              onActiveChange?.(origIdx)
-            }
-          }
-        }
-      },
-      {
-        root: container,
-        threshold: [0.5, 0.65, 0.8]
-      }
-    )
-
-    itemElementsRef.current.forEach((el) => {
-      observer.observe(el)
-    })
-
-    return () => observer.disconnect()
-  }, [repeatedItems, onActiveChange])
-
-  const handleCardClick = (item: LinearGalleryItem, globalIndex: number) => {
-    const origIndex = globalIndex % originalLength
-    onActiveChange?.(origIndex)
-    onSelect?.(item, origIndex)
-
-    const container = containerRef.current
-    if (container) {
-      container.classList.add('is-snapping')
-    }
-    holdUntilRef.current = performance.now() + 2200
-
-    const el = itemElementsRef.current.get(globalIndex)
+    const el = itemElementsRef.current.get(index)
     el?.scrollIntoView({
       behavior: 'smooth',
       inline: 'center',
@@ -259,27 +229,25 @@ export function LinearGallery({
   return (
     <div className={`linear-gallery-wrapper ${className}`}>
       <div ref={containerRef} className="linear-gallery">
-        {repeatedItems.map((item, globalIndex) => {
-          const originalIndex = globalIndex % originalLength
+        {items.map((item, index) => {
           const title = item.text || item.title || ''
-          const isActive = originalIndex === (activeIndex % originalLength)
+          const isActive = index === activeIndex
 
           return (
             <figure
-              key={`${item.image}-${globalIndex}`}
+              key={`${item.image}-${index}`}
               ref={(el) => {
-                if (el) itemElementsRef.current.set(globalIndex, el)
-                else itemElementsRef.current.delete(globalIndex)
+                if (el) itemElementsRef.current.set(index, el)
+                else itemElementsRef.current.delete(index)
               }}
-              data-index={globalIndex}
-              data-original-index={originalIndex}
+              data-index={index}
               className={isActive ? 'is-active' : ''}
-              onClick={() => handleCardClick(item, globalIndex)}
+              onClick={() => handleCardClick(item, index)}
             >
               <img
                 src={item.image}
                 alt={title}
-                loading={globalIndex < 10 ? 'eager' : 'lazy'}
+                loading={index < 4 ? 'eager' : 'lazy'}
                 draggable={false}
               />
               <figcaption>{title}</figcaption>

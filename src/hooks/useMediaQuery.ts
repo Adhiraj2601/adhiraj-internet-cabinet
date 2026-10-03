@@ -32,5 +32,5 @@ export function usePrefersReducedMotion() {
 }
 
 export function useIsWide() {
-  return useMediaQuery('(min-width: 768px)')
+  return useMediaQuery('(min-width: 768px) and (pointer: fine)')
 }
