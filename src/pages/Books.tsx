@@ -195,6 +195,8 @@ export function BooksPage() {
                 items={galleryItems}
                 activeIndex={activeGalleryIndex}
                 onActiveChange={setActiveGalleryIndex}
+                autoplay="drift"
+                speed={35}
               />
             )}
           </div>
