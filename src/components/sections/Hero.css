@@ -114,8 +114,8 @@
   overflow: visible;
 }
 
-/* Mobile & Tablet (< 1200px): Stacked editorial layout with badge above text */
-@media (max-width: 1199px) {
+/* Mobile (< 768px): Stacked editorial layout with badge above text */
+@media (max-width: 767px) {
   .hero-section {
     min-height: 0;
     justify-content: flex-start;
@@ -154,19 +154,19 @@
   }
 }
 
-/* Desktop (>= 1200px): 2-Column editorial layout (text left, badge right) */
-@media (min-width: 1200px) {
+/* Desktop (>= 768px): 2-Column editorial layout (text left, badge right) */
+@media (min-width: 768px) {
   .hero-section {
     min-height: 90dvh;
     justify-content: flex-end;
-    padding-top: 9rem;
-    padding-bottom: 6rem;
+    padding-top: clamp(5.5rem, 10vh, 9rem);
+    padding-bottom: clamp(2.5rem, 5vh, 6rem);
   }
 
   .hero-editorial-grid {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 3.5rem;
+    gap: clamp(1.5rem, 3vw, 3.5rem);
     align-items: center;
   }
 
@@ -191,7 +191,7 @@
   }
 
   .hero-scroll-hint {
-    margin-top: 4rem !important;
+    margin-top: clamp(2rem, 4vh, 4rem) !important;
   }
 }
 

@@ -96,7 +96,7 @@ export function Hero() {
         </LanyardErrorBoundary>
       ) : null}
 
-      {/* On mobile (< 1200px), reserve space for the swinging badge above the text */}
+      {/* On mobile (< 768px), reserve space for the swinging badge above the text */}
       {canRenderLanyard && (
         <div
           className="hero-lanyard-mobile-placeholder"
@@ -105,7 +105,7 @@ export function Hero() {
       )}
 
       <div className="container-main w-full">
-        {/* Small metadata label (visible on desktop >= 1200px) */}
+        {/* Small metadata label (visible on desktop >= 768px) */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

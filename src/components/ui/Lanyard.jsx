@@ -41,7 +41,7 @@ function drawContain(ctx, img, x, y, w, h) {
  * - Rapier physics locked to XY plane with linear/angular damping & drag velocity clamping
  * - Full responsive support for Desktop and Mobile viewports
  */
-export const MOBILE_BREAKPOINT = 1200;
+export const MOBILE_BREAKPOINT = 768;
 
 export default function Lanyard({
   gravity = [0, -40, 0],
@@ -192,7 +192,7 @@ function measureCoords(targetRef, isMobile) {
     };
   }
 
-  // Desktop (>= 1200px)
+  // Desktop (>= 768px)
   let cardWPx = 420;
   let cardHPx = 363;
   let targetCenterXPx = containerRect.left + containerRect.width * 0.78;
@@ -202,7 +202,7 @@ function measureCoords(targetRef, isMobile) {
   if (targetEl) {
     const tRect = targetEl.getBoundingClientRect();
     if (tRect.width > 50) {
-      cardWPx = tRect.width;
+      cardWPx = Math.min(420, Math.max(260, tRect.width));
       cardHPx = cardWPx * (1452 / 1680);
       targetCenterXPx = tRect.left + tRect.width / 2;
       targetCenterYPx = tRect.top + tRect.height / 2;
@@ -223,12 +223,13 @@ function measureCoords(targetRef, isMobile) {
   // Safety boundaries to prevent overlapping text and overflowing screen
   const textCol = document.querySelector('.hero-text-column');
   const textRightPx = textCol ? textCol.getBoundingClientRect().right : containerCenterXPx;
-  const minSafeX = Math.max(containerCenterXPx + 40, textRightPx + cardWPx / 2 + 24);
+  const minSafeX = Math.max(containerCenterXPx + 40, textRightPx + cardWPx / 2 + 20);
   const maxSafeX = (containerRect.right || sw) - cardWPx / 2 - 20;
 
-  // Prefer navMidX if reasonably aligned with the target placeholder; otherwise use targetCenterXPx
+  // Prefer navMidX only if cleanly aligned with the target placeholder (e.g. wide desktop);
+  // otherwise strictly track the right-column target placeholder so the card stays firmly on the right.
   let calculatedAnchorX = targetCenterXPx;
-  if (navMidX !== null && Math.abs(navMidX - targetCenterXPx) < 120) {
+  if (navMidX !== null && Math.abs(navMidX - targetCenterXPx) <= 35) {
     calculatedAnchorX = navMidX;
   }
   const safeAnchorXPx = Math.max(minSafeX, Math.min(calculatedAnchorX, maxSafeX));
@@ -613,15 +614,29 @@ function Band({
     [0, anchorY, 0]
   ]);
 
-  // Smoothly move fixed anchor on continuous viewport changes
+  // Smoothly move fixed anchor and bodies on continuous viewport changes
+  const prevAnchorRef = useRef({ x: coords.anchorX, y: coords.anchorY });
   useEffect(() => {
+    const dx = coords.anchorX - prevAnchorRef.current.x;
+    const dy = coords.anchorY - prevAnchorRef.current.y;
+    prevAnchorRef.current = { x: coords.anchorX, y: coords.anchorY };
+
     if (fixed.current) {
       try {
         fixed.current.setTranslation({ x: coords.anchorX, y: coords.anchorY, z: 0 }, true);
+        if (!dragged && (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001)) {
+          [j1, j2, j3, card].forEach(ref => {
+            if (ref.current) {
+              const pos = ref.current.translation();
+              ref.current.setTranslation({ x: pos.x + dx, y: pos.y + dy, z: pos.z }, true);
+              ref.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+            }
+          });
+        }
         [card, j1, j2, j3].forEach(ref => ref.current?.wakeUp());
       } catch {}
     }
-  }, [coords.anchorX, coords.anchorY]);
+  }, [coords.anchorX, coords.anchorY, dragged]);
 
   useEffect(() => {
     if (!isMobile) {
