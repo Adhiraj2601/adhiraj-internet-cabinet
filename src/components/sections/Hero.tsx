@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { SectionLabel } from '../ui/SectionLabel'
+import { PortraitFrame } from '../ui/PortraitFrame'
+import { LanyardErrorBoundary } from '../ui/LanyardErrorBoundary'
+import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 import './Hero.css'
+
+const Lanyard = lazy(() => import('../ui/Lanyard'))
 
 const heroLines = [
   { text: "hey,", delay: 0.55 },
@@ -10,14 +15,23 @@ const heroLines = [
 ]
 
 /**
+ * Check if the browser supports WebGL
+ */
+function checkWebGLSupport(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    const canvas = document.createElement('canvas')
+    return !!(
+      window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+    )
+  } catch {
+    return false
+  }
+}
+
+/**
  * Interactive Hero Copy Link Component
- * Turns supporting phrases into subtle interactive gateways to /blog, /books, and /sketches.
- * - 1px underline in green accent (#7EA84D, offset 4px)
- * - 180ms hover/focus transition where text turns dark green (#477224, WCAG AA compliant)
- *   and underline thickens to 2px
- * - Small "↗" indicator slides and fades into place on hover/focus with 0 layout shift
- * - Always-visible underline on touch screens where hover does not exist
- * - High-contrast focus-visible outline for keyboard navigation accessibility
  */
 interface HeroCopyLinkProps {
   to: string
@@ -36,32 +50,91 @@ function HeroCopyLink({ to, children }: HeroCopyLinkProps) {
 }
 
 export function Hero() {
-  const [imgError, setImgError] = useState(false)
+  const heroRef = useRef<HTMLElement>(null)
+  const [isInView, setIsInView] = useState(true)
+  const [hasWebGL] = useState(() => checkWebGLSupport())
+  const prefersReducedMotion = usePrefersReducedMotion()
 
-  const handleImgError = () => {
-    setImgError(true)
-  }
+  // Pause physics and rendering when hero is scrolled out of view
+  useEffect(() => {
+    if (!heroRef.current || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting)
+      },
+      { threshold: 0.05 }
+    )
+    io.observe(heroRef.current)
+    return () => io.disconnect()
+  }, [])
+
+  // Only render 3D Lanyard if WebGL is available and user does not prefer reduced motion
+  const canRenderLanyard = hasWebGL && !prefersReducedMotion
 
   return (
     <section
-      className="relative min-h-[90vh] flex flex-col justify-end pb-16 md:pb-24 pt-28 md:pt-36"
+      ref={heroRef}
+      className="hero-section relative min-h-[90vh] flex flex-col justify-end pb-16 md:pb-24 pt-20 lg:pt-36"
       aria-label="Introduction"
     >
+      {/* 3D Lanyard integration with ErrorBoundary & Fallback */}
+      {canRenderLanyard ? (
+        <LanyardErrorBoundary fallback={<PortraitFrame />}>
+          {/* Desktop Canvas (lg: 1024px+): drops from top: 0, positioned in right half at ~60vw */}
+          <div className="hidden lg:block hero-lanyard-desktop-container">
+            {isInView && (
+              <Suspense fallback={null}>
+                <Lanyard
+                  position={[0, 0, 24]}
+                  fov={20}
+                  isMobile={false}
+                  frameloop={isInView ? 'always' : 'never'}
+                />
+              </Suspense>
+            )}
+          </div>
+
+          {/* Mobile & Tablet Canvas (< 1024px): starts at top of page, full width, stacked above heading */}
+          <div className="block lg:hidden hero-lanyard-mobile-container">
+            {/* Mobile label at top left below nav */}
+            <div className="hero-mobile-badge-labels container-main">
+              <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
+                FIG. 01
+              </span>
+              <span className="font-handwritten text-[0.95rem] text-muted rotate-[-2deg]">
+                welcome to my little corner
+              </span>
+            </div>
+
+            {isInView && (
+              <Suspense fallback={null}>
+                <Lanyard
+                  position={[0, 1.2, 13]}
+                  fov={20}
+                  isMobile={true}
+                  frameloop={isInView ? 'always' : 'never'}
+                />
+              </Suspense>
+            )}
+          </div>
+        </LanyardErrorBoundary>
+      ) : null}
+
       <div className="container-main w-full">
-        {/* Small metadata label */}
+        {/* Small metadata label (visible on desktop) */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.35 }}
-          className="mb-8 md:mb-12"
+          className="hidden lg:block mb-8 md:mb-12"
         >
           <SectionLabel>Adi's Archive / 2026</SectionLabel>
         </motion.div>
 
-        {/* 2-column editorial grid: Intro on left, Image Placeholder on right */}
+        {/* 2-column editorial grid: Intro on left, Badge labels / Fallback portrait on right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Left Column: Heading & Supporting Text */}
-          <div className="lg:col-span-7 flex flex-col justify-center">
+          <div className="lg:col-span-7 flex flex-col justify-center hero-text-column">
             {/* Large hero text */}
             <h1
               className="leading-none font-bold tracking-tighter"
@@ -94,7 +167,7 @@ export function Hero() {
               ))}
             </h1>
 
-            {/* Supporting text with interactive section links (ADDITION 1) */}
+            {/* Supporting text with interactive section links */}
             <div className="mt-8 md:mt-10">
               {/* Line 1: Welcome message */}
               <motion.p
@@ -153,93 +226,23 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Column: Editorial Image */}
-          <motion.div
-            initial={{ opacity: 0.9, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-            className="lg:col-span-5 flex flex-col justify-center"
-          >
-            <div className="relative group">
-              {/* Handwritten tape note on top */}
-              <div className="flex justify-between items-center mb-2 px-1">
-                <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
-                  welcome to my little corner{' '}
-                </span>
-                <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
-                  FIG. 01 / ARTIFACT
-                </span>
+          {/* Right Column: Lanyard labels on desktop or fallback portrait */}
+          <div className="flex flex-col justify-center lg:col-span-5">
+            {canRenderLanyard ? (
+              <div className="hidden lg:flex flex-col hero-desktop-badge-labels">
+                <div className="flex justify-between items-center mb-2 px-1 max-w-[380px]">
+                  <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
+                    welcome to my little corner{' '}
+                  </span>
+                  <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
+                    FIG. 01 / ARTIFACT
+                  </span>
+                </div>
               </div>
-
-              {/* Main Image Frame */}
-              <motion.div
-                whileHover={{
-                  scale: 1.02,
-                  boxShadow: '0 14px 40px rgba(23,23,23,0.08)',
-                  transition: { duration: 0.3, ease: 'easeOut' },
-                }}
-                className="overflow-hidden border border-token bg-[rgba(23,23,23,0.02)] p-2 md:p-3"
-                style={{
-                  aspectRatio: '4/3',
-                  boxShadow: '0 4px 20px rgba(23,23,23,0.04)',
-                }}
-              >
-                {!imgError ? (
-                  <picture>
-                    <source
-                      type="image/avif"
-                      srcSet="/images/hero-480.avif 480w, /images/hero-800.avif 800w, /images/hero-1200.avif 1200w"
-                      sizes="(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 520px"
-                    />
-                    <source
-                      type="image/webp"
-                      srcSet="/images/hero-480.webp 480w, /images/hero-800.webp 800w, /images/hero-1200.webp 1200w"
-                      sizes="(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 520px"
-                    />
-                    <img
-                      src="/images/hero.webp"
-                      alt="Adhiraj Sengar"
-                      width={520}
-                      height={390}
-                      fetchPriority="high"
-                      decoding="async"
-                      className="w-full h-full object-cover"
-                      onError={handleImgError}
-                    />
-                  </picture>
-                ) : (
-                  <div className="w-full h-full border border-dashed border-token flex flex-col items-center justify-center p-6 text-center transition-colors group-hover:border-[rgba(23,23,23,0.35)]">
-                    {/* Viewfinder icon */}
-                    <svg
-                      width="36"
-                      height="36"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-muted mb-3 opacity-60 group-hover:opacity-100 transition-opacity"
-                    >
-                      <path d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4" />
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M12 9v6M9 12h6" />
-                    </svg>
-
-                    <p className="text-[0.7rem] font-bold tracking-[0.2em] uppercase text-foreground">
-                      Photo / Portrait
-                    </p>
-                    <p className="text-[0.7rem] text-muted font-mono mt-1">
-                      public/images/hero.jpg
-                    </p>
-                    <p className="font-handwritten text-[0.95rem] text-muted mt-2">
-                      photo, sketch, or artifact
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            </div>
-          </motion.div>
+            ) : (
+              <PortraitFrame />
+            )}
+          </div>
         </div>
 
         {/* Scroll indicator */}
