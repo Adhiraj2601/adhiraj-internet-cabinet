@@ -206,7 +206,7 @@ export function Hero() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 1.4 }}
-                className="hero-scroll-hint-mobile md:hidden mt-6 flex items-center gap-2"
+                className="hero-scroll-hint-mobile mt-6 items-center gap-2"
               >
                 <motion.span
                   animate={{ y: [0, 4, 0] }}
@@ -233,7 +233,7 @@ export function Hero() {
           </div>
         </div>
 
-        {/* On mobile (< 768px), reserve vertical space for the hanging card below the intro */}
+        {/* On mobile / portrait tablet, reserve vertical space for the hanging card below the intro */}
         {canRenderLanyard && (
           <div
             className="hero-lanyard-mobile-card-slot"
@@ -241,8 +241,8 @@ export function Hero() {
           />
         )}
 
-        {/* Scroll indicator (desktop >= 768px) */}
-        <div className="hero-scroll-hint hidden md:flex items-center justify-between">
+        {/* Scroll indicator (desktop >= 768px landscape) */}
+        <div className="hero-scroll-hint hero-scroll-hint-desktop items-center justify-between">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

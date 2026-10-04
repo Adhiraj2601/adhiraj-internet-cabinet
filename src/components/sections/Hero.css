@@ -114,12 +114,12 @@
   overflow: visible;
 }
 
-/* Mobile (< 768px): Intro text at top (54% width), strap along right side, card hangs below intro */
-@media (max-width: 767px) {
+/* Stacked Layout: All phones (< 768px) and all portrait screens (tablets like iPad Mini, Surface Pro, iPad Pro) */
+@media (max-width: 767px), (orientation: portrait) {
   .hero-section {
     min-height: 0;
     justify-content: flex-start;
-    padding-top: clamp(4.5rem, 12vh, 5.5rem);
+    padding-top: clamp(4.5rem, 8vh, 5.5rem);
     padding-bottom: 2.5rem;
   }
 
@@ -147,7 +147,7 @@
   .hero-lanyard-mobile-card-slot {
     display: block !important;
     width: 100%;
-    min-height: clamp(280px, 36vh, 340px);
+    min-height: clamp(290px, 32vw + 140px, 420px);
     pointer-events: none;
     position: relative;
     margin-top: 1.25rem;
@@ -158,13 +158,17 @@
     display: none !important;
   }
 
-  .hero-scroll-hint {
+  .hero-scroll-hint-mobile {
+    display: flex !important;
+  }
+
+  .hero-scroll-hint-desktop {
     display: none !important;
   }
 }
 
-/* Desktop (>= 768px): 2-Column editorial layout (text left, badge right) */
-@media (min-width: 768px) {
+/* Desktop 2-Column: Landscape screens >= 768px (laptops, landscape tablets, desktops) */
+@media (min-width: 768px) and (orientation: landscape) {
   .hero-section {
     min-height: 90dvh;
     justify-content: flex-end;
@@ -181,6 +185,8 @@
 
   .hero-text-column {
     grid-column: span 7 / span 7;
+    width: auto;
+    max-width: none;
   }
 
   .hero-badge-desktop-column {
@@ -203,7 +209,12 @@
     display: block !important;
   }
 
-  .hero-scroll-hint {
+  .hero-scroll-hint-mobile {
+    display: none !important;
+  }
+
+  .hero-scroll-hint-desktop {
+    display: flex !important;
     margin-top: clamp(2rem, 4vh, 4rem) !important;
   }
 }

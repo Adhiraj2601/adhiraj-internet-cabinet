@@ -12,6 +12,7 @@ import defaultLanyard from '../../assets/lanyard/lanyard.png';
 import defaultFrontImage from '../../assets/lanyard/card_front_43.png';
 import defaultBackImage from '../../assets/lanyard/card_back_43.png';
 
+import { checkIsStackedLayout, STACKED_MEDIA_QUERY } from '../../hooks/useStackedLayout';
 import './Lanyard.css';
 
 extend({ MeshLineGeometry, MeshLineMaterial });
@@ -37,9 +38,9 @@ function drawContain(ctx, img, x, y, w, h) {
  * Features:
  * - Orthographic camera (1 world unit = 100 CSS px) for 1:1 DOM matching
  * - Custom 4:3 landscape card mesh with front portrait + polaroid captions and back paper
- * - Sage-green strap with repeating mono text passing between WORK and BOOKS
+ * - Sage-green strap with repeating mono text passing cleanly through navbar
  * - Rapier physics locked to XY plane with linear/angular damping & drag velocity clamping
- * - Full responsive support for Desktop and Mobile viewports
+ * - Single source of truth stacked layout: phones (< 768px) and tall portrait screens (tablets)
  */
 export const MOBILE_BREAKPOINT = 768;
 
@@ -57,13 +58,20 @@ export default function Lanyard({
   style
 }) {
   const [internalIsMobile, setInternalIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
+    () => checkIsStackedLayout()
   );
 
   useEffect(() => {
-    const handleResize = () => setInternalIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const handleLayoutChange = () => setInternalIsMobile(checkIsStackedLayout());
+    const mql = window.matchMedia(STACKED_MEDIA_QUERY);
+    mql.addEventListener('change', handleLayoutChange);
+    window.addEventListener('resize', handleLayoutChange);
+    window.addEventListener('orientationchange', handleLayoutChange);
+    return () => {
+      mql.removeEventListener('change', handleLayoutChange);
+      window.removeEventListener('resize', handleLayoutChange);
+      window.removeEventListener('orientationchange', handleLayoutChange);
+    };
   }, []);
 
   const isMobile = isMobileProp !== undefined ? isMobileProp : internalIsMobile;
@@ -149,7 +157,7 @@ function measureCoords(targetRef, isMobile) {
   }
 
   const sw = window.innerWidth;
-  const isMob = isMobile ?? (sw < MOBILE_BREAKPOINT);
+  const isMob = isMobile ?? checkIsStackedLayout();
   const container =
     document.querySelector('.hero-lanyard-container') ||
     document.querySelector('.hero-section') ||
@@ -160,13 +168,64 @@ function measureCoords(targetRef, isMobile) {
   const containerCenterYPx = containerRect.top + containerRect.height / 2;
 
   if (isMob) {
-    // Strap runs down right side of intro text (roughly 62% across)
-    const strapXPx = Math.round(sw * 0.62);
+    const textCol = document.querySelector('.hero-text-column');
+    const textRightPx = textCol ? textCol.getBoundingClientRect().right : Math.round(sw * 0.54);
+
+    // Target strap X at ~62-65% across the screen
+    const targetStrapX = Math.round(sw * 0.63);
+
+    // If desktop nav links are rendered in the navbar (e.g. on tablets in portrait),
+    // snap the strap to the natural gap between links closest to targetStrapX that is clear of intro text
+    let chosenStrapXPx = targetStrapX;
+    const navLinks = Array.from(document.querySelectorAll('nav a'));
+    const menuLinks = navLinks.filter(a => {
+      const text = a.textContent?.trim();
+      if (!text || text === 'ADHIRAJ SENGAR') return false;
+      const rect = a.getBoundingClientRect();
+      return rect.width > 0 && rect.right > 0;
+    });
+
+    if (menuLinks.length >= 2) {
+      let bestGapMid = null;
+      let minDiff = Infinity;
+      for (let i = 0; i < menuLinks.length - 1; i++) {
+        const leftRect = menuLinks[i].getBoundingClientRect();
+        const rightRect = menuLinks[i + 1].getBoundingClientRect();
+        const gapMid = (leftRect.right + rightRect.left) / 2;
+        const gapWidth = rightRect.left - leftRect.right;
+        // Ensure there is an actual gap and it is at least 15px to the right of the intro text
+        if (gapWidth > 10 && gapMid > textRightPx + 15) {
+          const diff = Math.abs(gapMid - targetStrapX);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestGapMid = gapMid;
+          }
+        }
+      }
+      if (bestGapMid !== null) {
+        chosenStrapXPx = Math.round(bestGapMid);
+      }
+    } else {
+      // If mobile menu button is present, ensure strap is to the left of the MENU button with clearance
+      const menuBtn = document.querySelector('button[aria-label="Open menu"]');
+      if (menuBtn) {
+        const btnRect = menuBtn.getBoundingClientRect();
+        if (btnRect.width > 0) {
+          const maxSafeStrap = btnRect.left - 16;
+          chosenStrapXPx = Math.min(chosenStrapXPx, maxSafeStrap);
+        }
+      }
+      // Ensure at least 15px clear of intro text
+      chosenStrapXPx = Math.max(chosenStrapXPx, textRightPx + 15);
+    }
+
+    const strapXPx = chosenStrapXPx;
 
     // Card is horizontally centered on the strap.
-    // Ensure the card fits comfortably within the screen with no horizontal overflow.
-    const maxAvailableWidth = Math.floor((sw - strapXPx - 14) * 2);
-    const cardWPx = Math.max(190, Math.min(280, maxAvailableWidth));
+    // Scale card adaptively from ~190px on small phones up to 340px on tablets
+    const targetCardW = Math.round(180 + (sw / 1000) * 160);
+    const maxSafeW = Math.floor((sw - strapXPx - 16) * 2);
+    const cardWPx = Math.max(190, Math.min(340, Math.min(targetCardW, maxSafeW)));
     const cardHPx = cardWPx * (1452 / 1680);
 
     const mobileSlot = document.querySelector('.hero-lanyard-mobile-card-slot');
@@ -282,6 +341,8 @@ function useMeasuredCoords(targetRef, isMobile) {
 
     measure();
 
+    const mql = window.matchMedia(STACKED_MEDIA_QUERY);
+    mql.addEventListener('change', measure);
     window.addEventListener('resize', measure);
     window.addEventListener('orientationchange', measure);
     window.visualViewport?.addEventListener('resize', measure);
@@ -302,6 +363,7 @@ function useMeasuredCoords(targetRef, isMobile) {
     const t2 = setTimeout(measure, 400);
 
     return () => {
+      mql.removeEventListener('change', measure);
       window.removeEventListener('resize', measure);
       window.removeEventListener('orientationchange', measure);
       window.visualViewport?.removeEventListener('resize', measure);
