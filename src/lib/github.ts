@@ -46,21 +46,19 @@ export async function getFileSha(token: string, filePath: string): Promise<strin
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}?ref=${GITHUB_BRANCH}&_t=${Date.now()}`,
       {
-        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/vnd.github.v3+json',
-          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
-          Pragma: 'no-cache',
         },
       }
     )
     if (res.ok) {
       const data = await res.json()
-      return data.sha
+      return data.sha || null
     }
     return null
-  } catch {
+  } catch (err) {
+    console.warn(`[GitHub API] getFileSha failed for ${filePath}:`, err)
     return null
   }
 }
@@ -71,12 +69,9 @@ export async function getJsonFileFromGitHub<T>(token: string, filePath: string):
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}?ref=${GITHUB_BRANCH}&_t=${Date.now()}`,
       {
-        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/vnd.github.v3+json',
-          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
-          Pragma: 'no-cache',
         },
       }
     )
@@ -88,7 +83,8 @@ export async function getJsonFileFromGitHub<T>(token: string, filePath: string):
       }
     }
     return null
-  } catch {
+  } catch (err) {
+    console.warn(`[GitHub API] getJsonFileFromGitHub failed for ${filePath}:`, err)
     return null
   }
 }
@@ -115,7 +111,6 @@ export async function commitFileToGitHub(
         `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
         {
           method: 'PUT',
-          cache: 'no-store',
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/vnd.github.v3+json',
@@ -130,12 +125,14 @@ export async function commitFileToGitHub(
     let currentSha = await getFileSha(token, filePath)
     let res = await executePut(currentSha)
 
-    // 2. Auto-recovery on 409 Conflict:
-    // If the file was modified in a concurrent or recent commit, fetch the fresh SHA and retry
-    if (res.status === 409) {
+    // 2. Auto-recovery on 409 Conflict or 422 Missing SHA:
+    // If the file was modified in a concurrent commit or SHA was temporarily unready, retry once with fresh SHA
+    if (res.status === 409 || res.status === 422) {
       await new Promise((r) => setTimeout(r, 600))
       currentSha = await getFileSha(token, filePath)
-      res = await executePut(currentSha)
+      if (currentSha) {
+        res = await executePut(currentSha)
+      }
     }
 
     if (!res.ok) {
