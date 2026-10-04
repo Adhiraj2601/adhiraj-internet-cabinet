@@ -11,6 +11,7 @@ export interface LanyardProps {
   lanyardImage?: string | null;
   lanyardWidth?: number;
   isMobile?: boolean;
+  prefersReducedMotion?: boolean;
   frameloop?: 'always' | 'demand' | 'never';
   targetRef?: React.RefObject<HTMLDivElement | null>;
   eventSource?: React.RefObject<HTMLElement | null> | HTMLElement;

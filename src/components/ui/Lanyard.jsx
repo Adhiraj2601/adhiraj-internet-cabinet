@@ -16,6 +16,9 @@ import './Lanyard.css';
 
 extend({ MeshLineGeometry, MeshLineMaterial });
 useGLTF.preload(cardGLB);
+useTexture.preload(defaultLanyard);
+useTexture.preload(defaultFrontImage);
+useTexture.preload(defaultBackImage);
 
 /**
  * Fit image inside box without distortion (contain)
@@ -44,6 +47,7 @@ export default function Lanyard({
   backImage = defaultBackImage,
   lanyardImage = defaultLanyard,
   isMobile: isMobileProp,
+  prefersReducedMotion = false,
   frameloop = 'always',
   targetRef,
   eventSource,
@@ -65,8 +69,23 @@ export default function Lanyard({
   // Measure target DOM placeholder rect relative to canvas container
   const coords = useMeasuredCoords(targetRef, isMobile);
 
+  const [ready, setReady] = useState(prefersReducedMotion);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setReady(true);
+    }
+  }, [prefersReducedMotion]);
+
+  const handleReady = useCallback(() => {
+    setReady(true);
+  }, []);
+
   return (
-    <div className={`lanyard-wrapper ${className}`.trim()} style={style}>
+    <div
+      className={`lanyard-wrapper ${ready ? 'is-ready' : ''} ${className}`.trim()}
+      style={style}
+    >
       <Canvas
         orthographic
         camera={{
@@ -89,6 +108,7 @@ export default function Lanyard({
         <Physics
           gravity={gravity}
           timeStep={1 / 60}
+          paused={!ready || prefersReducedMotion}
         >
           <Band
             isMobile={isMobile}
@@ -96,6 +116,8 @@ export default function Lanyard({
             frontImage={frontImage}
             backImage={backImage}
             lanyardImage={lanyardImage}
+            prefersReducedMotion={prefersReducedMotion}
+            onReady={handleReady}
           />
         </Physics>
       </Canvas>
@@ -103,128 +125,119 @@ export default function Lanyard({
   );
 }
 
+function measureCoords(targetRef, isMobile) {
+  if (typeof window === 'undefined') {
+    return {
+      cardW: 4.2,
+      cardH: 3.63,
+      restX: 4.0,
+      restY: 0.18,
+      anchorX: 3.8,
+      anchorY: 4.5,
+      canvasW: 14.4,
+      canvasH: 9.0
+    };
+  }
+
+  const sw = window.innerWidth;
+  const isMob = isMobile ?? (sw < 1024);
+  const container =
+    document.querySelector('.hero-lanyard-container') ||
+    document.querySelector('.hero-section') ||
+    document.body;
+
+  const containerRect = container ? container.getBoundingClientRect() : { left: 0, top: 0, width: sw, height: window.innerHeight };
+  const containerCenterXPx = containerRect.left + containerRect.width / 2;
+  const containerCenterYPx = containerRect.top + containerRect.height / 2;
+
+  if (isMob) {
+    const wPx = Math.min(320, sw * 0.78);
+    const hPx = wPx * (1452 / 1680);
+    const mobileTarget = document.querySelector('.hero-lanyard-mobile-placeholder');
+
+    const cTop = containerRect.top;
+    const cHeight = containerRect.height || window.innerHeight;
+    const containerCenterYPx = cTop + cHeight / 2;
+
+    // Anchor at top of page behind navbar: 40px above the top of the container
+    const anchorYPx = cTop - 40;
+    const aY = (containerCenterYPx - anchorYPx) / 100;
+
+    let targetCenterYPx = cTop + 64 + 160;
+    if (mobileTarget) {
+      const mRect = mobileTarget.getBoundingClientRect();
+      targetCenterYPx = mRect.top + mRect.height * 0.48;
+    }
+
+    const rY = (containerCenterYPx - targetCenterYPx) / 100;
+
+    return {
+      cardW: wPx / 100,
+      cardH: hPx / 100,
+      restX: 0,
+      restY: rY,
+      anchorX: 0,
+      anchorY: aY,
+      canvasW: (containerRect.width || sw) / 100,
+      canvasH: cHeight / 100
+    };
+  }
+
+  // Desktop (>= 1024px)
+  let cardWPx = 420;
+  let cardHPx = 363;
+  let targetCenterXPx = containerRect.left + containerRect.width * 0.78;
+  let targetCenterYPx = containerCenterYPx;
+
+  const targetEl = targetRef?.current || document.querySelector('.hero-badge-target-placeholder');
+  if (targetEl) {
+    const tRect = targetEl.getBoundingClientRect();
+    if (tRect.width > 50) {
+      cardWPx = tRect.width;
+      cardHPx = cardWPx * (1452 / 1680);
+      targetCenterXPx = tRect.left + tRect.width / 2;
+      targetCenterYPx = tRect.top + tRect.height / 2;
+    }
+  }
+
+  // Measure nav midpoint between WORK and BOOKS
+  let navMidX = null;
+  const navLinks = Array.from(document.querySelectorAll('nav a'));
+  const workLink = navLinks.find(a => a.textContent?.toLowerCase().includes('work'));
+  const booksLink = navLinks.find(a => a.textContent?.toLowerCase().includes('books'));
+  if (workLink && booksLink) {
+    const wR = workLink.getBoundingClientRect();
+    const bR = booksLink.getBoundingClientRect();
+    navMidX = (wR.right + bR.left) / 2;
+  }
+
+  const anchorXPx = navMidX ?? targetCenterXPx;
+  const aX = (anchorXPx - containerCenterXPx) / 100;
+  const rX = (targetCenterXPx - containerCenterXPx) / 100;
+  const rY = (containerCenterYPx - targetCenterYPx) / 100;
+  const aY = (containerRect.height / 2 + 35) / 100;
+
+  return {
+    cardW: cardWPx / 100,
+    cardH: cardHPx / 100,
+    restX: rX,
+    restY: rY,
+    anchorX: aX,
+    anchorY: aY,
+    canvasW: (containerRect.width || sw) / 100,
+    canvasH: (containerRect.height || window.innerHeight) / 100
+  };
+}
+
 /**
  * Measure DOM target rect and canvas bounds
  */
 function useMeasuredCoords(targetRef, isMobile) {
-  const [coords, setCoords] = useState(() => {
-    const sw = typeof window !== 'undefined' ? window.innerWidth : 1440;
-    const isMob = isMobile ?? (sw < 1024);
-    if (isMob) {
-      const wPx = Math.min(320, sw * 0.78);
-      const hPx = wPx * (1452 / 1680);
-      return {
-        cardW: wPx / 100,
-        cardH: hPx / 100,
-        restX: 0,
-        restY: 0.8,
-        anchorX: 0,
-        anchorY: 4.2,
-        canvasW: sw / 100,
-        canvasH: 8.5
-      };
-    }
-    const cardWPx = 420;
-    const cardHPx = 363;
-    const targetCenterX = sw * 0.78;
-    const containerCenterX = sw / 2;
-    return {
-      cardW: cardWPx / 100,
-      cardH: cardHPx / 100,
-      restX: (targetCenterX - containerCenterX) / 100,
-      restY: 0.18,
-      anchorX: (targetCenterX - 20 - containerCenterX) / 100,
-      anchorY: 4.5,
-      canvasW: sw / 100,
-      canvasH: 9.0
-    };
-  });
+  const [coords, setCoords] = useState(() => measureCoords(targetRef, isMobile));
 
   useEffect(() => {
     function measure() {
-      if (typeof window === 'undefined') return;
-
-      const sw = window.innerWidth;
-      const isMob = isMobile ?? (sw < 1024);
-      const container =
-        document.querySelector('.hero-lanyard-container') ||
-        document.querySelector('.hero-section') ||
-        document.body;
-
-      const containerRect = container.getBoundingClientRect();
-      const containerCenterXPx = containerRect.left + containerRect.width / 2;
-      const containerCenterYPx = containerRect.top + containerRect.height / 2;
-
-      if (isMob) {
-        const wPx = Math.min(320, sw * 0.78);
-        const hPx = wPx * (1452 / 1680);
-        const mobileTarget = document.querySelector('.hero-lanyard-mobile-placeholder');
-        let targetCenterYPx = containerRect.top + 220;
-        if (mobileTarget) {
-          const mRect = mobileTarget.getBoundingClientRect();
-          targetCenterYPx = mRect.top + mRect.height * 0.48;
-        }
-
-        const rY = (containerCenterYPx - targetCenterYPx) / 100;
-        const aY = (containerRect.height / 2 + 10) / 100;
-
-        setCoords({
-          cardW: wPx / 100,
-          cardH: hPx / 100,
-          restX: 0,
-          restY: rY,
-          anchorX: 0,
-          anchorY: aY,
-          canvasW: containerRect.width / 100,
-          canvasH: containerRect.height / 100
-        });
-        return;
-      }
-
-      // Desktop (>= 1024px)
-      let cardWPx = 420;
-      let cardHPx = 363;
-      let targetCenterXPx = containerRect.left + containerRect.width * 0.78;
-      let targetCenterYPx = containerCenterYPx;
-
-      const targetEl = targetRef?.current || document.querySelector('.hero-badge-target-placeholder');
-      if (targetEl) {
-        const tRect = targetEl.getBoundingClientRect();
-        if (tRect.width > 50) {
-          cardWPx = tRect.width;
-          cardHPx = cardWPx * (1452 / 1680);
-          targetCenterXPx = tRect.left + tRect.width / 2;
-          targetCenterYPx = tRect.top + tRect.height / 2;
-        }
-      }
-
-      // Measure nav midpoint between WORK and BOOKS
-      let navMidX = null;
-      const navLinks = Array.from(document.querySelectorAll('nav a'));
-      const workLink = navLinks.find(a => a.textContent?.toLowerCase().includes('work'));
-      const booksLink = navLinks.find(a => a.textContent?.toLowerCase().includes('books'));
-      if (workLink && booksLink) {
-        const wR = workLink.getBoundingClientRect();
-        const bR = booksLink.getBoundingClientRect();
-        navMidX = (wR.right + bR.left) / 2;
-      }
-
-      const anchorXPx = navMidX ?? targetCenterXPx;
-      const aX = (anchorXPx - containerCenterXPx) / 100;
-      const rX = (targetCenterXPx - containerCenterXPx) / 100;
-      const rY = (containerCenterYPx - targetCenterYPx) / 100;
-      const aY = (containerRect.height / 2 + 35) / 100;
-
-      setCoords({
-        cardW: cardWPx / 100,
-        cardH: cardHPx / 100,
-        restX: rX,
-        restY: rY,
-        anchorX: aX,
-        anchorY: aY,
-        canvasW: containerRect.width / 100,
-        canvasH: containerRect.height / 100
-      });
+      setCoords(measureCoords(targetRef, isMobile));
     }
 
     measure();
@@ -246,7 +259,9 @@ function Band({
   coords,
   frontImage,
   backImage,
-  lanyardImage
+  lanyardImage,
+  prefersReducedMotion = false,
+  onReady
 }) {
   const band = useRef();
   const fixed = useRef();
@@ -267,8 +282,8 @@ function Band({
     type: 'dynamic',
     canSleep: true,
     colliders: false,
-    angularDamping: 2,
-    linearDamping: 2
+    angularDamping: 4,
+    linearDamping: 4
   }), []);
 
   const { nodes, materials } = useGLTF(cardGLB);
@@ -484,6 +499,74 @@ function Band({
   const ropeLength = Math.max(0.6, coords.anchorY - (coords.restY + anchorY));
   const segLen = ropeLength / 3;
 
+  const startPositions = useMemo(() => {
+    if (prefersReducedMotion) {
+      return {
+        fixed: [coords.anchorX, coords.anchorY, 0],
+        j1: [coords.anchorX, coords.anchorY - segLen, 0],
+        j2: [coords.anchorX, coords.anchorY - 2 * segLen, 0],
+        j3: [coords.anchorX, coords.anchorY - 3 * segLen, 0],
+        card: [coords.restX, coords.restY, 0],
+      };
+    }
+
+    // Calculate maximum safe spread to the right vs left
+    const rightSpace = (coords.canvasW / 2) - coords.anchorX - cardHalfW - 0.15;
+    const leftSpace = coords.anchorX - (-coords.canvasW / 2) - cardHalfW - 0.15;
+
+    // Prefer spreading right if space allows (>= 0.6), otherwise left
+    let dir = 1;
+    let maxSpread = rightSpace;
+    if (rightSpace < 0.6 && leftSpace > rightSpace) {
+      dir = -1;
+      maxSpread = leftSpace;
+    }
+
+    const targetOffset = isMobile ? 0.35 : 1.15;
+    const clampedOffset = Math.max(0.25, Math.min(targetOffset, Math.max(0.25, maxSpread)));
+    const dx = (clampedOffset / 3.2) * dir;
+
+    const cardStartX = coords.anchorX + 3.2 * dx;
+    const cardStartY = coords.anchorY - anchorY + 0.12;
+
+    return {
+      fixed: [coords.anchorX, coords.anchorY, 0],
+      j1: [coords.anchorX + 1 * dx, coords.anchorY, 0],
+      j2: [coords.anchorX + 2 * dx, coords.anchorY, 0],
+      j3: [coords.anchorX + 3 * dx, coords.anchorY, 0],
+      card: [cardStartX, cardStartY, 0],
+    };
+  }, [coords, segLen, cardHalfW, anchorY, isMobile, prefersReducedMotion]);
+
+  const hasUnpausedRef = useRef(false);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      onReady?.();
+      return;
+    }
+
+    if (liveTextures) {
+      const t = setTimeout(() => {
+        if (!hasUnpausedRef.current) {
+          hasUnpausedRef.current = true;
+          [card, j1, j2, j3].forEach(ref => ref.current?.wakeUp());
+          onReady?.();
+        }
+      }, 50);
+      return () => clearTimeout(t);
+    }
+
+    const fallbackTimer = setTimeout(() => {
+      if (!hasUnpausedRef.current) {
+        hasUnpausedRef.current = true;
+        [card, j1, j2, j3].forEach(ref => ref.current?.wakeUp());
+        onReady?.();
+      }
+    }, 600);
+    return () => clearTimeout(fallbackTimer);
+  }, [liveTextures, prefersReducedMotion, onReady]);
+
   // Touch gesture discriminator for mobile
   const touchStartRef = useRef(null);
   const isGestureDecidedRef = useRef(false);
@@ -498,6 +581,15 @@ function Band({
   ]);
 
   useEffect(() => {
+    if (fixed.current) {
+      try {
+        fixed.current.setTranslation({ x: coords.anchorX, y: coords.anchorY, z: 0 }, true);
+        [card, j1, j2, j3].forEach(ref => ref.current?.wakeUp());
+      } catch {}
+    }
+  }, [coords.anchorX, coords.anchorY]);
+
+  useEffect(() => {
     if (!isMobile) {
       document.body.style.cursor = dragged ? 'grabbing' : (hovered ? 'grab' : 'auto');
       return () => {
@@ -506,7 +598,13 @@ function Band({
     }
   }, [hovered, dragged, isMobile]);
 
+  const initialKickRef = useRef(false);
   useFrame((state, delta) => {
+    if (!initialKickRef.current && card.current && !prefersReducedMotion) {
+      initialKickRef.current = true;
+      [card, j1, j2, j3].forEach(ref => ref.current?.wakeUp());
+    }
+
     if (dragged) {
       vec.set(state.pointer.x, state.pointer.y, 0).unproject(state.camera);
       [card, j1, j2, j3, fixed].forEach(ref => ref.current?.wakeUp());
@@ -629,14 +727,14 @@ function Band({
         {/* Fixed strap anchor hidden behind top nav */}
         <RigidBody
           ref={fixed}
-          position={[coords.anchorX, coords.anchorY, 0]}
+          position={startPositions.fixed}
           {...segmentProps}
           type="fixed"
         />
 
         {/* Dynamic rope segments */}
         <RigidBody
-          position={[coords.anchorX, coords.anchorY - segLen, 0]}
+          position={startPositions.j1}
           ref={j1}
           {...segmentProps}
           enabledTranslations={[true, true, false]}
@@ -646,7 +744,7 @@ function Band({
         </RigidBody>
 
         <RigidBody
-          position={[coords.anchorX, coords.anchorY - 2 * segLen, 0]}
+          position={startPositions.j2}
           ref={j2}
           {...segmentProps}
           enabledTranslations={[true, true, false]}
@@ -656,7 +754,7 @@ function Band({
         </RigidBody>
 
         <RigidBody
-          position={[coords.anchorX, coords.anchorY - 3 * segLen, 0]}
+          position={startPositions.j3}
           ref={j3}
           {...segmentProps}
           enabledTranslations={[true, true, false]}
@@ -667,7 +765,7 @@ function Band({
 
         {/* Card rigid body: locked to XY plane */}
         <RigidBody
-          position={[coords.restX, coords.restY, 0]}
+          position={startPositions.card}
           ref={card}
           {...segmentProps}
           type={dragged ? 'kinematicPosition' : 'dynamic'}

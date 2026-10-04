@@ -1,13 +1,12 @@
-import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { SectionLabel } from '../ui/SectionLabel'
 import { PortraitFrame } from '../ui/PortraitFrame'
 import { LanyardErrorBoundary } from '../ui/LanyardErrorBoundary'
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
+import Lanyard from '../ui/Lanyard'
 import './Hero.css'
-
-const Lanyard = lazy(() => import('../ui/Lanyard'))
 
 const heroLines = [
   { text: "hey,", delay: 0.55 },
@@ -70,13 +69,13 @@ export function Hero() {
     return () => io.disconnect()
   }, [])
 
-  // Only render 3D Lanyard if WebGL is available and user does not prefer reduced motion
-  const canRenderLanyard = hasWebGL && !prefersReducedMotion
+  // Render 3D Lanyard if WebGL is available (Lanyard internally handles reduced motion at rest)
+  const canRenderLanyard = hasWebGL
 
   return (
     <section
       ref={heroRef}
-      className="hero-section relative min-h-[90vh] flex flex-col justify-end pb-16 md:pb-24 pt-20 lg:pt-36 overflow-x-clip"
+      className="hero-section relative min-h-0 lg:min-h-[90dvh] flex flex-col justify-start lg:justify-end pb-12 sm:pb-16 lg:pb-24 pt-16 sm:pt-20 lg:pt-36 overflow-x-clip"
       aria-label="Introduction"
     >
       {/* 3D Lanyard integration with ErrorBoundary & Fallback */}
@@ -89,6 +88,7 @@ export function Hero() {
                   eventSource={heroRef}
                   targetRef={desktopTargetRef}
                   frameloop={isInView ? 'always' : 'never'}
+                  prefersReducedMotion={prefersReducedMotion}
                 />
               </Suspense>
             )}
@@ -211,7 +211,7 @@ export function Hero() {
           </div>
 
           {/* Right Column: Target anchor placeholder on desktop or fallback portrait */}
-          <div className="flex flex-col justify-center lg:col-span-5 relative">
+          <div className="hidden lg:flex flex-col justify-center lg:col-span-5 relative">
             {canRenderLanyard ? (
               <div
                 ref={desktopTargetRef}
@@ -225,7 +225,7 @@ export function Hero() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="mt-12 md:mt-16 flex items-center justify-between">
+        <div className="mt-6 lg:mt-16 flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

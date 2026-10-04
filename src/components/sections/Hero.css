@@ -119,12 +119,12 @@
   .hero-lanyard-mobile-placeholder {
     position: relative;
     width: 100%;
-    height: clamp(360px, 46vh, 440px);
+    height: clamp(320px, 40dvh, 370px);
     pointer-events: none;
   }
 
   .hero-text-column {
-    margin-top: 0.5rem;
+    margin-top: 0;
   }
 }
 

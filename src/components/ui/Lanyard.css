@@ -11,6 +11,19 @@
   user-select: none;
   -webkit-user-select: none;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 280ms ease-out;
+}
+
+.lanyard-wrapper.is-ready {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lanyard-wrapper {
+    transition: none !important;
+    opacity: 1 !important;
+  }
 }
 
 .lanyard-wrapper canvas {
