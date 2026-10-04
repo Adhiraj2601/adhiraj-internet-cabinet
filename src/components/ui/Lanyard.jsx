@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 /* oxlint-disable */
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
-import { Canvas, extend, useFrame } from '@react-three/fiber';
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, useTexture } from '@react-three/drei';
 import { BallCollider, CuboidCollider, Physics, RigidBody, useRopeJoint, useSphericalJoint } from '@react-three/rapier';
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline';
@@ -88,7 +88,7 @@ export default function Lanyard({
         <directionalLight position={[0, 5, 10]} intensity={1.2} />
         <Physics
           gravity={gravity}
-          timeStep={isMobile ? 1 / 30 : 1 / 60}
+          timeStep={1 / 60}
         >
           <Band
             isMobile={isMobile}
@@ -258,6 +258,10 @@ function Band({
   const vec = useRef(new THREE.Vector3()).current;
   const ang = useRef(new THREE.Vector3()).current;
   const rot = useRef(new THREE.Vector3()).current;
+  const cardQuat = useRef(new THREE.Quaternion()).current;
+  const ringWorld = useRef(new THREE.Vector3()).current;
+
+  const { size } = useThree();
 
   const segmentProps = useMemo(() => ({
     type: 'dynamic',
@@ -446,11 +450,38 @@ function Band({
   const [dragged, drag] = useState(false);
   const [hovered, hover] = useState(false);
 
-  // Dimensions & Physics Setup
+  // Compute ring center and hook bounds from GLTF geometry
+  const { ringCenter, hookBox } = useMemo(() => {
+    nodes.clip.geometry.computeBoundingBox();
+    nodes.clamp.geometry.computeBoundingBox();
+
+    const boxClip = nodes.clip.geometry.boundingBox;
+    const boxClamp = nodes.clamp.geometry.boundingBox;
+
+    // The ring is at the top (larger max.y) and the hook/clamp is below it
+    const isClipRing = boxClip.max.y > boxClamp.max.y;
+    const ringGeom = isClipRing ? nodes.clip.geometry : nodes.clamp.geometry;
+    const hookGeom = isClipRing ? nodes.clamp.geometry : nodes.clip.geometry;
+
+    const center = new THREE.Vector3();
+    ringGeom.boundingBox.getCenter(center);
+
+    return {
+      ringCenter: center,
+      hookBox: hookGeom.boundingBox
+    };
+  }, [nodes]);
+
+  // Dimensions & Physics Setup derived from card geometry
   const cardT = 0.035;
-  const clipScale = isMobile ? 1.5 : 1.9;
-  const clipAnchorY = coords.cardH / 2 + 0.1505 * clipScale;
-  const ropeLength = Math.max(0.6, coords.anchorY - (coords.restY + clipAnchorY));
+  const cardHalfW = coords.cardW / 2;
+  const cardHalfH = coords.cardH / 2;
+  const groupScale = 2.25;
+  const gap = 0.375; // Distance from card top edge to ring center (same as original React Bits)
+  const anchorY = cardHalfH + gap;
+  const groupPosY = anchorY - ringCenter.y * groupScale;
+
+  const ropeLength = Math.max(0.6, coords.anchorY - (coords.restY + anchorY));
   const segLen = ropeLength / 3;
 
   // Touch gesture discriminator for mobile
@@ -463,7 +494,7 @@ function Band({
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], segLen]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, clipAnchorY, 0]
+    [0, anchorY, 0]
   ]);
 
   useEffect(() => {
@@ -497,7 +528,12 @@ function Band({
         );
       });
 
-      curve.points[0].copy(j3.current.translation());
+      // Calculate world position of ring center so strap end is mathematically locked to the ring
+      const r = card.current.rotation();
+      cardQuat.set(r.x, r.y, r.z, r.w);
+      ringWorld.set(0, anchorY, 0).applyQuaternion(cardQuat).add(card.current.translation());
+
+      curve.points[0].copy(ringWorld);
       curve.points[1].copy(j2.current.lerped);
       curve.points[2].copy(j1.current.lerped);
       curve.points[3].copy(fixed.current.translation());
@@ -673,18 +709,20 @@ function Band({
 
             {/* Metal Clip and Clamp from card.glb */}
             <group
-              scale={clipScale}
-              position={[0, coords.cardH / 2 - 1.023 * clipScale, 0]}
+              scale={groupScale}
+              position={[0, groupPosY, -0.01]}
             >
               <mesh
                 geometry={nodes.clip.geometry}
                 material={materials.metal}
                 material-roughness={0.25}
+                renderOrder={2}
               />
               <mesh
                 geometry={nodes.clamp.geometry}
                 material={materials.metal}
                 material-roughness={0.25}
+                renderOrder={2}
               />
             </group>
           </group>
@@ -692,16 +730,16 @@ function Band({
       </group>
 
       {/* Repeating Sage-Green Lanyard Strap */}
-      <mesh ref={band}>
+      <mesh ref={band} renderOrder={1}>
         <meshLineGeometry />
         <meshLineMaterial
           color="white"
           depthTest={false}
-          resolution={isMobile ? [1000, 2000] : [1000, 1000]}
+          resolution={[size.width, size.height]}
           useMap
           map={strapTex}
           repeat={isMobile ? [-2.2, 1] : [-4.0, 1]}
-          lineWidth={isMobile ? 0.055 : 0.07}
+          lineWidth={isMobile ? 0.045 : 0.052}
         />
       </mesh>
     </>
