@@ -103,6 +103,14 @@
   overflow-x: clip;
 }
 
+/* Prevent text selection and callouts in hero text column */
+.hero-text-column,
+.hero-text-column * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* Full-width Lanyard Container covering entire hero section */
 .hero-lanyard-container {
   position: absolute;
