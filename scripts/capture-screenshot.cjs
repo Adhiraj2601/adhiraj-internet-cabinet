@@ -1,6 +1,5 @@
 const { spawn } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
 async function capture() {
   const chrome = spawn('C:/Program Files/Google/Chrome/Application/chrome.exe', [

@@ -13,6 +13,7 @@ export interface LanyardProps {
   isMobile?: boolean;
   frameloop?: 'always' | 'demand' | 'never';
   targetRef?: React.RefObject<HTMLDivElement | null>;
+  eventSource?: React.RefObject<HTMLElement | null> | HTMLElement;
   className?: string;
   style?: CSSProperties;
 }

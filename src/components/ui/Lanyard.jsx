@@ -39,13 +39,14 @@ function drawContain(ctx, img, x, y, w, h) {
  * - Full responsive support for Desktop and Mobile viewports
  */
 export default function Lanyard({
-  gravity = [0, -35, 0],
+  gravity = [0, -40, 0],
   frontImage = defaultFrontImage,
   backImage = defaultBackImage,
   lanyardImage = defaultLanyard,
   isMobile: isMobileProp,
   frameloop = 'always',
   targetRef,
+  eventSource,
   className = '',
   style
 }) {
@@ -74,7 +75,9 @@ export default function Lanyard({
           near: 0.1,
           far: 1000
         }}
-        dpr={isMobile ? [1, 1.5] : [1, 2]}
+        eventSource={eventSource || undefined}
+        eventPrefix="client"
+        dpr={[1, 1.5]}
         gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
         frameloop={frameloop}
         onCreated={({ gl }) => {
@@ -105,29 +108,34 @@ export default function Lanyard({
  */
 function useMeasuredCoords(targetRef, isMobile) {
   const [coords, setCoords] = useState(() => {
-    if (isMobile) {
-      const sw = typeof window !== 'undefined' ? window.innerWidth : 390;
+    const sw = typeof window !== 'undefined' ? window.innerWidth : 1440;
+    const isMob = isMobile ?? (sw < 1024);
+    if (isMob) {
       const wPx = Math.min(320, sw * 0.78);
       const hPx = wPx * (1452 / 1680);
       return {
         cardW: wPx / 100,
         cardH: hPx / 100,
         restX: 0,
-        restY: 0.05,
+        restY: 0.8,
         anchorX: 0,
-        anchorY: 2.2,
+        anchorY: 4.2,
         canvasW: sw / 100,
-        canvasH: 4.2
+        canvasH: 8.5
       };
     }
+    const cardWPx = 420;
+    const cardHPx = 363;
+    const targetCenterX = sw * 0.78;
+    const containerCenterX = sw / 2;
     return {
-      cardW: 4.2,
-      cardH: 3.63,
-      restX: 1.15,
+      cardW: cardWPx / 100,
+      cardH: cardHPx / 100,
+      restX: (targetCenterX - containerCenterX) / 100,
       restY: 0.18,
-      anchorX: 1.10,
-      anchorY: 4.8,
-      canvasW: 8.6,
+      anchorX: (targetCenterX - 20 - containerCenterX) / 100,
+      anchorY: 4.5,
+      canvasW: sw / 100,
       canvasH: 9.0
     };
   });
@@ -136,77 +144,87 @@ function useMeasuredCoords(targetRef, isMobile) {
     function measure() {
       if (typeof window === 'undefined') return;
 
-      if (isMobile) {
-        const sw = window.innerWidth;
+      const sw = window.innerWidth;
+      const isMob = isMobile ?? (sw < 1024);
+      const container =
+        document.querySelector('.hero-lanyard-container') ||
+        document.querySelector('.hero-section') ||
+        document.body;
+
+      const containerRect = container.getBoundingClientRect();
+      const containerCenterXPx = containerRect.left + containerRect.width / 2;
+      const containerCenterYPx = containerRect.top + containerRect.height / 2;
+
+      if (isMob) {
         const wPx = Math.min(320, sw * 0.78);
         const hPx = wPx * (1452 / 1680);
-        const mobileContainer = document.querySelector('.hero-lanyard-mobile-container');
-        const cH = mobileContainer ? mobileContainer.clientHeight : 420;
+        const mobileTarget = document.querySelector('.hero-lanyard-mobile-placeholder');
+        let targetCenterYPx = containerRect.top + 220;
+        if (mobileTarget) {
+          const mRect = mobileTarget.getBoundingClientRect();
+          targetCenterYPx = mRect.top + mRect.height * 0.48;
+        }
+
+        const rY = (containerCenterYPx - targetCenterYPx) / 100;
+        const aY = (containerRect.height / 2 + 10) / 100;
+
         setCoords({
           cardW: wPx / 100,
           cardH: hPx / 100,
           restX: 0,
-          restY: 0.05,
-          anchorX: 0,
-          anchorY: (cH / 2 + 25) / 100,
-          canvasW: sw / 100,
-          canvasH: cH / 100
-        });
-        return;
-      }
-
-      // Desktop: measure relative to .hero-lanyard-desktop-container
-      const desktopContainer = document.querySelector('.hero-lanyard-desktop-container');
-      const targetEl = targetRef?.current || document.querySelector('.hero-badge-target-placeholder');
-
-      if (desktopContainer) {
-        const containerRect = desktopContainer.getBoundingClientRect();
-        let cardWPx = 420;
-        let cardHPx = 363;
-        let targetCenterXPx = containerRect.left + containerRect.width * 0.62;
-        let targetCenterYPx = containerRect.top + containerRect.height * 0.48;
-
-        if (targetEl) {
-          const tRect = targetEl.getBoundingClientRect();
-          if (tRect.width > 50) {
-            cardWPx = tRect.width;
-            cardHPx = cardWPx * (1452 / 1680);
-            targetCenterXPx = tRect.left + tRect.width / 2;
-            targetCenterYPx = tRect.top + tRect.height / 2;
-          }
-        }
-
-        // Measure nav midpoint between WORK and BOOKS
-        let navMidX = null;
-        const navLinks = Array.from(document.querySelectorAll('nav a'));
-        const workLink = navLinks.find(a => a.textContent?.toLowerCase().includes('work'));
-        const booksLink = navLinks.find(a => a.textContent?.toLowerCase().includes('books'));
-        if (workLink && booksLink) {
-          const wR = workLink.getBoundingClientRect();
-          const bR = booksLink.getBoundingClientRect();
-          navMidX = (wR.right + bR.left) / 2;
-        }
-
-        const containerCenterXPx = containerRect.left + containerRect.width / 2;
-        const containerCenterYPx = containerRect.top + containerRect.height / 2;
-
-        const anchorXPx = navMidX ?? targetCenterXPx;
-        const aX = (anchorXPx - containerCenterXPx) / 100;
-        const rX = (targetCenterXPx - containerCenterXPx) / 100;
-        const rY = (containerCenterYPx - targetCenterYPx) / 100;
-        const aY = (containerRect.height / 2 + 35) / 100;
-
-        setCoords({
-          cardW: cardWPx / 100,
-          cardH: cardHPx / 100,
-          restX: rX,
           restY: rY,
-          anchorX: aX,
+          anchorX: 0,
           anchorY: aY,
           canvasW: containerRect.width / 100,
           canvasH: containerRect.height / 100
         });
+        return;
       }
+
+      // Desktop (>= 1024px)
+      let cardWPx = 420;
+      let cardHPx = 363;
+      let targetCenterXPx = containerRect.left + containerRect.width * 0.78;
+      let targetCenterYPx = containerCenterYPx;
+
+      const targetEl = targetRef?.current || document.querySelector('.hero-badge-target-placeholder');
+      if (targetEl) {
+        const tRect = targetEl.getBoundingClientRect();
+        if (tRect.width > 50) {
+          cardWPx = tRect.width;
+          cardHPx = cardWPx * (1452 / 1680);
+          targetCenterXPx = tRect.left + tRect.width / 2;
+          targetCenterYPx = tRect.top + tRect.height / 2;
+        }
+      }
+
+      // Measure nav midpoint between WORK and BOOKS
+      let navMidX = null;
+      const navLinks = Array.from(document.querySelectorAll('nav a'));
+      const workLink = navLinks.find(a => a.textContent?.toLowerCase().includes('work'));
+      const booksLink = navLinks.find(a => a.textContent?.toLowerCase().includes('books'));
+      if (workLink && booksLink) {
+        const wR = workLink.getBoundingClientRect();
+        const bR = booksLink.getBoundingClientRect();
+        navMidX = (wR.right + bR.left) / 2;
+      }
+
+      const anchorXPx = navMidX ?? targetCenterXPx;
+      const aX = (anchorXPx - containerCenterXPx) / 100;
+      const rX = (targetCenterXPx - containerCenterXPx) / 100;
+      const rY = (containerCenterYPx - targetCenterYPx) / 100;
+      const aY = (containerRect.height / 2 + 35) / 100;
+
+      setCoords({
+        cardW: cardWPx / 100,
+        cardH: cardHPx / 100,
+        restX: rX,
+        restY: rY,
+        anchorX: aX,
+        anchorY: aY,
+        canvasW: containerRect.width / 100,
+        canvasH: containerRect.height / 100
+      });
     }
 
     measure();
@@ -222,8 +240,8 @@ function useMeasuredCoords(targetRef, isMobile) {
 }
 
 function Band({
-  maxSpeed = 45,
-  minSpeed = 0,
+  maxSpeed = 50,
+  minSpeed = 10,
   isMobile = false,
   coords,
   frontImage,
@@ -245,8 +263,8 @@ function Band({
     type: 'dynamic',
     canSleep: true,
     colliders: false,
-    angularDamping: 3.5,
-    linearDamping: 3.5
+    angularDamping: 2,
+    linearDamping: 2
   }), []);
 
   const { nodes, materials } = useGLTF(cardGLB);
@@ -449,8 +467,8 @@ function Band({
   ]);
 
   useEffect(() => {
-    if (hovered && !isMobile) {
-      document.body.style.cursor = dragged ? 'grabbing' : 'grab';
+    if (!isMobile) {
+      document.body.style.cursor = dragged ? 'grabbing' : (hovered ? 'grab' : 'auto');
       return () => {
         document.body.style.cursor = 'auto';
       };
@@ -462,21 +480,9 @@ function Band({
       vec.set(state.pointer.x, state.pointer.y, 0).unproject(state.camera);
       [card, j1, j2, j3, fixed].forEach(ref => ref.current?.wakeUp());
 
-      const targetX = vec.x - dragged.x;
-      const targetY = vec.y - dragged.y;
-
-      const halfW = coords.cardW / 2;
-      const halfH = coords.cardH / 2;
-      const canvasHalfW = coords.canvasW / 2;
-      const canvasHalfH = coords.canvasH / 2;
-
-      // Safe drag bounds: keep card fully inside canvas boundaries to prevent clipping
-      const clampedX = Math.max(-canvasHalfW + halfW + 0.1, Math.min(canvasHalfW - halfW - 0.1, targetX));
-      const clampedY = Math.max(-canvasHalfH + halfH + 0.1, Math.min(coords.anchorY - 0.6, targetY));
-
       card.current?.setNextKinematicTranslation({
-        x: clampedX,
-        y: clampedY,
+        x: vec.x - dragged.x,
+        y: vec.y - dragged.y,
         z: 0
       });
     }
@@ -499,11 +505,12 @@ function Band({
 
       ang.copy(card.current.angvel());
       rot.copy(card.current.rotation());
-      card.current.setAngvel({ x: 0, y: ang.y - rot.y * 0.35, z: ang.z });
+      card.current.setAngvel({ x: 0, y: ang.y - rot.y * 0.25, z: ang.z });
     }
   });
 
   const handlePointerDown = useCallback((e) => {
+    e.stopPropagation?.();
     if (e.pointerType === 'mouse') {
       try {
         e.target.setPointerCapture(e.pointerId);
@@ -556,38 +563,29 @@ function Band({
 
   const handlePointerUp = useCallback((e) => {
     try {
-      e.target.releasePointerCapture(e.pointerId);
+      e?.target?.releasePointerCapture?.(e.pointerId);
     } catch {}
     drag(false);
     touchStartRef.current = null;
     isGestureDecidedRef.current = false;
     isDraggingBadgeRef.current = false;
-
-    if (card.current) {
-      const linvel = card.current.linvel();
-      const speed = Math.hypot(linvel.x, linvel.y);
-      const maxReleaseSpeed = 7.0;
-      if (speed > maxReleaseSpeed) {
-        card.current.setLinvel({
-          x: (linvel.x / speed) * maxReleaseSpeed,
-          y: (linvel.y / speed) * maxReleaseSpeed,
-          z: 0
-        });
-      } else {
-        card.current.setLinvel({ x: linvel.x, y: linvel.y, z: 0 });
-      }
-
-      const angvel = card.current.angvel();
-      const maxAngSpeed = 3.5;
-      if (Math.abs(angvel.z) > maxAngSpeed) {
-        card.current.setAngvel({
-          x: 0,
-          y: 0,
-          z: Math.sign(angvel.z) * maxAngSpeed
-        });
-      }
-    }
   }, []);
+
+  useEffect(() => {
+    if (!dragged) return;
+    const handleGlobalPointerUp = () => {
+      drag(false);
+      touchStartRef.current = null;
+      isGestureDecidedRef.current = false;
+      isDraggingBadgeRef.current = false;
+    };
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    window.addEventListener('pointercancel', handleGlobalPointerUp);
+    return () => {
+      window.removeEventListener('pointerup', handleGlobalPointerUp);
+      window.removeEventListener('pointercancel', handleGlobalPointerUp);
+    };
+  }, [dragged]);
 
   return (
     <>

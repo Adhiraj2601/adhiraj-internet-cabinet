@@ -76,31 +76,18 @@ export function Hero() {
   return (
     <section
       ref={heroRef}
-      className="hero-section relative min-h-[90vh] flex flex-col justify-end pb-16 md:pb-24 pt-20 lg:pt-36"
+      className="hero-section relative min-h-[90vh] flex flex-col justify-end pb-16 md:pb-24 pt-20 lg:pt-36 overflow-x-clip"
       aria-label="Introduction"
     >
       {/* 3D Lanyard integration with ErrorBoundary & Fallback */}
       {canRenderLanyard ? (
         <LanyardErrorBoundary fallback={<PortraitFrame />}>
-          {/* Desktop Canvas (lg: 1024px+): drops from top: 0, positioned in right half */}
-          <div className="hidden lg:block hero-lanyard-desktop-container">
+          <div className="hero-lanyard-container">
             {isInView && (
               <Suspense fallback={null}>
                 <Lanyard
-                  isMobile={false}
-                  frameloop={isInView ? 'always' : 'never'}
+                  eventSource={heroRef}
                   targetRef={desktopTargetRef}
-                />
-              </Suspense>
-            )}
-          </div>
-
-          {/* Mobile & Tablet Canvas (< 1024px): starts below nav, full width, stacked above heading */}
-          <div className="block lg:hidden hero-lanyard-mobile-container">
-            {isInView && (
-              <Suspense fallback={null}>
-                <Lanyard
-                  isMobile={true}
                   frameloop={isInView ? 'always' : 'never'}
                 />
               </Suspense>
@@ -108,6 +95,14 @@ export function Hero() {
           </div>
         </LanyardErrorBoundary>
       ) : null}
+
+      {/* On mobile (< 1024px), reserve space for the swinging badge above the text */}
+      {canRenderLanyard && (
+        <div
+          className="block lg:hidden hero-lanyard-mobile-placeholder"
+          aria-hidden="true"
+        />
+      )}
 
       <div className="container-main w-full">
         {/* Small metadata label (visible on desktop) */}
