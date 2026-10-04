@@ -53,7 +53,7 @@
     "category": "Communication",
     "description": "A peer-to-peer and encrypted messenger that keeps working when the network does not. Works over a Bluetooth and Wi-Fi mesh, with no servers or accounts.",
     "year": "2026",
-    "image": "/images/projects/narada-cover.png",
+    "image": "/images/projects/narada-cover.webp",
     "github": "https://github.com/Adhiraj2601/Narada",
     "live": "https://github.com/Adhiraj2601/Narada/releases/tag/v1.0.3"
   }

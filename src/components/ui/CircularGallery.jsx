@@ -3,6 +3,7 @@ import { useEffect, useRef, memo } from 'react';
 
 import './CircularGallery.css';
 import { GALLERY_ENTRANCE, easeOutCubic, preloadGalleryImages } from '../../lib/galleryEntrance';
+import { usePrefersReducedMotion } from '../../hooks/useMediaQuery';
 
 function debounce(func, wait) {
   let timeout;
@@ -1329,8 +1330,7 @@ function CircularGalleryComponent({
     onIntroComplete
   };
 
-  const prefersReducedMotion = typeof window !== 'undefined'
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Setup effect: creates the app once on mount, tears down only on unmount
   useEffect(() => {

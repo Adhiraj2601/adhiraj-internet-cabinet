@@ -68,19 +68,6 @@
   animation-play-state: running;
 }
 
-/* Backwards compatibility for reel-spokes alias */
-.reel-spokes {
-  transform-box: fill-box;
-  transform-origin: center center;
-  animation: cassette-reel-cw 2s linear infinite;
-  animation-play-state: paused;
-}
-
-.cassette-card:hover .reel-spokes,
-.cassette-button:hover .reel-spokes,
-.cassette-playing .reel-spokes {
-  animation-play-state: running;
-}
 
 /* CRT Blinking Block Cursor */
 @keyframes cursor-blink {
@@ -310,8 +297,7 @@ html:has(.tv-player-modal) {
 
 @media (prefers-reduced-motion: reduce) {
   .cassette-reel-left,
-  .cassette-reel-right,
-  .reel-spokes {
+  .cassette-reel-right {
     animation: none !important;
   }
   .floating-doodle {

@@ -3,7 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-export const isSupabaseConfigured = Boolean(
+const isSupabaseConfigured = Boolean(
   supabaseUrl && 
   supabaseAnonKey && 
   !supabaseUrl.includes('your-project')
@@ -21,12 +21,6 @@ export async function adminSignIn(email: string, password: string) {
 export async function adminSignOut() {
   if (!supabase) return
   return await supabase.auth.signOut()
-}
-
-export async function getAdminSession() {
-  if (!supabase) return null
-  const { data } = await supabase.auth.getSession()
-  return data.session
 }
 
 export interface CommentRecord {

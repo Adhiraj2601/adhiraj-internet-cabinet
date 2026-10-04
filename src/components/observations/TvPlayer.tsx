@@ -7,7 +7,7 @@ import { DoodleBackdrop } from './DoodleBackdrop'
 import { TvScene } from './TvScene'
 import { TvScreen, type TvScreenHandle } from './TvScreen'
 import { RoughenFilterDefs } from './CassetteCard'
-import { useIsMobile } from '../../hooks/useMediaQuery'
+import { useIsMobile, usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 import './observations.css'
 
 interface TvPlayerProps {
@@ -19,10 +19,7 @@ interface TvPlayerProps {
 
 export function TvPlayer({ post, allObservations, onClose, isDirectLink = false }: TvPlayerProps) {
   const isMobile = useIsMobile()
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   // Animation timeline phases:
   // On desktop:

@@ -53,5 +53,3 @@ public/media/
 *.mov
 *.avi
 *.mkv
-# Exception: the hero video is intentionally committed (≈49 MB, under GitHub limit)
-!public/media/video.mp4

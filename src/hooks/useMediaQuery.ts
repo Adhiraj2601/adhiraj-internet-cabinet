@@ -20,7 +20,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 export function useIsMobile() {
-  return useMediaQuery('(max-width: 768px)')
+  return useMediaQuery('(max-width: 767px)')
 }
 
 export function useIsTouch() {

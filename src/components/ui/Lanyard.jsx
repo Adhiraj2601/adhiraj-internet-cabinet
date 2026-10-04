@@ -40,9 +40,7 @@ function drawContain(ctx, img, x, y, w, h) {
  * - Custom 4:3 landscape card mesh with front portrait + polaroid captions and back paper
  * - Sage-green strap with repeating mono text passing cleanly through navbar
  * - Rapier physics locked to XY plane with linear/angular damping & drag velocity clamping
- * - Single source of truth stacked layout: phones (< 768px) and tall portrait screens (tablets)
  */
-export const MOBILE_BREAKPOINT = 768;
 
 export default function Lanyard({
   gravity = [0, -40, 0],

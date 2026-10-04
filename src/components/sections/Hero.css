@@ -140,10 +140,6 @@
     display: none !important;
   }
 
-  .hero-lanyard-mobile-placeholder {
-    display: none !important;
-  }
-
   .hero-lanyard-mobile-card-slot {
     display: block !important;
     width: 100%;
@@ -195,10 +191,6 @@
     justify-content: center;
     grid-column: span 5 / span 5;
     position: relative;
-  }
-
-  .hero-lanyard-mobile-placeholder {
-    display: none !important;
   }
 
   .hero-lanyard-mobile-card-slot {

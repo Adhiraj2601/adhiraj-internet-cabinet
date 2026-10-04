@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { usePrefersReducedMotion } from './useMediaQuery'
 
 export interface TypewriterSection {
   id: string
@@ -30,10 +31,7 @@ export function useTypewriter(
   }, [onDone])
 
   // Check prefers-reduced-motion
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   const skip = useCallback(() => {
     if (timerRef.current) {

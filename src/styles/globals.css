@@ -86,35 +86,6 @@
     border-color: var(--border);
   }
 
-  .grid-main {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 1.5rem;
-    max-width: 1500px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
-
-  @media (max-width: 1024px) {
-    .grid-main {
-      grid-template-columns: repeat(8, 1fr);
-      padding: 0 1.5rem;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .grid-main {
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      padding: 0 1.25rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .grid-main {
-      padding: 0 1rem;
-    }
-  }
 
   .container-main {
     max-width: 1500px;

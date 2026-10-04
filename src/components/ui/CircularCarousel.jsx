@@ -2,6 +2,7 @@
 // Source: https://reactbits.dev — vendored to avoid runtime dependency
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { usePrefersReducedMotion } from '../../hooks/useMediaQuery';
 
 import './CircularCarousel.css';
 
@@ -161,19 +162,6 @@ const Digits = ({ value }) => (
       ))}
   </span>
 );
-
-const usePrefersReducedMotion = () => {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    if (!query) return undefined;
-    const update = () => setReduced(query.matches);
-    update();
-    query.addEventListener?.('change', update);
-    return () => query.removeEventListener?.('change', update);
-  }, []);
-  return reduced;
-};
 
 const CircularCarousel = ({
   items = DEFAULT_ITEMS,

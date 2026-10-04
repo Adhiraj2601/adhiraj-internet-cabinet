@@ -91,5 +91,3 @@ export function PortraitFrame({ className = '' }: { className?: string }) {
     </motion.div>
   );
 }
-
-export default PortraitFrame;

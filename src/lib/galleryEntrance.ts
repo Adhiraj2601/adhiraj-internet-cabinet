@@ -26,15 +26,6 @@ export const GALLERY_ENTRANCE = {
 } as const
 
 /**
- * Quintic ease-out curve: identical to the smooth rising curve in sketches.
- * f(t) = 1 - (1 - t)^5
- */
-export function easeOutQuint(t: number): number {
-  const clamped = Math.max(0, Math.min(1, t))
-  return 1 - Math.pow(1 - clamped, 5)
-}
-
-/**
  * Cubic ease-out curve.
  * f(t) = 1 - (1 - t)^3
  */

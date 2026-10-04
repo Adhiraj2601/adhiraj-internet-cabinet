@@ -238,23 +238,6 @@ export function Admin() {
   const [isDeployingHook, setIsDeployingHook] = useState(false)
   const [hookSavedMessage, setHookSavedMessage] = useState('')
 
-  // Verify token on mount if stored
-  useEffect(() => {
-    if (token) {
-      setIsVerifying(true)
-      testGitHubToken(token).then((res) => {
-        setIsVerifying(false)
-        if (res.valid && res.user) {
-          setAuthenticatedUser(res.user)
-          syncWithGitHub(token)
-        } else {
-          setAuthError(res.error || 'Token expired or invalid.')
-          setAuthenticatedUser(null)
-        }
-      })
-    }
-  }, [token])
-
   // Sync state directly from GitHub repository so CMS is never stale
   const syncWithGitHub = async (userToken: string) => {
     try {
@@ -278,6 +261,23 @@ export function Admin() {
       console.warn('Could not sync with GitHub:', err)
     }
   }
+
+  // Verify token on mount if stored
+  useEffect(() => {
+    if (token) {
+      setIsVerifying(true)
+      testGitHubToken(token).then((res) => {
+        setIsVerifying(false)
+        if (res.valid && res.user) {
+          setAuthenticatedUser(res.user)
+          syncWithGitHub(token)
+        } else {
+          setAuthError(res.error || 'Token expired or invalid.')
+          setAuthenticatedUser(null)
+        }
+      })
+    }
+  }, [token])
 
   // Handle Token Connection
   const handleConnect = async (e: React.FormEvent) => {

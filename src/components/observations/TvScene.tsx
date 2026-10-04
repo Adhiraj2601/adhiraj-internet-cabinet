@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { type Post } from '../../content/posts'
 import { CassetteCard } from './CassetteCard'
+import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 
 interface TvSceneProps {
   post: Post
@@ -20,10 +21,7 @@ export function TvScene({
   isReadMode = false,
   children,
 }: TvSceneProps) {
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const prefersReducedMotion = usePrefersReducedMotion()
 
   // TV dimensions: viewBox 0 0 760 640
   // TV body: width 690, height 535 -> 690 / 535 = 1.289 : 1 (matches 1.28 : 1)

@@ -731,5 +731,3 @@ export function LinearGallery({
     </div>
   )
 }
-
-export default LinearGallery
