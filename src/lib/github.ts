@@ -44,11 +44,14 @@ export async function testGitHubToken(token: string): Promise<{ valid: boolean; 
 export async function getFileSha(token: string, filePath: string): Promise<string | null> {
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}?ref=${GITHUB_BRANCH}`,
+      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}?ref=${GITHUB_BRANCH}&_t=${Date.now()}`,
       {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/vnd.github.v3+json',
+          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+          Pragma: 'no-cache',
         },
       }
     )
@@ -68,9 +71,12 @@ export async function getJsonFileFromGitHub<T>(token: string, filePath: string):
     const res = await fetch(
       `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}?ref=${GITHUB_BRANCH}&_t=${Date.now()}`,
       {
+        cache: 'no-store',
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/vnd.github.v3+json',
+          'Cache-Control': 'no-cache, no-store, max-age=0, must-revalidate',
+          Pragma: 'no-cache',
         },
       }
     )
@@ -95,37 +101,48 @@ export async function commitFileToGitHub(
   commitMessage: string
 ): Promise<GitHubCommitResult> {
   try {
-    // 1. Fetch current SHA if the file exists
-    const currentSha = await getFileSha(token, filePath)
-
-    // 2. Put file contents
-    const payload: { message: string; content: string; branch: string; sha?: string } = {
-      message: commitMessage,
-      content: contentBase64,
-      branch: GITHUB_BRANCH,
-    }
-    if (currentSha) {
-      payload.sha = currentSha
-    }
-
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
-      {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+    const executePut = async (shaToUse: string | null) => {
+      const payload: { message: string; content: string; branch: string; sha?: string } = {
+        message: commitMessage,
+        content: contentBase64,
+        branch: GITHUB_BRANCH,
       }
-    )
+      if (shaToUse) {
+        payload.sha = shaToUse
+      }
+
+      return await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${filePath}`,
+        {
+          method: 'PUT',
+          cache: 'no-store',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      )
+    }
+
+    // 1. Fetch current fresh SHA
+    let currentSha = await getFileSha(token, filePath)
+    let res = await executePut(currentSha)
+
+    // 2. Auto-recovery on 409 Conflict:
+    // If the file was modified in a concurrent or recent commit, fetch the fresh SHA and retry
+    if (res.status === 409) {
+      await new Promise((r) => setTimeout(r, 600))
+      currentSha = await getFileSha(token, filePath)
+      res = await executePut(currentSha)
+    }
 
     if (!res.ok) {
-      const errorData = await res.json()
+      const errorData = await res.json().catch(() => ({}))
       return {
         success: false,
-        message: errorData.message || 'Failed to commit file to GitHub',
+        message: errorData.message || `Failed to commit ${filePath} to GitHub (HTTP ${res.status})`,
       }
     }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   FolderGit2,
   BookOpen,
@@ -149,6 +149,16 @@ export function Admin() {
   const [publishMessage, setPublishMessage] = useState<{ type: 'success' | 'error'; text: string; url?: string } | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
 
+  // Baseline tracking to prevent redundant or stale commits
+  const lastSyncedRef = useRef({
+    projects: JSON.stringify(initialProjects),
+    books: JSON.stringify(initialBooks),
+    scraps: JSON.stringify(initialScraps),
+    currently: JSON.stringify(initialCurrently),
+    posts: JSON.stringify(initialPosts),
+    experiments: JSON.stringify(initialExperiments),
+  })
+
   // Item editing modal states
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [isNewProject, setIsNewProject] = useState(false)
@@ -255,12 +265,30 @@ export function Admin() {
           getJsonFileFromGitHub<Experiment[]>(userToken, 'src/content/experiments.json'),
         ])
 
-      if (remotePosts) setPostsData(remotePosts)
-      if (remoteProjects) setProjectsData(remoteProjects)
-      if (remoteBooks) setBooksData(remoteBooks)
-      if (remoteScraps) setScrapsData(remoteScraps)
-      if (remoteCurrently) setCurrentlyData(remoteCurrently)
-      if (remoteExperiments) setExperimentsData(remoteExperiments)
+      if (remotePosts) {
+        setPostsData(remotePosts)
+        lastSyncedRef.current.posts = JSON.stringify(remotePosts)
+      }
+      if (remoteProjects) {
+        setProjectsData(remoteProjects)
+        lastSyncedRef.current.projects = JSON.stringify(remoteProjects)
+      }
+      if (remoteBooks) {
+        setBooksData(remoteBooks)
+        lastSyncedRef.current.books = JSON.stringify(remoteBooks)
+      }
+      if (remoteScraps) {
+        setScrapsData(remoteScraps)
+        lastSyncedRef.current.scraps = JSON.stringify(remoteScraps)
+      }
+      if (remoteCurrently) {
+        setCurrentlyData(remoteCurrently)
+        lastSyncedRef.current.currently = JSON.stringify(remoteCurrently)
+      }
+      if (remoteExperiments) {
+        setExperimentsData(remoteExperiments)
+        lastSyncedRef.current.experiments = JSON.stringify(remoteExperiments)
+      }
     } catch (err) {
       console.warn('Could not sync with GitHub:', err)
     }
@@ -337,43 +365,43 @@ export function Admin() {
         {
           path: 'src/content/projects.json',
           data: projectsData,
-          initial: initialProjects,
+          baseline: lastSyncedRef.current.projects,
           msg: 'cms: update projects',
         },
         {
           path: 'src/content/books.json',
           data: booksData,
-          initial: initialBooks,
+          baseline: lastSyncedRef.current.books,
           msg: 'cms: update reading list',
         },
         {
           path: 'src/content/scraps.json',
           data: scrapsData,
-          initial: initialScraps,
+          baseline: lastSyncedRef.current.scraps,
           msg: 'cms: update visual scraps / sketches',
         },
         {
           path: 'src/content/currently.json',
           data: currentlyData,
-          initial: initialCurrently,
+          baseline: lastSyncedRef.current.currently,
           msg: 'cms: update currently section',
         },
         {
           path: 'src/content/posts.json',
           data: postsData,
-          initial: initialPosts,
+          baseline: lastSyncedRef.current.posts,
           msg: 'cms: update journal notes',
         },
         {
           path: 'src/content/experiments.json',
           data: experimentsData,
-          initial: initialExperiments,
+          baseline: lastSyncedRef.current.experiments,
           msg: 'cms: update lab experiments',
         },
       ]
 
       const changedUpdates = updates.filter(
-        (item) => JSON.stringify(item.data) !== JSON.stringify(item.initial)
+        (item) => JSON.stringify(item.data) !== item.baseline
       )
 
       if (changedUpdates.length === 0 && queuedImages.length === 0) {
@@ -397,6 +425,8 @@ export function Admin() {
         if (res.commitUrl) {
           lastCommitUrl = res.commitUrl
         }
+        // Small pause between consecutive commits so GitHub's git reference stabilizes
+        await new Promise((r) => setTimeout(r, 400))
       }
 
       let deployTriggered = false
@@ -410,6 +440,12 @@ export function Admin() {
       }
 
       setHasChanges(false)
+      lastSyncedRef.current.projects = JSON.stringify(projectsData)
+      lastSyncedRef.current.books = JSON.stringify(booksData)
+      lastSyncedRef.current.scraps = JSON.stringify(scrapsData)
+      lastSyncedRef.current.currently = JSON.stringify(currentlyData)
+      lastSyncedRef.current.posts = JSON.stringify(postsData)
+      lastSyncedRef.current.experiments = JSON.stringify(experimentsData)
       setSelectedImageFile(null)
       setSelectedBookCoverFile(null)
       setSelectedScrapFile(null)
