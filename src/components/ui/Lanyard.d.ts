@@ -12,6 +12,7 @@ export interface LanyardProps {
   lanyardWidth?: number;
   isMobile?: boolean;
   frameloop?: 'always' | 'demand' | 'never';
+  targetRef?: React.RefObject<HTMLDivElement | null>;
   className?: string;
   style?: CSSProperties;
 }

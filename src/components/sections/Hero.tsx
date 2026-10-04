@@ -55,6 +55,8 @@ export function Hero() {
   const [hasWebGL] = useState(() => checkWebGLSupport())
   const prefersReducedMotion = usePrefersReducedMotion()
 
+  const desktopTargetRef = useRef<HTMLDivElement>(null)
+
   // Pause physics and rendering when hero is scrolled out of view
   useEffect(() => {
     if (!heroRef.current || typeof IntersectionObserver === 'undefined') return
@@ -80,37 +82,24 @@ export function Hero() {
       {/* 3D Lanyard integration with ErrorBoundary & Fallback */}
       {canRenderLanyard ? (
         <LanyardErrorBoundary fallback={<PortraitFrame />}>
-          {/* Desktop Canvas (lg: 1024px+): drops from top: 0, positioned in right half at ~60vw */}
+          {/* Desktop Canvas (lg: 1024px+): drops from top: 0, positioned in right half */}
           <div className="hidden lg:block hero-lanyard-desktop-container">
             {isInView && (
               <Suspense fallback={null}>
                 <Lanyard
-                  position={[0, 0, 24]}
-                  fov={20}
                   isMobile={false}
                   frameloop={isInView ? 'always' : 'never'}
+                  targetRef={desktopTargetRef}
                 />
               </Suspense>
             )}
           </div>
 
-          {/* Mobile & Tablet Canvas (< 1024px): starts at top of page, full width, stacked above heading */}
+          {/* Mobile & Tablet Canvas (< 1024px): starts below nav, full width, stacked above heading */}
           <div className="block lg:hidden hero-lanyard-mobile-container">
-            {/* Mobile label at top left below nav */}
-            <div className="hero-mobile-badge-labels container-main">
-              <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
-                FIG. 01
-              </span>
-              <span className="font-handwritten text-[0.95rem] text-muted rotate-[-2deg]">
-                welcome to my little corner
-              </span>
-            </div>
-
             {isInView && (
               <Suspense fallback={null}>
                 <Lanyard
-                  position={[0, 1.2, 13]}
-                  fov={20}
                   isMobile={true}
                   frameloop={isInView ? 'always' : 'never'}
                 />
@@ -134,7 +123,7 @@ export function Hero() {
         {/* 2-column editorial grid: Intro on left, Badge labels / Fallback portrait on right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           {/* Left Column: Heading & Supporting Text */}
-          <div className="lg:col-span-7 flex flex-col justify-center hero-text-column">
+          <div className="lg:col-span-7 flex flex-col justify-center hero-text-column relative z-30">
             {/* Large hero text */}
             <h1
               className="leading-none font-bold tracking-tighter"
@@ -226,19 +215,14 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right Column: Lanyard labels on desktop or fallback portrait */}
-          <div className="flex flex-col justify-center lg:col-span-5">
+          {/* Right Column: Target anchor placeholder on desktop or fallback portrait */}
+          <div className="flex flex-col justify-center lg:col-span-5 relative">
             {canRenderLanyard ? (
-              <div className="hidden lg:flex flex-col hero-desktop-badge-labels">
-                <div className="flex justify-between items-center mb-2 px-1 max-w-[380px]">
-                  <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
-                    welcome to my little corner{' '}
-                  </span>
-                  <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
-                    FIG. 01 / ARTIFACT
-                  </span>
-                </div>
-              </div>
+              <div
+                ref={desktopTargetRef}
+                className="hero-badge-target-placeholder w-full max-w-[420px] mx-auto aspect-[4/3] invisible pointer-events-none"
+                aria-hidden="true"
+              />
             ) : (
               <PortraitFrame />
             )}

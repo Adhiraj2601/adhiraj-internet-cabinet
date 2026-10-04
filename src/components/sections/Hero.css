@@ -104,20 +104,13 @@
   .hero-lanyard-desktop-container {
     position: absolute;
     top: 0;
-    left: 60vw;
-    transform: translateX(-50%);
-    width: 420px;
-    height: 100vh;
-    max-height: 780px;
+    left: 40vw;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    min-height: 100vh;
     z-index: 20;
     pointer-events: auto;
-  }
-
-  .hero-desktop-badge-labels {
-    position: relative;
-    z-index: 25;
-    pointer-events: none;
-    margin-bottom: 2rem;
   }
 }
 
@@ -126,25 +119,14 @@
   .hero-lanyard-mobile-container {
     position: relative;
     width: 100%;
-    height: clamp(380px, 52vh, 460px);
+    height: clamp(380px, 50vh, 450px);
     z-index: 20;
     touch-action: pan-y;
   }
 
-  .hero-mobile-badge-labels {
-    position: absolute;
-    top: 5.5rem;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    pointer-events: none;
-    z-index: 25;
-  }
-
   .hero-text-column {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
   }
 }
+
 
