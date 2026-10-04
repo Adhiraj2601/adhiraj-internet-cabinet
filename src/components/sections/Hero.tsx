@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { SectionLabel } from '../ui/SectionLabel'
-import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 import './Hero.css'
 
 const heroLines = [
@@ -11,7 +10,7 @@ const heroLines = [
 ]
 
 /**
- * ADDITION 1: Interactive Hero Copy Link Component
+ * Interactive Hero Copy Link Component
  * Turns supporting phrases into subtle interactive gateways to /blog, /books, and /sketches.
  * - 1px underline in green accent (#7EA84D, offset 4px)
  * - 180ms hover/focus transition where text turns dark green (#477224, WCAG AA compliant)
@@ -38,7 +37,6 @@ function HeroCopyLink({ to, children }: HeroCopyLinkProps) {
 
 export function Hero() {
   const [imgError, setImgError] = useState(false)
-  const prefersReducedMotion = usePrefersReducedMotion()
 
   const handleImgError = () => {
     setImgError(true)
@@ -163,73 +161,11 @@ export function Hero() {
             className="lg:col-span-5 flex flex-col justify-center"
           >
             <div className="relative group">
-              {/* Handwritten tape note on top + Hand-drawn Nudge Arrow (ADDITION 2) */}
+              {/* Handwritten tape note on top */}
               <div className="flex justify-between items-center mb-2 px-1">
-                <div className="relative inline-flex items-center">
-                  <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
-                    welcome to my little corner{' '}
-                  </span>
-
-                  {/* ADDITION 2: Handwritten nudge arrow toward hero copy links
-                      - Hand-drawn style SVG with 1.5px stroke in green accent (#7EA84D)
-                      - Swoops gently down and left from the tape note toward the hero copy links
-                      - Draws in once on page load using stroke-dashoffset (pathLength) animation
-                      - Hidden on narrow viewports (hidden lg:block) where columns stack vertically */}
-                  <div
-                    className="hidden lg:block absolute pointer-events-none -left-28 -top-3 w-28 h-16 hero-nudge-arrow-wrap"
-                    aria-hidden="true"
-                  >
-                    <svg
-                      viewBox="0 0 110 60"
-                      fill="none"
-                      className="w-full h-full overflow-visible"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      {/* Arrow shaft: smooth organic curve toward left column links */}
-                      <motion.path
-                        d="M 102 12 C 78 8, 46 22, 12 42"
-                        stroke="#7EA84D"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        initial={{
-                          pathLength: prefersReducedMotion ? 1 : 0,
-                          opacity: prefersReducedMotion ? 1 : 0,
-                        }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{
-                          pathLength: prefersReducedMotion
-                            ? { duration: 0 }
-                            : { duration: 0.85, delay: 1.4, ease: [0.65, 0, 0.35, 1] },
-                          opacity: prefersReducedMotion
-                            ? { duration: 0 }
-                            : { duration: 0.15, delay: 1.4 },
-                        }}
-                      />
-                      {/* Arrowhead barbs: flicking in as the shaft completes */}
-                      <motion.path
-                        d="M 23 33 L 12 42 L 20 52"
-                        stroke="#7EA84D"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        initial={{
-                          pathLength: prefersReducedMotion ? 1 : 0,
-                          opacity: prefersReducedMotion ? 1 : 0,
-                        }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{
-                          pathLength: prefersReducedMotion
-                            ? { duration: 0 }
-                            : { duration: 0.3, delay: 2.15, ease: 'easeOut' },
-                          opacity: prefersReducedMotion
-                            ? { duration: 0 }
-                            : { duration: 0.1, delay: 2.15 },
-                        }}
-                      />
-                    </svg>
-                  </div>
-                </div>
-
+                <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
+                  welcome to my little corner{' '}
+                </span>
                 <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
                   FIG. 01 / ARTIFACT
                 </span>
