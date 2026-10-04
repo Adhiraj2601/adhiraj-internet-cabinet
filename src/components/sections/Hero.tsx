@@ -96,13 +96,6 @@ export function Hero() {
         </LanyardErrorBoundary>
       ) : null}
 
-      {/* On mobile (< 768px), reserve space for the swinging badge above the text */}
-      {canRenderLanyard && (
-        <div
-          className="hero-lanyard-mobile-placeholder"
-          aria-hidden="true"
-        />
-      )}
 
       <div className="container-main w-full">
         {/* Small metadata label (visible on desktop >= 768px) */}
@@ -207,6 +200,22 @@ export function Hero() {
               >
                 and <HeroCopyLink to="/sketches">occasionally draw</HeroCopyLink>.
               </motion.p>
+
+              {/* Mobile scroll hint directly below intro text */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1.4 }}
+                className="hero-scroll-hint-mobile md:hidden mt-6 flex items-center gap-2"
+              >
+                <motion.span
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                  className="text-[0.75rem] tracking-widest text-muted font-medium"
+                >
+                  scroll ↓
+                </motion.span>
+              </motion.div>
             </div>
           </div>
 
@@ -224,8 +233,16 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div className="hero-scroll-hint flex items-center justify-between">
+        {/* On mobile (< 768px), reserve vertical space for the hanging card below the intro */}
+        {canRenderLanyard && (
+          <div
+            className="hero-lanyard-mobile-card-slot"
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Scroll indicator (desktop >= 768px) */}
+        <div className="hero-scroll-hint hidden md:flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

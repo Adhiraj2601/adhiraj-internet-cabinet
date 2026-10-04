@@ -160,32 +160,41 @@ function measureCoords(targetRef, isMobile) {
   const containerCenterYPx = containerRect.top + containerRect.height / 2;
 
   if (isMob) {
-    const wPx = Math.min(320, sw * 0.78);
-    const hPx = wPx * (1452 / 1680);
-    const mobileTarget = document.querySelector('.hero-lanyard-mobile-placeholder');
+    // Strap runs down right side of intro text (roughly 62% across)
+    const strapXPx = Math.round(sw * 0.62);
+
+    // Card is horizontally centered on the strap.
+    // Ensure the card fits comfortably within the screen with no horizontal overflow.
+    const maxAvailableWidth = Math.floor((sw - strapXPx - 14) * 2);
+    const cardWPx = Math.max(190, Math.min(280, maxAvailableWidth));
+    const cardHPx = cardWPx * (1452 / 1680);
+
+    const mobileSlot = document.querySelector('.hero-lanyard-mobile-card-slot');
 
     const cTop = containerRect.top;
     const cHeight = containerRect.height || window.innerHeight;
     const containerCenterYPx = cTop + cHeight / 2;
 
-    // Anchor at top of page behind navbar: 40px above the top of the container
+    // Anchor at top of page behind navbar: 40px above container top
     const anchorYPx = cTop - 40;
     const aY = (containerCenterYPx - anchorYPx) / 100;
+    const aX = (strapXPx - containerCenterXPx) / 100;
 
-    let targetCenterYPx = cTop + 64 + 160;
-    if (mobileTarget) {
-      const mRect = mobileTarget.getBoundingClientRect();
-      targetCenterYPx = mRect.top + mRect.height * 0.48;
+    let targetCenterYPx = cTop + 480;
+    if (mobileSlot) {
+      const sRect = mobileSlot.getBoundingClientRect();
+      targetCenterYPx = sRect.top + sRect.height * 0.48;
     }
 
     const rY = (containerCenterYPx - targetCenterYPx) / 100;
+    const rX = aX;
 
     return {
-      cardW: wPx / 100,
-      cardH: hPx / 100,
-      restX: 0,
+      cardW: cardWPx / 100,
+      cardH: cardHPx / 100,
+      restX: rX,
       restY: rY,
-      anchorX: 0,
+      anchorX: aX,
       anchorY: aY,
       canvasW: (containerRect.width || sw) / 100,
       canvasH: cHeight / 100
@@ -272,11 +281,34 @@ function useMeasuredCoords(targetRef, isMobile) {
     }
 
     measure();
+
     window.addEventListener('resize', measure);
-    const t = setTimeout(measure, 150);
+    window.addEventListener('orientationchange', measure);
+    window.visualViewport?.addEventListener('resize', measure);
+    window.visualViewport?.addEventListener('scroll', measure);
+
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(measure);
+    }
+
+    const roTarget = document.querySelector('.hero-section') || document.body;
+    let ro = null;
+    if (typeof ResizeObserver !== 'undefined' && roTarget) {
+      ro = new ResizeObserver(measure);
+      ro.observe(roTarget);
+    }
+
+    const t1 = setTimeout(measure, 100);
+    const t2 = setTimeout(measure, 400);
+
     return () => {
       window.removeEventListener('resize', measure);
-      clearTimeout(t);
+      window.removeEventListener('orientationchange', measure);
+      window.visualViewport?.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('scroll', measure);
+      if (ro) ro.disconnect();
+      clearTimeout(t1);
+      clearTimeout(t2);
     };
   }, [targetRef, isMobile]);
 
@@ -556,7 +588,22 @@ function Band({
       maxSpread = leftSpace;
     }
 
-    const targetOffset = isMobile ? 0.35 : 1.15;
+    // On mobile: the long strap runs down beside the text, so start with a gentle tilt
+    // hanging down rather than dropping 500px from the ceiling
+    if (isMobile) {
+      const angle = 0.12 * dir;
+      const sinA = Math.sin(angle);
+      const cosA = Math.cos(angle);
+      return {
+        fixed: [coords.anchorX, coords.anchorY, 0],
+        j1: [coords.anchorX + sinA * segLen, coords.anchorY - cosA * segLen, 0],
+        j2: [coords.anchorX + sinA * 2 * segLen, coords.anchorY - cosA * 2 * segLen, 0],
+        j3: [coords.anchorX + sinA * 3 * segLen, coords.anchorY - cosA * 3 * segLen, 0],
+        card: [coords.anchorX + sinA * (ropeLength + 0.08), coords.anchorY - cosA * (ropeLength + 0.08) - anchorY, 0],
+      };
+    }
+
+    const targetOffset = 1.15;
     const clampedOffset = Math.max(0.25, Math.min(targetOffset, Math.max(0.25, maxSpread)));
     const dx = (clampedOffset / 3.2) * dir;
 
@@ -885,8 +932,8 @@ function Band({
           resolution={[size.width, size.height]}
           useMap
           map={strapTex}
-          repeat={isMobile ? [-2.2, 1] : [-4.0, 1]}
-          lineWidth={isMobile ? 0.045 : 0.052}
+          repeat={isMobile ? [-3.8, 1] : [-4.0, 1]}
+          lineWidth={isMobile ? 0.046 : 0.052}
         />
       </mesh>
     </>

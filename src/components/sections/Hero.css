@@ -114,19 +114,26 @@
   overflow: visible;
 }
 
-/* Mobile (< 768px): Stacked editorial layout with badge above text */
+/* Mobile (< 768px): Intro text at top (54% width), strap along right side, card hangs below intro */
 @media (max-width: 767px) {
   .hero-section {
     min-height: 0;
     justify-content: flex-start;
-    padding-top: clamp(4rem, 10vw, 5rem);
-    padding-bottom: 3rem;
+    padding-top: clamp(4.5rem, 12vh, 5.5rem);
+    padding-bottom: 2.5rem;
   }
 
   .hero-editorial-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2.5rem;
+    display: block;
+    width: 100%;
+  }
+
+  .hero-text-column {
+    width: 54%;
+    max-width: 54%;
+    margin-top: 0;
+    position: relative;
+    z-index: 10;
   }
 
   .hero-badge-desktop-column {
@@ -134,23 +141,25 @@
   }
 
   .hero-lanyard-mobile-placeholder {
+    display: none !important;
+  }
+
+  .hero-lanyard-mobile-card-slot {
     display: block !important;
-    position: relative;
     width: 100%;
-    height: clamp(320px, 40dvh, 370px);
+    min-height: clamp(280px, 36vh, 340px);
     pointer-events: none;
+    position: relative;
+    margin-top: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
   .hero-meta-label {
     display: none !important;
   }
 
-  .hero-text-column {
-    margin-top: 0;
-  }
-
   .hero-scroll-hint {
-    margin-top: 1.5rem !important;
+    display: none !important;
   }
 }
 
@@ -183,6 +192,10 @@
   }
 
   .hero-lanyard-mobile-placeholder {
+    display: none !important;
+  }
+
+  .hero-lanyard-mobile-card-slot {
     display: none !important;
   }
 
