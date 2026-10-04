@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useLocation } from 'react-router-dom'
 import { books, type Book } from '../content/books'
@@ -108,6 +108,122 @@ function BookCard({ book, index }: { book: Book; index: number }) {
   )
 }
 
+interface BookHeroDetailsProps {
+  activeIndex: number
+  detailsVisible: boolean
+  isMobile?: boolean
+}
+
+/**
+ * Isolated details block component fed only by the active index.
+ * Prevents re-rendering of the 3D CircularGallery and 2D LinearGallery
+ * when the centered active book updates.
+ */
+const BookHeroDetails = memo(function BookHeroDetails({
+  activeIndex,
+  detailsVisible,
+  isMobile = false,
+}: BookHeroDetailsProps) {
+  const activeBook = books[activeIndex] || books[0]
+  const activeStatus = activeBook
+    ? statusConfig[activeBook.status] || statusConfig.read
+    : statusConfig.read
+
+  if (!activeBook) return null
+
+  if (isMobile) {
+    return (
+      <div className="books-hero-details-wrap">
+        <motion.div
+          key={activeBook.id}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{
+            opacity: detailsVisible ? 1 : 0,
+            y: detailsVisible ? 0 : 8,
+          }}
+          transition={{ duration: 0.45, ease: 'easeOut' }}
+          className="flex flex-col items-center w-full"
+        >
+          {/* Status & Volume Index */}
+          <div className="flex items-center gap-2 text-[0.68rem] font-mono tracking-widest uppercase">
+            <span className="text-muted/70">
+              Vol. #{activeBook.id} of {books.length}
+            </span>
+            <span className="text-muted/40">•</span>
+            <span
+              className="inline-flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
+              style={{ color: activeStatus.color }}
+            >
+              <span>{activeStatus.symbol}</span>
+              <span>{activeStatus.label}</span>
+            </span>
+          </div>
+
+          {/* Title in Geologica font */}
+          <h2 className="font-geologica text-[1.25rem] font-bold tracking-tight text-foreground leading-snug mt-1">
+            {activeBook.title}
+          </h2>
+
+          {/* Author */}
+          <p className="text-xs text-muted font-medium tracking-wide mt-0.5">
+            by {activeBook.author}
+          </p>
+
+          {/* Tagline */}
+          {activeBook.note && (
+            <p className="books-hero-tagline mt-1">
+              "{activeBook.note}"
+            </p>
+          )}
+        </motion.div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-2 max-w-xl mx-auto text-center px-4 min-h-[105px] flex flex-col items-center justify-start">
+      <motion.div
+        key={activeBook.id}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{
+          opacity: detailsVisible ? 1 : 0,
+          y: detailsVisible ? 0 : 8,
+        }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        className="flex flex-col items-center gap-1.5 w-full"
+      >
+        <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
+          <span className="text-muted/70">
+            Vol. #{activeBook.id} of {books.length}
+          </span>
+          <span className="text-muted/40">•</span>
+          <span
+            className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
+            style={{ color: activeStatus.color }}
+          >
+            <span>{activeStatus.symbol}</span>
+            <span>{activeStatus.label}</span>
+          </span>
+        </div>
+
+        <h2 className="font-geologica text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
+          {activeBook.title}
+        </h2>
+
+        <p className="text-sm text-muted font-medium tracking-wide">
+          by {activeBook.author}
+        </p>
+
+        {activeBook.note && (
+          <p className="books-hero-tagline">
+            "{activeBook.note}"
+          </p>
+        )}
+      </motion.div>
+    </div>
+  )
+})
+
 export function BooksPage() {
   const location = useLocation()
   const [detailsVisible, setDetailsVisible] = useState(false)
@@ -135,9 +251,6 @@ export function BooksPage() {
       text: b.title,
     }))
   }, [])
-
-  const activeBook = books[activeGalleryIndex] || books[0]
-  const activeStatus = activeBook ? (statusConfig[activeBook.status] || statusConfig.read) : statusConfig.read
 
   // Filter & search & sort logic for the grid below
   const filteredBooks = useMemo(() => {
@@ -190,9 +303,7 @@ export function BooksPage() {
           >
             <div className="w-full relative h-[420px] overflow-hidden flex items-center">
               <CircularGallery
-                key={`circular-${location.key || location.pathname}`}
                 items={galleryItems}
-                initialIndex={activeGalleryIndex}
                 bend={3}
                 textColor="#171717"
                 borderRadius={0.05}
@@ -208,48 +319,10 @@ export function BooksPage() {
             </div>
 
             {/* Active Book Details Under Gallery (Fades in when entrance reaches 60%) */}
-            {activeBook && (
-              <div className="mt-2 max-w-xl mx-auto text-center px-4 min-h-[105px] flex flex-col items-center justify-start">
-                <motion.div
-                  key={activeBook.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{
-                    opacity: detailsVisible ? 1 : 0,
-                    y: detailsVisible ? 0 : 8
-                  }}
-                  transition={{ duration: 0.45, ease: 'easeOut' }}
-                  className="flex flex-col items-center gap-1.5 w-full"
-                >
-                  <div className="flex items-center gap-2.5 text-[0.7rem] font-mono tracking-widest uppercase">
-                    <span className="text-muted/70">
-                      Vol. #{activeBook.id} of {books.length}
-                    </span>
-                    <span className="text-muted/40">•</span>
-                    <span
-                      className="inline-flex items-center gap-1.5 font-bold px-2 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
-                      style={{ color: activeStatus.color }}
-                    >
-                      <span>{activeStatus.symbol}</span>
-                      <span>{activeStatus.label}</span>
-                    </span>
-                  </div>
-
-                  <h2 className="font-geologica text-2xl md:text-3xl font-bold tracking-tight text-foreground leading-snug">
-                    {activeBook.title}
-                  </h2>
-
-                  <p className="text-sm text-muted font-medium tracking-wide">
-                    by {activeBook.author}
-                  </p>
-
-                  {activeBook.note && (
-                    <p className="books-hero-tagline">
-                      "{activeBook.note}"
-                    </p>
-                  )}
-                </motion.div>
-              </div>
-            )}
+            <BookHeroDetails
+              activeIndex={activeGalleryIndex}
+              detailsVisible={detailsVisible}
+            />
 
             {/* Scroll Down Indicator */}
             <div className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center gap-1.5 text-muted pointer-events-none z-10">
@@ -280,7 +353,6 @@ export function BooksPage() {
           <div className="books-hero-content-group">
             <div className="books-hero-carousel-wrap">
               <LinearGallery
-                key={`linear-${location.key || location.pathname}`}
                 items={galleryItems}
                 activeIndex={activeGalleryIndex}
                 onActiveChange={setActiveGalleryIndex}
@@ -288,58 +360,16 @@ export function BooksPage() {
                 speed={28}
                 direction="forward"
                 resumeDelay={2500}
-                initialIndex={activeGalleryIndex}
                 onDetailsReady={handleDetailsReady}
               />
             </div>
 
             {/* Active Book Details Under Gallery (Fades in when entrance reaches 60%) */}
-            {activeBook && (
-              <div className="books-hero-details-wrap">
-                <motion.div
-                  key={activeBook.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{
-                    opacity: detailsVisible ? 1 : 0,
-                    y: detailsVisible ? 0 : 8
-                  }}
-                  transition={{ duration: 0.45, ease: 'easeOut' }}
-                  className="flex flex-col items-center w-full"
-                >
-                  {/* Status & Volume Index */}
-                  <div className="flex items-center gap-2 text-[0.68rem] font-mono tracking-widest uppercase">
-                    <span className="text-muted/70">
-                      Vol. #{activeBook.id} of {books.length}
-                    </span>
-                    <span className="text-muted/40">•</span>
-                    <span
-                      className="inline-flex items-center gap-1 font-bold px-1.5 py-0.5 rounded-xs border border-token/60 bg-[var(--background)] shadow-2xs"
-                      style={{ color: activeStatus.color }}
-                    >
-                      <span>{activeStatus.symbol}</span>
-                      <span>{activeStatus.label}</span>
-                    </span>
-                  </div>
-
-                  {/* Title in Geologica font (readable, not below 20px) */}
-                  <h2 className="font-geologica text-[1.25rem] font-bold tracking-tight text-foreground leading-snug mt-1">
-                    {activeBook.title}
-                  </h2>
-
-                  {/* Author */}
-                  <p className="text-xs text-muted font-medium tracking-wide mt-0.5">
-                    by {activeBook.author}
-                  </p>
-
-                  {/* Note in handwritten script - legible, unslanted, solid contrast */}
-                  {activeBook.note && (
-                    <p className="books-hero-tagline">
-                      "{activeBook.note}"
-                    </p>
-                  )}
-                </motion.div>
-              </div>
-            )}
+            <BookHeroDetails
+              activeIndex={activeGalleryIndex}
+              detailsVisible={detailsVisible}
+              isMobile={true}
+            />
           </div>
 
           {/* Scroll Down Indicator Pinned Near Bottom with margin-top: auto */}

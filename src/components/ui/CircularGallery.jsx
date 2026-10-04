@@ -1,5 +1,5 @@
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
 
 import './CircularGallery.css';
 import { GALLERY_ENTRANCE, easeOutCubic, preloadGalleryImages } from '../../lib/galleryEntrance';
@@ -236,6 +236,33 @@ class Title {
 }
 
 // ============================================================================
+// Texture Cache (Hardened: Cache textures by image URL so covers never reload)
+// ============================================================================
+const glTextureCache = new Map();
+
+function getOrCreateCoverTexture(gl, imageUrl, preloadedImg) {
+  if (!imageUrl) {
+    const emptyTexture = new Texture(gl, { generateMipmaps: true });
+    if (preloadedImg) emptyTexture.image = preloadedImg;
+    return emptyTexture;
+  }
+
+  const cached = glTextureCache.get(imageUrl);
+  if (cached && cached.gl === gl) {
+    return cached;
+  }
+
+  const texture = new Texture(gl, {
+    generateMipmaps: true
+  });
+  if (preloadedImg) {
+    texture.image = preloadedImg;
+  }
+  glTextureCache.set(imageUrl, texture);
+  return texture;
+}
+
+// ============================================================================
 // Media (Book Card) Class
 // ============================================================================
 class Media {
@@ -281,12 +308,7 @@ class Media {
   }
 
   createShader() {
-    const texture = new Texture(this.gl, {
-      generateMipmaps: true
-    });
-    if (this.preloadedImg) {
-      texture.image = this.preloadedImg;
-    }
+    const texture = getOrCreateCoverTexture(this.gl, this.image, this.preloadedImg);
 
     this.program = new Program(this.gl, {
       depthTest: false,
@@ -567,6 +589,7 @@ class App {
       speed = 1.8,
       pauseOnHover = false,
       direction = 'left',
+      callbacksRef,
       onActiveChange,
       onDetailsReady,
       onIntroComplete,
@@ -578,6 +601,7 @@ class App {
     this.initialIndex = initialIndex;
     this.scrollSpeed = scrollSpeed;
     this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
+    this.callbacksRef = callbacksRef;
     this.onActiveChange = onActiveChange;
     this.onDetailsReady = onDetailsReady;
     this.onIntroComplete = onIntroComplete;
@@ -633,6 +657,48 @@ class App {
     this.setupResizeObserver();
     // [CHANGE 6]: IntersectionObserver performance pause
     this.setupIntersectionObserver();
+  }
+
+  callCallback(name, ...args) {
+    if (this.callbacksRef && this.callbacksRef.current && typeof this.callbacksRef.current[name] === 'function') {
+      this.callbacksRef.current[name](...args);
+    } else if (typeof this[name] === 'function') {
+      this[name](...args);
+    }
+  }
+
+  updateItems(newItems) {
+    if (!newItems || newItems.length === 0) return;
+    this.originalLength = newItems.length;
+
+    let repeated = [...newItems];
+    while (repeated.length < 8) {
+      repeated = repeated.concat(newItems);
+    }
+    const newMediasImages = [...repeated, ...repeated, ...repeated];
+    this.setLength = repeated.length;
+
+    if (this.medias && this.medias.length === newMediasImages.length) {
+      this.medias.forEach((media, index) => {
+        const data = newMediasImages[index];
+        media.image = data.image;
+        media.text = data.text;
+        const preloadedImg = this.loadedImagesMap ? this.loadedImagesMap.get(data.image) : null;
+        if (media.program && media.program.uniforms && media.program.uniforms.tMap) {
+          media.program.uniforms.tMap.value = getOrCreateCoverTexture(this.gl, data.image, preloadedImg);
+          if (preloadedImg && media.program.uniforms.uImageSizes) {
+            media.program.uniforms.uImageSizes.value = [
+              preloadedImg.naturalWidth || 200,
+              preloadedImg.naturalHeight || 300
+            ];
+          }
+        }
+        if (media.title) {
+          media.title.text = data.text;
+          media.title.renderTextTexture();
+        }
+      });
+    }
   }
 
   /**
@@ -1022,16 +1088,16 @@ class App {
 
       if (!this.detailsRevealed && overallProgress >= GALLERY_ENTRANCE.detailsThreshold) {
         this.detailsRevealed = true;
-        this.onDetailsReady?.();
+        this.callCallback('onDetailsReady');
       }
 
       if (elapsed >= this.totalIntroDuration) {
         this.isIntroActive = false;
         if (!this.detailsRevealed) {
           this.detailsRevealed = true;
-          this.onDetailsReady?.();
+          this.callCallback('onDetailsReady');
         }
-        this.onIntroComplete?.();
+        this.callCallback('onIntroComplete');
         if (this.medias) {
           this.medias.forEach(media => media.setOpacity(1.0));
         }
@@ -1085,7 +1151,7 @@ class App {
         const activeIndex = ((rawIndex % this.originalLength) + this.originalLength) % this.originalLength;
         if (activeIndex !== this.lastActiveIndex) {
           this.lastActiveIndex = activeIndex;
-          this.onActiveChange?.(activeIndex);
+          this.callCallback('onActiveChange', activeIndex);
         }
       }
     }
@@ -1197,16 +1263,19 @@ class App {
           if (media.title && media.title.texture && media.title.texture.texture && this.gl) {
             this.gl.deleteTexture(media.title.texture.texture);
           }
-          if (media.program && media.program.uniforms && media.program.uniforms.tMap && media.program.uniforms.tMap.value) {
-            const tex = media.program.uniforms.tMap.value;
-            if (tex.texture && this.gl) {
-              this.gl.deleteTexture(tex.texture);
-            }
-          }
         } catch {}
       });
       this.medias = [];
     }
+
+    glTextureCache.forEach((tex) => {
+      try {
+        if (tex.texture && this.gl) {
+          this.gl.deleteTexture(tex.texture);
+        }
+      } catch {}
+    });
+    glTextureCache.clear();
 
     if (this.renderer && this.renderer.gl && this.renderer.gl.canvas && this.renderer.gl.canvas.parentNode) {
       this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
@@ -1219,7 +1288,7 @@ class App {
 // ============================================================================
 // React Component Wrapper
 // ============================================================================
-export default function CircularGallery({
+function CircularGalleryComponent({
   items,
   initialIndex = 0,
   bend = 3,
@@ -1241,28 +1310,31 @@ export default function CircularGallery({
   style
 }) {
   const containerRef = useRef(null);
-  const onActiveChangeRef = useRef(onActiveChange);
-  const onDetailsReadyRef = useRef(onDetailsReady);
-  const onIntroCompleteRef = useRef(onIntroComplete);
+  const appRef = useRef(null);
+  const rendererRef = useRef(null);
+  const mediasRef = useRef(null);
+  const scrollRef = useRef(null);
+  const itemsRef = useRef(items);
+  const initialIndexRef = useRef(initialIndex);
+  const callbacksRef = useRef({
+    onActiveChange,
+    onDetailsReady,
+    onIntroComplete
+  });
 
-  useEffect(() => {
-    onActiveChangeRef.current = onActiveChange;
-  }, [onActiveChange]);
-
-  useEffect(() => {
-    onDetailsReadyRef.current = onDetailsReady;
-  }, [onDetailsReady]);
-
-  useEffect(() => {
-    onIntroCompleteRef.current = onIntroComplete;
-  }, [onIntroComplete]);
+  // Always keep callbacks ref synchronized without triggering re-renders
+  callbacksRef.current = {
+    onActiveChange,
+    onDetailsReady,
+    onIntroComplete
+  };
 
   const prefersReducedMotion = typeof window !== 'undefined'
     && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Setup effect: creates the app once on mount, tears down only on unmount
   useEffect(() => {
     if (!containerRef.current || !items || items.length === 0) return;
-    let app;
     let isMounted = true;
 
     const imageUrls = items.map(item => item.image);
@@ -1273,10 +1345,10 @@ export default function CircularGallery({
       preloadGalleryImages(imageUrls)
     ]).then(([resolvedFont, loadedImagesMap]) => {
       if (!isMounted || !containerRef.current) return;
-      app = new App(containerRef.current, {
+      const app = new App(containerRef.current, {
         items,
         loadedImagesMap,
-        initialIndex,
+        initialIndex: initialIndexRef.current,
         bend,
         textColor,
         borderRadius,
@@ -1289,17 +1361,36 @@ export default function CircularGallery({
         pauseOnHover,
         direction,
         reducedMotion: prefersReducedMotion,
-        onActiveChange: (index) => onActiveChangeRef.current?.(index),
-        onDetailsReady: () => onDetailsReadyRef.current?.(),
-        onIntroComplete: () => onIntroCompleteRef.current?.()
+        callbacksRef
       });
+
+      appRef.current = app;
+      rendererRef.current = app.renderer;
+      mediasRef.current = app.medias;
+      scrollRef.current = app.scroll;
     });
 
     return () => {
       isMounted = false;
-      if (app) app.destroy();
+      if (appRef.current) {
+        appRef.current.destroy();
+        appRef.current = null;
+        rendererRef.current = null;
+        mediasRef.current = null;
+        scrollRef.current = null;
+      }
     };
-  }, [items, initialIndex, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase, offsetY, autoplay, speed, pauseOnHover, direction]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run ONCE on mount, tear down ONLY on unmount!
+
+  // In-place update effect: if items change without unmounting, update in-place
+  useEffect(() => {
+    if (appRef.current && items && items !== itemsRef.current) {
+      itemsRef.current = items;
+      appRef.current.updateItems(items);
+      mediasRef.current = appRef.current.medias;
+    }
+  }, [items]);
 
   if (!items || items.length === 0) {
     return (
@@ -1324,3 +1415,19 @@ export default function CircularGallery({
     />
   );
 }
+
+// Wrap in React.memo with custom comparison that ignores active index or dynamic callback identity
+const CircularGallery = memo(CircularGalleryComponent, (prevProps, nextProps) => {
+  // Ignore active index or dynamic callback references
+  if (prevProps.items !== nextProps.items) return false;
+  if (prevProps.bend !== nextProps.bend) return false;
+  if (prevProps.textColor !== nextProps.textColor) return false;
+  if (prevProps.borderRadius !== nextProps.borderRadius) return false;
+  if (prevProps.font !== nextProps.font) return false;
+  if (prevProps.autoplay !== nextProps.autoplay) return false;
+  if (prevProps.speed !== nextProps.speed) return false;
+  if (prevProps.direction !== nextProps.direction) return false;
+  return true; // Keep stable, do NOT re-render!
+});
+
+export default CircularGallery;
