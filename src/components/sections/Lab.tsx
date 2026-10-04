@@ -74,15 +74,29 @@ export function Lab() {
                 </div>
                 <h3 className="font-semibold text-[1rem] leading-snug">{exp.title}</h3>
                 <p className="text-[0.85rem] text-muted leading-relaxed flex-1">{exp.description}</p>
-                {exp.github && (
-                  <a
-                    href={exp.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[0.7rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200 mt-1"
-                  >
-                    ↗ GITHUB
-                  </a>
+                {(exp.github || exp.link) && (
+                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                    {exp.github && (
+                      <a
+                        href={exp.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[0.7rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200"
+                      >
+                        ↗ GITHUB
+                      </a>
+                    )}
+                    {exp.link && (
+                      <a
+                        href={exp.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[0.7rem] font-semibold tracking-widest hover:text-accent transition-colors duration-200"
+                      >
+                        ↗ DEMO
+                      </a>
+                    )}
+                  </div>
                 )}
               </motion.article>
             ))}

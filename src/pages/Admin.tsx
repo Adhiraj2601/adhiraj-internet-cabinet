@@ -53,7 +53,7 @@ import type { Project } from '../content/projects'
 import type { Book } from '../content/books'
 import type { ScrapItem } from '../content/scraps'
 import { isObservation, type Post } from '../content/posts'
-import type { Experiment } from '../content/experiments'
+import type { Experiment, ExperimentStatus } from '../content/experiments'
 import { CassetteCard, RoughenFilterDefs } from '../components/observations/CassetteCard'
 
 type Tab = 'projects' | 'books' | 'scraps' | 'currently' | 'notes' | 'lab'
@@ -227,6 +227,10 @@ export function Admin() {
     return 'all'
   })
   const [showObservationPreview, setShowObservationPreview] = useState(true)
+
+  // Experiment modal states
+  const [editingExperiment, setEditingExperiment] = useState<Experiment | null>(null)
+  const [isNewExperiment, setIsNewExperiment] = useState(false)
 
   // Queued image uploads to publish
   const [queuedImages, setQueuedImages] = useState<{ path: string; file: File; label: string }[]>([])
@@ -732,6 +736,54 @@ export function Admin() {
       return col
     })
     setCurrentlyData(updated)
+    setHasChanges(true)
+  }
+
+  // Lab / Experiment item handlers
+  const handleSaveExperiment = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingExperiment) return
+
+    let updatedExperiments: Experiment[]
+    const experimentToSave: Experiment = {
+      ...editingExperiment,
+      title: editingExperiment.title.trim(),
+      description: editingExperiment.description.trim(),
+      status: editingExperiment.status,
+      year: editingExperiment.year.trim() || new Date().getFullYear().toString(),
+      github: editingExperiment.github?.trim() || undefined,
+      link: editingExperiment.link?.trim() || undefined,
+    }
+
+    if (isNewExperiment) {
+      updatedExperiments = [...experimentsData, experimentToSave]
+    } else {
+      updatedExperiments = experimentsData.map((exp) =>
+        exp.id === experimentToSave.id ? experimentToSave : exp
+      )
+    }
+
+    setExperimentsData(updatedExperiments)
+    setHasChanges(true)
+    setEditingExperiment(null)
+    setIsNewExperiment(false)
+  }
+
+  const handleDeleteExperiment = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this experiment?')) {
+      setExperimentsData(experimentsData.filter((exp) => exp.id !== id))
+      setHasChanges(true)
+    }
+  }
+
+  const moveExperiment = (index: number, direction: 'up' | 'down') => {
+    const newIdx = direction === 'up' ? index - 1 : index + 1
+    if (newIdx < 0 || newIdx >= experimentsData.length) return
+    const updated = [...experimentsData]
+    const temp = updated[index]
+    updated[index] = updated[newIdx]
+    updated[newIdx] = temp
+    setExperimentsData(updated)
     setHasChanges(true)
   }
 
@@ -2928,15 +2980,21 @@ export function Admin() {
               </div>
               <button
                 onClick={() => {
-                  const newExp = {
-                    id: String(experimentsData.length + 1).padStart(2, '0'),
-                    title: 'New Experiment',
-                    description: 'Description of this experiment...',
-                    status: 'WIP' as const,
+                  const maxNum = experimentsData.reduce((max, exp) => {
+                    const n = parseInt(exp.id.replace(/\D/g, ''), 10)
+                    return !isNaN(n) && n > max ? n : max
+                  }, 0)
+                  const nextId = String(maxNum + 1).padStart(2, '0')
+                  setEditingExperiment({
+                    id: nextId,
+                    title: '',
+                    description: '',
+                    status: 'IDEA',
                     year: new Date().getFullYear().toString(),
-                  }
-                  setExperimentsData([...experimentsData, newExp])
-                  setHasChanges(true)
+                    github: '',
+                    link: '',
+                  })
+                  setIsNewExperiment(true)
                 }}
                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wider bg-[#171717] text-white border border-black shadow-[2px_2px_0px_#000000] hover:bg-[#333333] transition-all rounded-xs cursor-pointer"
               >
@@ -2946,30 +3004,272 @@ export function Admin() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {experimentsData.map((exp, idx) => (
-                <div key={exp.id} className="p-4 border border-token rounded-sm flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase text-accent">{exp.status}</span>
-                      <span className="text-[10px] text-muted">{exp.year}</span>
+              {experimentsData.map((exp, idx) => {
+                const getStatusStyle = (st: ExperimentStatus) => {
+                  switch (st) {
+                    case 'EXPERIMENT':
+                      return { color: 'var(--accent)', borderColor: 'rgba(49, 92, 255, 0.3)', backgroundColor: 'rgba(49, 92, 255, 0.06)' }
+                    case 'WIP':
+                      return { color: '#B47B16', borderColor: 'rgba(232, 168, 56, 0.4)', backgroundColor: 'rgba(232, 168, 56, 0.08)' }
+                    case 'PLAYING':
+                      return { color: '#2E7D4F', borderColor: 'rgba(76, 175, 119, 0.4)', backgroundColor: 'rgba(76, 175, 119, 0.08)' }
+                    case 'ABANDONED':
+                      return { color: '#737373', borderColor: 'rgba(115, 115, 115, 0.3)', backgroundColor: 'rgba(115, 115, 115, 0.05)' }
+                    case 'IDEA':
+                    default:
+                      return { color: 'var(--muted)', borderColor: 'var(--border)', backgroundColor: 'rgba(0, 0, 0, 0.02)' }
+                  }
+                }
+                const statusStyle = getStatusStyle(exp.status)
+
+                return (
+                  <div
+                    key={exp.id}
+                    className="p-4 border border-token rounded-sm flex flex-col justify-between bg-card hover:border-neutral-400 transition-colors shadow-2xs"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span
+                          className="text-[10px] font-bold uppercase px-2 py-0.5 rounded border"
+                          style={statusStyle}
+                        >
+                          {exp.status}
+                        </span>
+                        <span className="text-[10px] font-mono text-muted">{exp.year}</span>
+                      </div>
+                      <h3 className="font-bold text-sm mb-1 tracking-tight">{exp.title}</h3>
+                      <p className="text-xs text-muted leading-relaxed whitespace-pre-wrap">{exp.description}</p>
+
+                      {/* GitHub / Demo Link Info */}
+                      <div className="flex flex-wrap items-center gap-2 mt-3 pt-2.5 border-t border-token/60">
+                        {exp.github ? (
+                          <a
+                            href={exp.github}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-accent hover:underline"
+                            title="Open GitHub repo"
+                          >
+                            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+                            </svg>
+                            <span>github</span>
+                            <ExternalLink size={10} />
+                          </a>
+                        ) : (
+                          <span className="text-[10px] text-muted/60 italic font-mono">no github link</span>
+                        )}
+
+                        {exp.link && (
+                          <a
+                            href={exp.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-mono font-medium text-muted hover:text-foreground hover:underline ml-auto"
+                            title="Open live link"
+                          >
+                            <span>live demo</span>
+                            <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <h3 className="font-bold text-sm mb-1">{exp.title}</h3>
-                    <p className="text-xs text-muted leading-relaxed">{exp.description}</p>
+
+                    {/* Card Actions Footer */}
+                    <div className="flex items-center justify-between mt-4 pt-2.5 border-t border-token">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => moveExperiment(idx, 'up')}
+                          disabled={idx === 0}
+                          className="p-1.5 border border-token hover:bg-neutral-100 rounded-xs disabled:opacity-30 cursor-pointer"
+                          title="Move Up"
+                        >
+                          <ArrowUp size={13} />
+                        </button>
+                        <button
+                          onClick={() => moveExperiment(idx, 'down')}
+                          disabled={idx === experimentsData.length - 1}
+                          className="p-1.5 border border-token hover:bg-neutral-100 rounded-xs disabled:opacity-30 cursor-pointer"
+                          title="Move Down"
+                        >
+                          <ArrowDown size={13} />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingExperiment(exp)
+                            setIsNewExperiment(false)
+                          }}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border border-token hover:bg-neutral-100 rounded-xs cursor-pointer"
+                        >
+                          <Edit3 size={13} />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExperiment(exp.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 border border-red-200 rounded-xs cursor-pointer"
+                          title="Delete Experiment"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-end mt-4 pt-2 border-t border-token">
+                )
+              })}
+            </div>
+
+            {/* Experiment Edit/Create Modal */}
+            {editingExperiment && (
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <div className="bg-[var(--background)] border border-token max-w-xl w-full p-6 rounded-sm shadow-xl max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between pb-4 border-b border-token mb-5">
+                    <h3 className="font-bold text-base">
+                      {isNewExperiment ? 'Add New Idea / Experiment' : `Edit "${editingExperiment.title || 'Experiment'}"`}
+                    </h3>
                     <button
-                      onClick={() => {
-                        setExperimentsData(experimentsData.filter((_, i) => i !== idx))
-                        setHasChanges(true)
-                      }}
-                      className="text-xs text-muted hover:text-red-600"
+                      onClick={() => setEditingExperiment(null)}
+                      className="text-muted hover:text-foreground cursor-pointer text-sm"
+                      title="Close modal"
                     >
-                      Delete
+                      ✕
                     </button>
                   </div>
+
+                  <form onSubmit={handleSaveExperiment} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">Title</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingExperiment.title}
+                        onChange={(e) => setEditingExperiment({ ...editingExperiment, title: e.target.value })}
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                        placeholder="e.g. Font Pairing Tool"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Status</label>
+                        <select
+                          value={editingExperiment.status}
+                          onChange={(e) =>
+                            setEditingExperiment({
+                              ...editingExperiment,
+                              status: e.target.value as ExperimentStatus,
+                            })
+                          }
+                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent cursor-pointer"
+                        >
+                          <option value="IDEA">IDEA (Idea / Concept)</option>
+                          <option value="WIP">WIP (Work In Progress)</option>
+                          <option value="EXPERIMENT">EXPERIMENT (Active Code)</option>
+                          <option value="PLAYING">PLAYING (Sandbox / Toy)</option>
+                          <option value="ABANDONED">ABANDONED (Shelved / Post-mortem)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider mb-1">Year</label>
+                        <input
+                          type="text"
+                          required
+                          value={editingExperiment.year}
+                          onChange={(e) => setEditingExperiment({ ...editingExperiment, year: e.target.value })}
+                          className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent"
+                          placeholder="2026"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider mb-1">
+                        Content / Description
+                      </label>
+                      <textarea
+                        rows={4}
+                        required
+                        value={editingExperiment.description}
+                        onChange={(e) =>
+                          setEditingExperiment({ ...editingExperiment, description: e.target.value })
+                        }
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent leading-relaxed"
+                        placeholder="Describe what this idea/experiment is, what you tried, what worked, or what you learned..."
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold uppercase tracking-wider">GitHub Link</label>
+                        {editingExperiment.github && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingExperiment({ ...editingExperiment, github: '' })}
+                            className="text-[11px] text-red-600 hover:underline cursor-pointer"
+                          >
+                            Remove GitHub link
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="url"
+                        value={editingExperiment.github || ''}
+                        onChange={(e) => setEditingExperiment({ ...editingExperiment, github: e.target.value })}
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                        placeholder="https://github.com/username/repository (optional)"
+                      />
+                      <p className="text-[10px] text-muted mt-1">
+                        Enter a repository URL, or click "Remove GitHub link" to clear it.
+                      </p>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold uppercase tracking-wider">
+                          Live Demo / External Link (Optional)
+                        </label>
+                        {editingExperiment.link && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingExperiment({ ...editingExperiment, link: '' })}
+                            className="text-[11px] text-red-600 hover:underline cursor-pointer"
+                          >
+                            Remove live link
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="url"
+                        value={editingExperiment.link || ''}
+                        onChange={(e) => setEditingExperiment({ ...editingExperiment, link: e.target.value })}
+                        className="w-full px-3 py-2 text-xs bg-background border border-token rounded-xs focus:outline-accent font-mono"
+                        placeholder="https://my-experiment.vercel.app (optional)"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-token mt-6">
+                      <button
+                        type="button"
+                        onClick={() => setEditingExperiment(null)}
+                        className="px-4 py-2 text-xs font-semibold border border-token hover:bg-neutral-100 rounded-xs cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider bg-[#171717] text-white border border-black shadow-[2px_2px_0px_#000000] hover:bg-[#333333] rounded-xs cursor-pointer transition-colors"
+                      >
+                        <Save size={13} />
+                        <span>{isNewExperiment ? 'Add Experiment' : 'Save Changes'}</span>
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </main>
