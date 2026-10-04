@@ -9,7 +9,7 @@
   {
     "id": "05",
     "title": "Conway Variations",
-    "description": "Game of Life but the rules change every 10 generations. Chaos, mostly.",
+    "description": "Game of Life but the rules change every 10 generations.",
     "status": "PLAYING",
     "year": "2025"
   },
