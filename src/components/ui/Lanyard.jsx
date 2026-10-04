@@ -18,6 +18,18 @@ extend({ MeshLineGeometry, MeshLineMaterial });
 useGLTF.preload(cardGLB);
 
 /**
+ * Fit image inside box without distortion (contain)
+ */
+function drawContain(ctx, img, x, y, w, h) {
+  const nw = img.naturalWidth || img.width;
+  const nh = img.naturalHeight || img.height;
+  const s = Math.min(w / nw, h / nh);
+  const dw = nw * s;
+  const dh = nh * s;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+
+/**
  * 3D Lanyard ID Badge Component
  * Features:
  * - Orthographic camera (1 world unit = 100 CSS px) for 1:1 DOM matching
@@ -96,7 +108,7 @@ function useMeasuredCoords(targetRef, isMobile) {
     if (isMobile) {
       const sw = typeof window !== 'undefined' ? window.innerWidth : 390;
       const wPx = Math.min(320, sw * 0.78);
-      const hPx = wPx * 0.75;
+      const hPx = wPx * (1452 / 1680);
       return {
         cardW: wPx / 100,
         cardH: hPx / 100,
@@ -110,7 +122,7 @@ function useMeasuredCoords(targetRef, isMobile) {
     }
     return {
       cardW: 4.2,
-      cardH: 3.15,
+      cardH: 3.63,
       restX: 1.15,
       restY: 0.18,
       anchorX: 1.10,
@@ -127,7 +139,7 @@ function useMeasuredCoords(targetRef, isMobile) {
       if (isMobile) {
         const sw = window.innerWidth;
         const wPx = Math.min(320, sw * 0.78);
-        const hPx = wPx * 0.75;
+        const hPx = wPx * (1452 / 1680);
         const mobileContainer = document.querySelector('.hero-lanyard-mobile-container');
         const cH = mobileContainer ? mobileContainer.clientHeight : 420;
         setCoords({
@@ -150,7 +162,7 @@ function useMeasuredCoords(targetRef, isMobile) {
       if (desktopContainer) {
         const containerRect = desktopContainer.getBoundingClientRect();
         let cardWPx = 420;
-        let cardHPx = 315;
+        let cardHPx = 363;
         let targetCenterXPx = containerRect.left + containerRect.width * 0.62;
         let targetCenterYPx = containerRect.top + containerRect.height * 0.48;
 
@@ -158,7 +170,7 @@ function useMeasuredCoords(targetRef, isMobile) {
           const tRect = targetEl.getBoundingClientRect();
           if (tRect.width > 50) {
             cardWPx = tRect.width;
-            cardHPx = tRect.height;
+            cardHPx = cardWPx * (1452 / 1680);
             targetCenterXPx = tRect.left + tRect.width / 2;
             targetCenterYPx = tRect.top + tRect.height / 2;
           }
@@ -283,8 +295,16 @@ function Band({
         }
         if (!active || !img.width) return;
 
-        const W = 1600;
-        const H = 1200;
+        const nw = img.naturalWidth || 800;
+        const nh = img.naturalHeight || 600;
+
+        // Derive card dimensions dynamically from natural aspect ratio of the photo
+        const W = 1680;
+        const padding = 48;
+        const photoW = W - 2 * padding; // 1584
+        const photoH = Math.round(photoW * (nh / nw)); // 1188 for 4:3
+        const captionStripH = 168;
+        const H = padding + photoH + captionStripH + padding; // 1452
 
         // Front Face Canvas
         const cF = document.createElement('canvas');
@@ -303,29 +323,25 @@ function Band({
         ctxF.strokeRect(4, 4, W - 8, H - 8);
 
         // Inset photo frame
-        const padX = 46;
-        const padTop = 46;
-        const photoW = W - padX * 2;
-        const photoH = 955;
-
         ctxF.fillStyle = '#F4F1EA';
-        ctxF.fillRect(padX, padTop, photoW, photoH);
+        ctxF.fillRect(padding, padding, photoW, photoH);
         ctxF.strokeStyle = 'rgba(23, 23, 23, 0.12)';
         ctxF.lineWidth = 3;
-        ctxF.strokeRect(padX, padTop, photoW, photoH);
+        ctxF.strokeRect(padding, padding, photoW, photoH);
 
-        // Draw portrait image
+        // Draw portrait image with contain (never stretch or distort)
         ctxF.save();
         ctxF.beginPath();
-        ctxF.rect(padX + 2, padTop + 2, photoW - 4, photoH - 4);
+        ctxF.rect(padding + 2, padding + 2, photoW - 4, photoH - 4);
         ctxF.clip();
-        ctxF.drawImage(img, padX + 2, padTop + 2, photoW - 4, photoH - 4);
+        drawContain(ctxF, img, padding + 2, padding + 2, photoW - 4, photoH - 4);
         ctxF.restore();
 
         // Bottom polaroid caption: handwriting on left, mono fig label on right
+        const captionCenterY = padding + photoH + captionStripH / 2;
         ctxF.save();
-        ctxF.translate(padX + 20, H - 86);
-        ctxF.rotate(-0.032);
+        ctxF.translate(padding + 20, captionCenterY + 12);
+        ctxF.rotate(-0.026);
         ctxF.font = '500 52px "Caveat", cursive';
         ctxF.fillStyle = '#6E6A62';
         ctxF.textBaseline = 'middle';
@@ -334,11 +350,13 @@ function Band({
 
         ctxF.save();
         ctxF.font = '600 24px "Space Mono", monospace';
-        ctxF.letterSpacing = '5px';
+        if ('letterSpacing' in ctxF) {
+          ctxF.letterSpacing = '4.5px';
+        }
         ctxF.fillStyle = '#77736B';
         ctxF.textAlign = 'right';
         ctxF.textBaseline = 'middle';
-        ctxF.fillText('FIG. 01 / ARTIFACT', W - padX - 20, H - 90);
+        ctxF.fillText('FIG. 01 / ARTIFACT', W - padding - 20, captionCenterY + 8);
         ctxF.restore();
 
         // Back Face Canvas
@@ -356,14 +374,18 @@ function Band({
 
         ctxB.fillStyle = '#6E6A62';
         ctxB.font = '700 32px "Space Mono", monospace';
-        ctxB.letterSpacing = '6px';
+        if ('letterSpacing' in ctxB) {
+          ctxB.letterSpacing = '6px';
+        }
         ctxB.textAlign = 'center';
         ctxB.textBaseline = 'middle';
         ctxB.fillText('ADHIRAJ SENGAR · ARCHIVE 2026', W / 2, H / 2 - 25);
 
         ctxB.fillStyle = '#948F85';
         ctxB.font = '600 20px "Space Mono", monospace';
-        ctxB.letterSpacing = '4.5px';
+        if ('letterSpacing' in ctxB) {
+          ctxB.letterSpacing = '4.5px';
+        }
         ctxB.fillText('PERSONAL ACCESS CARD', W / 2, H / 2 + 35);
 
         const fTex = new THREE.CanvasTexture(cF);

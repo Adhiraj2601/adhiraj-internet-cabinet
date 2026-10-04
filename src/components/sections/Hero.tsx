@@ -220,7 +220,7 @@ export function Hero() {
             {canRenderLanyard ? (
               <div
                 ref={desktopTargetRef}
-                className="hero-badge-target-placeholder w-full max-w-[420px] mx-auto aspect-[4/3] invisible pointer-events-none"
+                className="hero-badge-target-placeholder w-full max-w-[420px] mx-auto aspect-[1680/1452] invisible pointer-events-none"
                 aria-hidden="true"
               />
             ) : (
