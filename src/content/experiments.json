@@ -11,8 +11,7 @@
     "title": "Conway Variations",
     "description": "Game of Life but the rules change every 10 generations. Chaos, mostly.",
     "status": "PLAYING",
-    "year": "2025",
-    "github": "https://github.com/adhirajsengar/conway-variations"
+    "year": "2025"
   },
   {
     "id": "06",
