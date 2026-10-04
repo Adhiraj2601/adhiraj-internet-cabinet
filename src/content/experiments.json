@@ -1,11 +1,10 @@
 [
   {
     "id": "04",
-    "title": "Pixel Weather App",
-    "description": "Weather data rendered as pixel art. API integration worked. Art looked terrible.",
-    "status": "ABANDONED",
-    "year": "2025",
-    "github": "https://github.com/adhirajsengar/pixel-weather"
+    "title": "No retreat chess",
+    "description": "what if your army had to make it's last stand? \nPieces are no longer allowed to move backwards",
+    "status": "IDEA",
+    "year": "2025"
   },
   {
     "id": "05",
