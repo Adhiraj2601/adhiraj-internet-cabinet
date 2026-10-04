@@ -41,6 +41,8 @@ function drawContain(ctx, img, x, y, w, h) {
  * - Rapier physics locked to XY plane with linear/angular damping & drag velocity clamping
  * - Full responsive support for Desktop and Mobile viewports
  */
+export const MOBILE_BREAKPOINT = 1200;
+
 export default function Lanyard({
   gravity = [0, -40, 0],
   frontImage = defaultFrontImage,
@@ -55,11 +57,11 @@ export default function Lanyard({
   style
 }) {
   const [internalIsMobile, setInternalIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 1024
+    () => typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
   );
 
   useEffect(() => {
-    const handleResize = () => setInternalIsMobile(window.innerWidth < 1024);
+    const handleResize = () => setInternalIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -70,6 +72,11 @@ export default function Lanyard({
   const coords = useMeasuredCoords(targetRef, isMobile);
 
   const [ready, setReady] = useState(prefersReducedMotion);
+  const isFirstMountRef = useRef(true);
+
+  useEffect(() => {
+    isFirstMountRef.current = false;
+  }, []);
 
   useEffect(() => {
     if (prefersReducedMotion) {
@@ -111,7 +118,9 @@ export default function Lanyard({
           paused={!ready || prefersReducedMotion}
         >
           <Band
+            key={isMobile ? 'mobile' : 'desktop'}
             isMobile={isMobile}
+            isFirstMount={isFirstMountRef.current}
             coords={coords}
             frontImage={frontImage}
             backImage={backImage}
@@ -140,7 +149,7 @@ function measureCoords(targetRef, isMobile) {
   }
 
   const sw = window.innerWidth;
-  const isMob = isMobile ?? (sw < 1024);
+  const isMob = isMobile ?? (sw < MOBILE_BREAKPOINT);
   const container =
     document.querySelector('.hero-lanyard-container') ||
     document.querySelector('.hero-section') ||
@@ -183,7 +192,7 @@ function measureCoords(targetRef, isMobile) {
     };
   }
 
-  // Desktop (>= 1024px)
+  // Desktop (>= 1200px)
   let cardWPx = 420;
   let cardHPx = 363;
   let targetCenterXPx = containerRect.left + containerRect.width * 0.78;
@@ -211,9 +220,21 @@ function measureCoords(targetRef, isMobile) {
     navMidX = (wR.right + bR.left) / 2;
   }
 
-  const anchorXPx = navMidX ?? targetCenterXPx;
-  const aX = (anchorXPx - containerCenterXPx) / 100;
-  const rX = (targetCenterXPx - containerCenterXPx) / 100;
+  // Safety boundaries to prevent overlapping text and overflowing screen
+  const textCol = document.querySelector('.hero-text-column');
+  const textRightPx = textCol ? textCol.getBoundingClientRect().right : containerCenterXPx;
+  const minSafeX = Math.max(containerCenterXPx + 40, textRightPx + cardWPx / 2 + 24);
+  const maxSafeX = (containerRect.right || sw) - cardWPx / 2 - 20;
+
+  // Prefer navMidX if reasonably aligned with the target placeholder; otherwise use targetCenterXPx
+  let calculatedAnchorX = targetCenterXPx;
+  if (navMidX !== null && Math.abs(navMidX - targetCenterXPx) < 120) {
+    calculatedAnchorX = navMidX;
+  }
+  const safeAnchorXPx = Math.max(minSafeX, Math.min(calculatedAnchorX, maxSafeX));
+
+  const aX = (safeAnchorXPx - containerCenterXPx) / 100;
+  const rX = aX;
   const rY = (containerCenterYPx - targetCenterYPx) / 100;
   const aY = (containerRect.height / 2 + 35) / 100;
 
@@ -234,6 +255,15 @@ function measureCoords(targetRef, isMobile) {
  */
 function useMeasuredCoords(targetRef, isMobile) {
   const [coords, setCoords] = useState(() => measureCoords(targetRef, isMobile));
+  const prevIsMobileRef = useRef(isMobile);
+
+  // Synchronously synchronize coords when breakpoint changes to eliminate stale 1-render lag
+  let currentCoords = coords;
+  if (prevIsMobileRef.current !== isMobile) {
+    prevIsMobileRef.current = isMobile;
+    currentCoords = measureCoords(targetRef, isMobile);
+    setCoords(currentCoords);
+  }
 
   useEffect(() => {
     function measure() {
@@ -249,13 +279,14 @@ function useMeasuredCoords(targetRef, isMobile) {
     };
   }, [targetRef, isMobile]);
 
-  return coords;
+  return currentCoords;
 }
 
 function Band({
   maxSpeed = 50,
   minSpeed = 10,
   isMobile = false,
+  isFirstMount = true,
   coords,
   frontImage,
   backImage,
@@ -500,7 +531,9 @@ function Band({
   const segLen = ropeLength / 3;
 
   const startPositions = useMemo(() => {
-    if (prefersReducedMotion) {
+    // If user prefers reduced motion, or if this is a remount due to breakpoint resize,
+    // start immediately at rest pose so the card doesn't drop from the sky on resize
+    if (prefersReducedMotion || !isFirstMount) {
       return {
         fixed: [coords.anchorX, coords.anchorY, 0],
         j1: [coords.anchorX, coords.anchorY - segLen, 0],
@@ -510,7 +543,7 @@ function Band({
       };
     }
 
-    // Calculate maximum safe spread to the right vs left
+    // On initial page load: start at top with subtle swing and fall down (React Bits entrance)
     const rightSpace = (coords.canvasW / 2) - coords.anchorX - cardHalfW - 0.15;
     const leftSpace = coords.anchorX - (-coords.canvasW / 2) - cardHalfW - 0.15;
 
@@ -536,7 +569,7 @@ function Band({
       j3: [coords.anchorX + 3 * dx, coords.anchorY, 0],
       card: [cardStartX, cardStartY, 0],
     };
-  }, [coords, segLen, cardHalfW, anchorY, isMobile, prefersReducedMotion]);
+  }, [coords, segLen, cardHalfW, anchorY, isMobile, prefersReducedMotion, isFirstMount]);
 
   const hasUnpausedRef = useRef(false);
 
@@ -580,6 +613,7 @@ function Band({
     [0, anchorY, 0]
   ]);
 
+  // Smoothly move fixed anchor on continuous viewport changes
   useEffect(() => {
     if (fixed.current) {
       try {
@@ -635,7 +669,7 @@ function Band({
       curve.points[1].copy(j2.current.lerped);
       curve.points[2].copy(j1.current.lerped);
       curve.points[3].copy(fixed.current.translation());
-      band.current.geometry.setPoints(curve.getPoints(isMobile ? 16 : 32));
+      band.current.geometry.setPoints(curve.getPoints(32));
 
       ang.copy(card.current.angvel());
       rot.copy(card.current.rotation());
@@ -740,7 +774,7 @@ function Band({
           enabledTranslations={[true, true, false]}
           enabledRotations={[false, false, true]}
         >
-          <BallCollider args={[0.08]} />
+          <BallCollider args={[0.02]} mass={0.1} sensor />
         </RigidBody>
 
         <RigidBody
@@ -750,7 +784,7 @@ function Band({
           enabledTranslations={[true, true, false]}
           enabledRotations={[false, false, true]}
         >
-          <BallCollider args={[0.08]} />
+          <BallCollider args={[0.02]} mass={0.1} sensor />
         </RigidBody>
 
         <RigidBody
@@ -760,7 +794,7 @@ function Band({
           enabledTranslations={[true, true, false]}
           enabledRotations={[false, false, true]}
         >
-          <BallCollider args={[0.08]} />
+          <BallCollider args={[0.02]} mass={0.1} sensor />
         </RigidBody>
 
         {/* Card rigid body: locked to XY plane */}
@@ -772,7 +806,7 @@ function Band({
           enabledTranslations={[true, true, false]}
           enabledRotations={[false, true, true]}
         >
-          <CuboidCollider args={[coords.cardW / 2, coords.cardH / 2, cardT / 2]} />
+          <CuboidCollider args={[coords.cardW / 2, coords.cardH / 2, cardT / 2]} mass={0.2} />
           <group
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}

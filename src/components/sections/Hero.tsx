@@ -75,7 +75,7 @@ export function Hero() {
   return (
     <section
       ref={heroRef}
-      className="hero-section relative min-h-0 lg:min-h-[90dvh] flex flex-col justify-start lg:justify-end pb-12 sm:pb-16 lg:pb-24 pt-16 sm:pt-20 lg:pt-36 overflow-x-clip"
+      className="hero-section relative flex flex-col overflow-x-clip"
       aria-label="Introduction"
     >
       {/* 3D Lanyard integration with ErrorBoundary & Fallback */}
@@ -96,29 +96,29 @@ export function Hero() {
         </LanyardErrorBoundary>
       ) : null}
 
-      {/* On mobile (< 1024px), reserve space for the swinging badge above the text */}
+      {/* On mobile (< 1200px), reserve space for the swinging badge above the text */}
       {canRenderLanyard && (
         <div
-          className="block lg:hidden hero-lanyard-mobile-placeholder"
+          className="hero-lanyard-mobile-placeholder"
           aria-hidden="true"
         />
       )}
 
       <div className="container-main w-full">
-        {/* Small metadata label (visible on desktop) */}
+        {/* Small metadata label (visible on desktop >= 1200px) */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.35 }}
-          className="hidden lg:block mb-8 md:mb-12"
+          className="hero-meta-label mb-8 md:mb-12"
         >
           <SectionLabel>Adi's Archive / 2026</SectionLabel>
         </motion.div>
 
         {/* 2-column editorial grid: Intro on left, Badge labels / Fallback portrait on right */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+        <div className="hero-editorial-grid">
           {/* Left Column: Heading & Supporting Text */}
-          <div className="lg:col-span-7 flex flex-col justify-center hero-text-column relative z-30">
+          <div className="hero-text-column flex flex-col justify-center relative z-30">
             {/* Large hero text */}
             <h1
               className="leading-none font-bold tracking-tighter"
@@ -211,7 +211,7 @@ export function Hero() {
           </div>
 
           {/* Right Column: Target anchor placeholder on desktop or fallback portrait */}
-          <div className="hidden lg:flex flex-col justify-center lg:col-span-5 relative">
+          <div className="hero-badge-desktop-column relative">
             {canRenderLanyard ? (
               <div
                 ref={desktopTargetRef}
@@ -225,7 +225,7 @@ export function Hero() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="mt-6 lg:mt-16 flex items-center justify-between">
+        <div className="hero-scroll-hint flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

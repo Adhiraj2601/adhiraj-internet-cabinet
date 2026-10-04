@@ -96,7 +96,7 @@
 }
 
 /* ==========================================================================
-   LANYARD 3D HERO INTEGRATION
+   LANYARD 3D HERO INTEGRATION & 1200px RESPONSIVE EDITORIAL SYSTEM
    ========================================================================== */
 
 .hero-section {
@@ -114,18 +114,86 @@
   overflow: visible;
 }
 
-/* Mobile & Tablet spacer for badge stacking */
-@media (max-width: 1023px) {
+/* Mobile & Tablet (< 1200px): Stacked editorial layout with badge above text */
+@media (max-width: 1199px) {
+  .hero-section {
+    min-height: 0;
+    justify-content: flex-start;
+    padding-top: clamp(4rem, 10vw, 5rem);
+    padding-bottom: 3rem;
+  }
+
+  .hero-editorial-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .hero-badge-desktop-column {
+    display: none !important;
+  }
+
   .hero-lanyard-mobile-placeholder {
+    display: block !important;
     position: relative;
     width: 100%;
     height: clamp(320px, 40dvh, 370px);
     pointer-events: none;
   }
 
+  .hero-meta-label {
+    display: none !important;
+  }
+
   .hero-text-column {
     margin-top: 0;
   }
+
+  .hero-scroll-hint {
+    margin-top: 1.5rem !important;
+  }
 }
+
+/* Desktop (>= 1200px): 2-Column editorial layout (text left, badge right) */
+@media (min-width: 1200px) {
+  .hero-section {
+    min-height: 90dvh;
+    justify-content: flex-end;
+    padding-top: 9rem;
+    padding-bottom: 6rem;
+  }
+
+  .hero-editorial-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 3.5rem;
+    align-items: center;
+  }
+
+  .hero-text-column {
+    grid-column: span 7 / span 7;
+  }
+
+  .hero-badge-desktop-column {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    grid-column: span 5 / span 5;
+    position: relative;
+  }
+
+  .hero-lanyard-mobile-placeholder {
+    display: none !important;
+  }
+
+  .hero-meta-label {
+    display: block !important;
+  }
+
+  .hero-scroll-hint {
+    margin-top: 4rem !important;
+  }
+}
+
 
 
