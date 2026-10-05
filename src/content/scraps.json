@@ -119,5 +119,23 @@
     "date": "March 2026",
     "description": "Compilation of spontaneous doodles, quick character sketches, and daily notes.",
     "inCarousel": true
+  },
+  {
+    "id": "12",
+    "src": "/images/scrapbook/1ee0509f-deee-47bc-8924-7177552c3a4b.jpg",
+    "alt": "a splash of color",
+    "rotation": 0.5,
+    "size": "wide",
+    "note": "Happiness is a Hibiscus in full bloom",
+    "inCarousel": false
+  },
+  {
+    "id": "13",
+    "src": "/images/scrapbook/b9af8e54-dc0d-4a3a-a72d-44b77fa107ed.jpg",
+    "alt": "aot fanart",
+    "rotation": 1,
+    "size": "tall",
+    "note": " If you haven't watched A.O.T I honestly encourage you to watch it",
+    "inCarousel": false
   }
 ]
