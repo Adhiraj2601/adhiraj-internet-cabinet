@@ -36,6 +36,7 @@ export function SketchesPage() {
       title: item.note || item.alt,
       subtitle: `#${item.id}${item.date ? ' · ' + item.date : ''}`,
       id: item.id,
+      rawItem: item,
     }))
   }, [isMobile])
 
@@ -63,13 +64,15 @@ export function SketchesPage() {
 
   // Active list for lightbox navigation (prev/next)
   const activeList = useMemo(() => {
-    if (selectedSketch && filteredSketches.some((s) => s.id === selectedSketch.id)) {
+    if (selectedSketch && filteredSketches.some((s) => s.id === selectedSketch.id && s.src === selectedSketch.src)) {
       return filteredSketches
     }
     return scrapItems
   }, [selectedSketch, filteredSketches])
 
-  const currentIndex = selectedSketch ? activeList.findIndex((s) => s.id === selectedSketch.id) : -1
+  const currentIndex = selectedSketch
+    ? activeList.findIndex((s) => s.id === selectedSketch.id && s.src === selectedSketch.src)
+    : -1
 
   // Lightbox keyboard navigation (Esc, ArrowLeft, ArrowRight)
   const handlePrev = useCallback(() => {
@@ -132,7 +135,14 @@ export function SketchesPage() {
                 innerShade={0.25}
                 cornerRadius={8}
                 onItemClick={(item) => {
-                  const found = scrapItems.find((s) => s.id === item.id)
+                  if (item.rawItem) {
+                    setSelectedSketch(item.rawItem)
+                    return
+                  }
+                  const found =
+                    scrapItems.find((s) => s.id === item.id && s.src === item.src) ||
+                    scrapItems.find((s) => s.src === item.src) ||
+                    scrapItems.find((s) => s.id === item.id)
                   if (found) setSelectedSketch(found)
                 }}
               />
@@ -183,7 +193,14 @@ export function SketchesPage() {
                 innerShade={0.25}
                 cornerRadius={8}
                 onItemClick={(item) => {
-                  const found = scrapItems.find((s) => s.id === item.id)
+                  if (item.rawItem) {
+                    setSelectedSketch(item.rawItem)
+                    return
+                  }
+                  const found =
+                    scrapItems.find((s) => s.id === item.id && s.src === item.src) ||
+                    scrapItems.find((s) => s.src === item.src) ||
+                    scrapItems.find((s) => s.id === item.id)
                   if (found) setSelectedSketch(found)
                 }}
               />
@@ -316,7 +333,7 @@ export function SketchesPage() {
             <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
               {filteredSketches.map((item, index) => (
                 <motion.figure
-                  key={item.id}
+                  key={`${item.id}-${item.src}`}
                   variants={fadeUp}
                   initial="hidden"
                   animate="visible"

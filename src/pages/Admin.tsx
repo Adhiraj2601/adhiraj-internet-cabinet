@@ -1281,9 +1281,14 @@ export function Admin() {
               </div>
               <button
                 onClick={() => {
+                  const maxId = projectsData.reduce((acc, p) => {
+                    const n = parseInt(p.id, 10)
+                    return !isNaN(n) && n > acc ? n : acc
+                  }, 0)
+                  const nextId = String(maxId + 1).padStart(2, '0')
                   setEditingProject({
-                    id: String(projectsData.length + 1).padStart(2, '0'),
-                    number: String(projectsData.length + 1).padStart(2, '0'),
+                    id: nextId,
+                    number: nextId,
                     title: '',
                     slug: '',
                     category: '',
@@ -1548,8 +1553,12 @@ export function Admin() {
               </div>
               <button
                 onClick={() => {
+                  const maxId = booksData.reduce((acc, b) => {
+                    const n = parseInt(b.id, 10)
+                    return !isNaN(n) && n > acc ? n : acc
+                  }, 0)
                   setEditingBook({
-                    id: String(booksData.length + 1).padStart(2, '0'),
+                    id: String(maxId + 1).padStart(2, '0'),
                     title: '',
                     author: '',
                     note: '',
@@ -1753,8 +1762,12 @@ export function Admin() {
               </div>
               <button
                 onClick={() => {
+                  const maxId = scrapsData.reduce((acc, s) => {
+                    const n = parseInt(s.id, 10)
+                    return !isNaN(n) && n > acc ? n : acc
+                  }, 0)
                   setEditingScrap({
-                    id: String(scrapsData.length + 1).padStart(2, '0'),
+                    id: String(maxId + 1).padStart(2, '0'),
                     src: '',
                     alt: '',
                     rotation: 0,

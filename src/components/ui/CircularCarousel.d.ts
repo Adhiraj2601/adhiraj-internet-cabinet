@@ -6,6 +6,8 @@ export interface CircularCarouselItem {
   title?: string
   subtitle?: string
   id?: string
+  rawItem?: any
+  [key: string]: any
 }
 
 export interface CircularCarouselProps {
