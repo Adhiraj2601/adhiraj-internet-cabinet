@@ -118,7 +118,7 @@
     "note": "random scribbles",
     "date": "March 2026",
     "description": "Compilation of spontaneous doodles, quick character sketches, and daily notes.",
-    "inCarousel": true
+    "inCarousel": false
   },
   {
     "id": "12",
@@ -127,7 +127,7 @@
     "rotation": 0.5,
     "size": "wide",
     "note": "Happiness is a Hibiscus in full bloom",
-    "inCarousel": false
+    "inCarousel": true
   },
   {
     "id": "13",
