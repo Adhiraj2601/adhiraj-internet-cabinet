@@ -137,5 +137,14 @@
     "size": "tall",
     "note": " If you haven't watched A.O.T I honestly encourage you to watch it",
     "inCarousel": false
+  },
+  {
+    "id": "14",
+    "src": "/images/scrapbook/d4d48b69-1b77-40c2-bb86-784dcf5b3b54.jpg",
+    "alt": "class notes",
+    "rotation": -1,
+    "size": "tall",
+    "note": "class notes",
+    "inCarousel": false
   }
 ]
