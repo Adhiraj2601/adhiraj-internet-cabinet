@@ -45,7 +45,7 @@ export function Currently() {
               >
                 <p
                   className="text-[0.7rem] font-semibold tracking-[0.2em] uppercase"
-                  style={{ color: 'var(--accent)' }}
+                  style={{ color: 'var(--sage-green, #a8cf7c)' }}
                 >
                   {col.label}
                 </p>

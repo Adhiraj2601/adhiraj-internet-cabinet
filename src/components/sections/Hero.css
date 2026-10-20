@@ -158,10 +158,6 @@
     margin-bottom: 1.5rem;
   }
 
-  .hero-meta-label {
-    display: none !important;
-  }
-
   .hero-scroll-hint-mobile {
     display: flex !important;
   }
@@ -203,10 +199,6 @@
 
   .hero-lanyard-mobile-card-slot {
     display: none !important;
-  }
-
-  .hero-meta-label {
-    display: block !important;
   }
 
   .hero-scroll-hint-mobile {

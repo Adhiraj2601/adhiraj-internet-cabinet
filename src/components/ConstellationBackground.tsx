@@ -19,7 +19,7 @@ const DENSITY = 1 / 11000;   // nodes per px² (lower = sparser)
 const MAX_NODES = 140;
 const LINK_DISTANCE = 130;   // px, max distance for a line
 const SPEED = 0.18;          // drift speed
-const ACCENT_RATIO = 0.16;   // share of nodes drawn in your accent blue
+const ACCENT_RATIO = 0.16;   // share of nodes drawn in your accent sage green
 const LINE_ALPHA = 0.14;     // line strength at closest distance
 const DOT_ALPHA = 0.5;
 const MOUSE_RADIUS = 140;    // px; nodes gently link to the cursor
@@ -54,7 +54,7 @@ function ConstellationBackground() {
     if (!ctx) return;
 
     const ink = toRgb(readVar("--foreground", "#171717"));
-    const accent = toRgb(readVar("--accent", "#315CFF"));
+    const accent = toRgb(readVar("--accent", "#a8cf7c"));
 
     let w = 0;
     let h = 0;

@@ -4,7 +4,7 @@
   --color-background: #F4F1EA;
   --color-foreground: #171717;
   --color-muted: #77736B;
-  --color-accent: #315CFF;
+  --color-accent: #a8cf7c;
   --color-sage: #a8cf7c;
 }
 
@@ -14,7 +14,7 @@
     --foreground: #171717;
     --muted: #77736B;
     --border: rgba(23, 23, 23, 0.15);
-    --accent: #315CFF;
+    --accent: #a8cf7c;
     --sage-green: #a8cf7c;
   }
 
@@ -42,7 +42,7 @@
 
   ::selection {
     background-color: var(--accent);
-    color: #fff;
+    color: #171717;
   }
 
   a {
@@ -78,6 +78,14 @@
 
   .text-accent {
     color: var(--accent);
+  }
+
+  .hover\:text-accent:hover {
+    color: var(--accent) !important;
+  }
+
+  .group:hover .group-hover\:text-accent {
+    color: var(--accent) !important;
   }
 
   .bg-accent {

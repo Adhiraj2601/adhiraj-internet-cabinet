@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { SectionLabel } from '../ui/SectionLabel'
 import { PortraitFrame } from '../ui/PortraitFrame'
 import { LanyardErrorBoundary } from '../ui/LanyardErrorBoundary'
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
@@ -100,16 +99,6 @@ export function Hero() {
 
 
       <div className="container-main w-full">
-        {/* Small metadata label (visible on desktop >= 768px) */}
-        <motion.div
-          initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
-          animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
-          transition={{ duration: prefersReducedMotion ? 0.4 : 0.6, delay: prefersReducedMotion ? 0 : 0.05, ease: "easeOut" }}
-          className="hero-meta-label mb-8 md:mb-12"
-        >
-          <SectionLabel>Adi's Archive / 2026</SectionLabel>
-        </motion.div>
-
         {/* 2-column editorial grid: Intro on left, Badge labels / Fallback portrait on right */}
         <div className="hero-editorial-grid">
           {/* Left Column: Heading & Supporting Text */}

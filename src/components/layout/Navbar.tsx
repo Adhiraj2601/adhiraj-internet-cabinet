@@ -149,8 +149,7 @@ export function Navbar() {
                   <a
                     href={link.href}
                     onClick={(e) => { e.preventDefault(); handleNavClick(link.href) }}
-                    className="text-[0.7rem] font-semibold tracking-[0.15em] text-muted hover:text-foreground transition-colors duration-200"
-                    style={{ color: 'var(--muted)' }}
+                    className="text-[0.7rem] font-semibold tracking-[0.15em] text-muted hover:text-accent transition-colors duration-200"
                   >
                     {link.label}
                   </a>
@@ -160,7 +159,7 @@ export function Navbar() {
 
             {/* Mobile menu button */}
             <button
-              className="md:hidden text-[0.7rem] font-semibold tracking-[0.15em] text-muted hover:text-foreground transition-colors duration-200"
+              className="md:hidden text-[0.7rem] font-semibold tracking-[0.15em] text-muted hover:text-accent transition-colors duration-200"
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
               aria-expanded={menuOpen}
