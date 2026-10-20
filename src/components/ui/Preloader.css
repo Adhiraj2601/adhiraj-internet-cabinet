@@ -9,12 +9,16 @@
   --loader-counter-color: #6b6b6b;
 }
 
+html {
+  background-color: var(--loader-bg) !important;
+}
+
 /* ── Overlay ── */
 .preloader {
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: var(--loader-bg);
+  background-color: var(--loader-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -43,8 +47,15 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end; /* counter aligned to right edge of word */
+  opacity: 0;
+  transition: opacity 300ms ease-out;
   will-change: transform, opacity;
   transform-origin: center center;
+}
+
+/* Fades in smoothly once font is confirmed ready */
+.preloader__inner.is-ready {
+  opacity: 1;
 }
 
 /* ── SVG word ── */
@@ -54,6 +65,8 @@
   font-family: 'Geologica', system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.04em;
+  width: clamp(280px, 80vw, 860px);
+  height: auto;
 }
 
 /* Dim (unfilled) text layer */
@@ -61,15 +74,19 @@
   fill: var(--loader-dim);
 }
 
-/* Filled (liquid) text */
+/* Filled (liquid) text — CSS DEFAULT IS 100% EMPTY */
 .preloader__liquid-fill {
   fill: var(--loader-fill);
+  transform: translate3d(0, 106px, 0);
+  will-change: transform;
 }
 
 /* Second wave — subtle depth */
 .preloader__wave-2 {
   fill: var(--loader-fill);
   opacity: 0.42;
+  transform: translate3d(-30px, 108px, 0);
+  will-change: transform;
 }
 
 /* ── Counter ── */

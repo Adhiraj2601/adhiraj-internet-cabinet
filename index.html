@@ -36,9 +36,104 @@
       imagesizes="(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 520px"
     />
 
-    <!-- Non-render-blocking font preconnect and stylesheet -->
+    <!-- Preload Critical Fonts for Instant Preloader Display -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="https://fonts.gstatic.com/s/geologica/v5/oY1o8evIr7j9P3TN9YwNAdyjzUyDKkKdAGOJh1UlCDUIhAIdhCZOn1fLsig7jfvCCPHZckU8H3G11_z-_OZqD5_sc-QSAA.woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2"
+      crossorigin
+    />
+
+    <!-- Critical Preloader CSS inlined in <head> to eliminate any blank gap or flash -->
+    <style>
+      :root {
+        --background: #F4F1EA;
+        --foreground: #171717;
+        --loader-fill: #a8cf7c;
+        --loader-bg: #F4F1EA;
+        --loader-dim: rgba(26, 26, 26, 0.10);
+        --loader-counter-color: #6b6b6b;
+      }
+      html {
+        background-color: #F4F1EA !important;
+      }
+      body {
+        background-color: #F4F1EA !important;
+        margin: 0;
+      }
+      .preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background-color: #F4F1EA;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .preloader__inner {
+        position: relative;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        opacity: 0;
+        transition: opacity 300ms ease-out;
+        transform-origin: center center;
+        will-change: transform, opacity;
+      }
+      .preloader__inner.is-ready {
+        opacity: 1 !important;
+      }
+      .preloader__svg {
+        display: block;
+        overflow: visible;
+        font-family: 'Geologica', system-ui, sans-serif;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        width: clamp(280px, 80vw, 860px);
+        height: auto;
+      }
+      .preloader__text-dim {
+        fill: rgba(26, 26, 26, 0.10);
+      }
+      /* CSS default is 100% EMPTY: wave is translated down past baseline */
+      .preloader__liquid-fill {
+        fill: #a8cf7c;
+        transform: translate3d(0, 106px, 0);
+        will-change: transform;
+      }
+      .preloader__wave-2 {
+        fill: #a8cf7c;
+        opacity: 0.42;
+        transform: translate3d(-30px, 108px, 0);
+        will-change: transform;
+      }
+      .preloader__counter {
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        color: #6b6b6b;
+        line-height: 1;
+        margin-top: 14px;
+        user-select: none;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+
+    <!-- Full font stylesheets -->
     <link
       rel="preload"
       as="style"
@@ -76,31 +171,71 @@
     </script>
   </head>
   <body>
-    <!-- ═══ Preloader stub — visible before React mounts ═══
-         React's Preloader component replaces/manages this on mount.
-         The stub just ensures the cream overlay is visible from byte 1.
+    <!-- ═══ Preloader Initial Shell (Server-rendered HTML) ═══
+         Appears on Frame 0 with empty wave and cream background.
+         Fades in the dim word smoothly once font arrives.
+         React's Preloader component seamlessly adopts this shell on mount.
     ═══ -->
-    <div id="preloader-stub" style="
-      position:fixed;inset:0;z-index:9999;
-      background:#F4F1EA;
-      display:flex;align-items:center;justify-content:center;
-      font-family:'Geologica',system-ui,sans-serif;
-    " aria-hidden="true">
+    <div id="preloader-static" class="preloader" data-state="visible" aria-hidden="true">
+      <div class="preloader__inner" id="preloader-static-inner">
+        <svg
+          class="preloader__svg"
+          viewBox="0 0 260 115"
+          aria-hidden="true"
+        >
+          <defs>
+            <clipPath id="preloader-clip-hello-static">
+              <text
+                x="5"
+                y="98"
+                font-size="100"
+                font-family="'Geologica', system-ui, sans-serif"
+                font-weight="800"
+                letter-spacing="-0.04em"
+              >Hello</text>
+            </clipPath>
+          </defs>
+          <text
+            x="5"
+            y="98"
+            font-size="100"
+            font-family="'Geologica', system-ui, sans-serif"
+            font-weight="800"
+            letter-spacing="-0.04em"
+            class="preloader__text-dim"
+          >Hello</text>
+          <g clip-path="url(#preloader-clip-hello-static)">
+            <path
+              class="preloader__wave-2"
+              d="M -260 0 C -236.6 -4.5 -218.4 -4.5 -195.0 0 C -171.6 4.5 -153.4 4.5 -130 0 C -106.6 -4.5 -88.4 -4.5 -65.0 0 C -41.6 4.5 -23.4 4.5 0 0 C 23.4 -4.5 41.6 -4.5 65.0 0 C 88.4 4.5 106.6 4.5 130 0 C 153.4 -4.5 171.6 -4.5 195.0 0 C 218.4 4.5 236.6 4.5 260 0 C 283.4 -4.5 301.6 -4.5 325.0 0 C 348.4 4.5 366.6 4.5 390 0 C 413.4 -4.5 431.6 -4.5 455.0 0 C 478.4 4.5 496.6 4.5 520 0 L 520 160 L -260 160 Z"
+              transform="translate(-30, 108)"
+              style="transform: translate3d(-30px, 108px, 0);"
+            ></path>
+            <path
+              class="preloader__liquid-fill"
+              d="M -260 0 C -236.6 -4.5 -218.4 -4.5 -195.0 0 C -171.6 4.5 -153.4 4.5 -130 0 C -106.6 -4.5 -88.4 -4.5 -65.0 0 C -41.6 4.5 -23.4 4.5 0 0 C 23.4 -4.5 41.6 -4.5 65.0 0 C 88.4 4.5 106.6 4.5 130 0 C 153.4 -4.5 171.6 -4.5 195.0 0 C 218.4 4.5 236.6 4.5 260 0 C 283.4 -4.5 301.6 -4.5 325.0 0 C 348.4 4.5 366.6 4.5 390 0 C 413.4 -4.5 431.6 -4.5 455.0 0 C 478.4 4.5 496.6 4.5 520 0 L 520 160 L -260 160 Z"
+              transform="translate(0, 106)"
+              style="transform: translate3d(0px, 106px, 0);"
+            ></path>
+          </g>
+        </svg>
+        <span class="preloader__counter">loading... 0 %</span>
+      </div>
     </div>
-    <div id="root"></div>
     <script>
-      // Remove stub the moment React's Preloader renders
-      (function(){
-        var stub = document.getElementById('preloader-stub');
-        if(stub){
-          var obs = new MutationObserver(function(){
-            var preloaderEl = document.querySelector('.preloader');
-            if(preloaderEl){ stub.remove(); obs.disconnect(); }
-          });
-          obs.observe(document.getElementById('root') || document.body, { childList:true, subtree:true });
+      (function() {
+        function reveal() {
+          var el = document.getElementById('preloader-static-inner');
+          if (el) el.classList.add('is-ready');
+        }
+        if (document.fonts && document.fonts.load) {
+          document.fonts.load('800 1em Geologica').then(reveal).catch(reveal);
+        } else {
+          reveal();
         }
       })();
     </script>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
