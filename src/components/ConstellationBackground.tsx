@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "../hooks/useMediaQuery";
+import { usePreloaderContext } from "../context/PreloaderContext";
 
 /**
  * Constellation background: drifting dots joined by faint lines when close.
@@ -43,8 +44,10 @@ function toRgb(color: string): string {
 function ConstellationBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduceMotion = usePrefersReducedMotion();
+  const { loaderDone } = usePreloaderContext();
 
   useEffect(() => {
+    if (!loaderDone) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -178,7 +181,7 @@ function ConstellationBackground() {
       window.removeEventListener("mouseout", onLeave);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [reduceMotion]);
+  }, [reduceMotion, loaderDone]);
 
   return (
     <canvas

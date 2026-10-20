@@ -93,15 +93,23 @@ function Layout({ children }: { children: React.ReactNode }) {
   )
 }
 
-function AppContent() {
-  const { triggerHeroEntrance } = usePreloaderContext()
+function PreloaderContainer() {
+  const { triggerHeroEntrance, setLoaderDone } = usePreloaderContext()
+  return (
+    <Preloader
+      onStartExit={triggerHeroEntrance}
+      onComplete={() => {
+        triggerHeroEntrance()
+        setLoaderDone()
+      }}
+    />
+  )
+}
 
+function AppContent() {
   return (
     <BrowserRouter>
-      <Preloader
-        onStartExit={triggerHeroEntrance}
-        onComplete={triggerHeroEntrance}
-      />
+      <PreloaderContainer />
       <SecretAdminShortcut />
       <ScrollToTop />
       <CustomCursor />

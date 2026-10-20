@@ -14,7 +14,7 @@ html {
   background-color: var(--loader-bg) !important;
 }
 
-/* ── Overlay ── */
+/* ── Overlay: simple fixed div, no blur, no shadow, no mix-blend ── */
 .preloader {
   position: fixed;
   inset: 0;
@@ -45,7 +45,6 @@ html {
   flex-direction: column;
   align-items: flex-end; /* counter aligned to right edge of word */
   opacity: 1;
-  transform-origin: center center;
 }
 
 /* ── SVG word ── */
@@ -68,7 +67,6 @@ html {
 .preloader__liquid-fill {
   fill: var(--loader-fill);
   transform: translate3d(0px, 106px, 0);
-  will-change: transform;
 }
 
 /* Second wave — subtle depth (same green at 45% opacity) */
@@ -76,7 +74,6 @@ html {
   fill: var(--loader-fill);
   opacity: 0.45;
   transform: translate3d(-30px, 108px, 0);
-  will-change: transform;
 }
 
 /* ── Counter ── */

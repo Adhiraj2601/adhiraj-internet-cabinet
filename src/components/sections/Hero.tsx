@@ -54,7 +54,7 @@ export function Hero() {
   const [isInView, setIsInView] = useState(true)
   const [hasWebGL] = useState(() => checkWebGLSupport())
   const prefersReducedMotion = usePrefersReducedMotion()
-  const { heroEntered } = usePreloaderContext()
+  const { heroEntered, loaderDone } = usePreloaderContext()
 
   const desktopTargetRef = useRef<HTMLDivElement>(null)
 
@@ -84,12 +84,12 @@ export function Hero() {
       {canRenderLanyard ? (
         <LanyardErrorBoundary fallback={<PortraitFrame />}>
           <motion.div className="hero-lanyard-container" initial={{ opacity: 0 }} animate={heroEntered ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0.4 : 0.8, delay: prefersReducedMotion ? 0 : 0.35, ease: "easeOut" }}>
-            {isInView && (
+            {isInView && loaderDone && (
               <Suspense fallback={null}>
                 <Lanyard
                   eventSource={heroRef}
                   targetRef={desktopTargetRef}
-                  frameloop={isInView ? 'always' : 'never'}
+                  frameloop={isInView && loaderDone ? 'always' : 'never'}
                   prefersReducedMotion={prefersReducedMotion}
                 />
               </Suspense>

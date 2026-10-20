@@ -6,20 +6,20 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useLayoutEffect, useId, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useId, useRef, useState } from 'react'
 import './Preloader.css'
 
 // ─── Timing config — change here to adjust feel ──────────────────
 const CONFIG = {
   /** ms to idle at 0% after dim word is visible before fill begins (~0.5s) */
   initialPause: 500,
-  /** ms for progress 0 → 100 (wave rises + counter counts up) (~2.0s) */
-  fillDuration: 2000,
+  /** ms for progress 0 → 100 (wave rises + counter counts up) (~1.9s) */
+  fillDuration: 1900,
   /** ms to hold the fully-filled word at 100% before exit (~0.4s) */
   holdDuration: 400,
-  /** ms for the zoom dissolve exit (~1.0s) */
-  zoomDuration: 1000,
-  /** Fraction of zoom at which the overlay background starts fading out (0.65 = last 35% ~0.35s) */
+  /** ms for the zoom dissolve exit (~0.9s) */
+  zoomDuration: 900,
+  /** Fraction of zoom at which the overlay background starts fading out (0.65 = last 35% ~0.315s) */
   overlayFadeThreshold: 0.65,
   /** Wave 1 horizontal slosh cycle duration in ms */
   sloshCycle1: 1200,
@@ -30,12 +30,15 @@ const CONFIG = {
 } as const
 
 // ─── Easing helpers ──────────────────────────────────────────────
-/** power2.inOut — cubic-bezier(.45, 0, .55, 1) */
+/** power2.inOut — cubic-bezier(.45, 0, .55, 1) — symmetric S-curve */
 function easeInOutPower2(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
 }
 
-/** Accelerating cubic-bezier(.7, 0, .84, 0) for zoom */
+/**
+ * Responsive cubic-bezier ease-in for vector zoom (scale 1x → 6x)
+ * Starts moving smoothly from frame 1 without dead latency/drift, then rapidly accelerates.
+ */
 function cubicBezier(p1x: number, p1y: number, p2x: number, p2y: number) {
   return function (t: number): number {
     let x = t
@@ -48,7 +51,7 @@ function cubicBezier(p1x: number, p1y: number, p2x: number, p2y: number) {
     return ((1 - 3 * p2y + 3 * p1y) * x + (3 * p2y - 6 * p1y)) * x * x + 3 * p1y * x
   }
 }
-const easeInZoom = cubicBezier(0.7, 0.0, 0.84, 0.0)
+const easeInZoom = cubicBezier(0.45, 0.0, 0.75, 0.0)
 
 // ─── Seamless Wave Path Geometry ─────────────────────────────────
 // Viewbox width is 260. Wavelength is 130 (2 full crests across viewBox).
@@ -88,19 +91,18 @@ interface PreloaderProps {
   onComplete?: () => void
 }
 
-export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
+export const Preloader = memo(function Preloader({ onStartExit, onComplete }: PreloaderProps) {
   const rawId = useId()
   const clipId = `preloader-clip-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`
 
   const [state, setState] = useState<'visible' | 'hidden'>('visible')
 
   const overlayRef = useRef<HTMLDivElement>(null)
-  const innerRef = useRef<HTMLDivElement>(null)
+  const wordGroupRef = useRef<SVGGElement>(null)
   const wave1Ref = useRef<SVGPathElement>(null)
   const wave2Ref = useRef<SVGPathElement>(null)
   const counterRef = useRef<HTMLSpanElement>(null)
   const rafRef = useRef<number>(0)
-  const pageReadyRef = useRef(false)
   const isRunningRef = useRef(false)
 
   const onStartExitRef = useRef(onStartExit)
@@ -122,30 +124,6 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
   useEffect(() => {
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
-
-    // Track full page readiness (window load)
-    const markPageReady = () => {
-      if (!pageReadyRef.current) {
-        pageReadyRef.current = true
-        console.log(`[Preloader] window load at ${performance.now().toFixed(1)}ms`)
-      }
-    }
-
-    if (document.readyState === 'complete') {
-      markPageReady()
-    } else {
-      window.addEventListener('load', markPageReady, { once: true })
-    }
-    const pageReadyFallback = setTimeout(markPageReady, 3500)
-
-    // Track fonts ready
-    if (document.fonts?.ready) {
-      document.fonts.ready
-        .then(() => {
-          console.log(`[Preloader] fonts-ready at ${performance.now().toFixed(1)}ms`)
-        })
-        .catch(() => {})
-    }
 
     // Guard: single active RAF loop
     isRunningRef.current = true
@@ -173,8 +151,6 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
       return () => {
         isRunningRef.current = false
         clearTimeout(rmTimer)
-        clearTimeout(pageReadyFallback)
-        window.removeEventListener('load', markPageReady)
       }
     }
 
@@ -183,6 +159,17 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
     let hasLoggedProgressStart = false
     let hasLogged100Pct = false
     let hasTriggeredStartExit = false
+
+    const metrics = {
+      mountTime: performance.now(),
+      fillStartTime: 0,
+      fill50Time: 0,
+      fillEndTime: 0,
+      zoomStartTime: 0,
+      zoomEndTime: 0,
+      zoomDeltas: [] as number[],
+    }
+    let lastZoomFrameTime = 0
 
     function tick(now: number) {
       if (!isRunningRef.current) return
@@ -193,7 +180,7 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
 
       const phaseElapsed = now - phaseStartTime
 
-      // Continuous horizontal slosh for Wave 1 and Wave 2
+      // Continuous horizontal slosh for Wave 1 and Wave 2 at constant speed
       const slosh1 = -((now % CONFIG.sloshCycle1) / CONFIG.sloshCycle1) * WAVE_WL
       const slosh2 = -((now % CONFIG.sloshCycle2) / CONFIG.sloshCycle2) * WAVE_WL - 35
 
@@ -212,6 +199,7 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
         if (phaseElapsed >= CONFIG.initialPause) {
           phase = 'fill'
           phaseStartTime = now
+          metrics.fillStartTime = now
           if (!hasLoggedProgressStart) {
             hasLoggedProgressStart = true
             console.log(`[Preloader] progress start at ${performance.now().toFixed(1)}ms`)
@@ -221,7 +209,7 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
         return
       }
 
-      // ── PHASE 2: Rise + Slosh + Counter (~2.0s fill) ──────────
+      // ── PHASE 2: Rise + Slosh + Counter (~1.9s symmetric easeInOutPower2 fill) ──
       if (phase === 'fill') {
         const rawT = Math.min(phaseElapsed / CONFIG.fillDuration, 1)
         const progress = easeInOutPower2(rawT)
@@ -240,11 +228,16 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
           counterRef.current.textContent = `loading... ${pct} %`
         }
 
+        if (rawT >= 0.5 && !metrics.fill50Time) {
+          metrics.fill50Time = now
+        }
+
         if (rawT >= 1) {
           if (!hasLogged100Pct) {
             hasLogged100Pct = true
             console.log(`[Preloader] 100 % reached at ${performance.now().toFixed(1)}ms`)
           }
+          metrics.fillEndTime = now
           phase = 'hold'
           phaseStartTime = now
         }
@@ -253,7 +246,7 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
         return
       }
 
-      // ── PHASE 3: Hold fully filled word (~0.4s hold at 100%, gates exit only) ──
+      // ── PHASE 3: Hold fully filled word (~0.4s hold at 100%) ──
       if (phase === 'hold') {
         if (wave1Ref.current) {
           wave1Ref.current.style.transform = `translate3d(${slosh1.toFixed(2)}px, ${FILL_Y_END}px, 0)`
@@ -265,38 +258,46 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
           counterRef.current.textContent = 'loading... 100 %'
         }
 
-        // Only exit when both holdDuration has elapsed AND page is ready
-        if (phaseElapsed >= CONFIG.holdDuration && pageReadyRef.current) {
-          // Clear will-change before exit starts so edges stay razor sharp vector during zoom
-          if (innerRef.current) innerRef.current.style.willChange = 'auto'
+        if (phaseElapsed >= CONFIG.holdDuration) {
+          // Clear will-change before exit starts so edges stay razor-sharp vector during zoom
           if (wave1Ref.current) wave1Ref.current.style.willChange = 'auto'
           if (wave2Ref.current) wave2Ref.current.style.willChange = 'auto'
 
           phase = 'zoom'
           phaseStartTime = now
+          metrics.zoomStartTime = now
+          lastZoomFrameTime = now
         }
 
         rafRef.current = requestAnimationFrame(tick)
         return
       }
 
-      // ── PHASE 4: Zoom Dissolve (~1.0s, ease cubic-bezier(.7, 0, .84, 0)) ──
+      // ── PHASE 4: Pure Vector Zoom Dissolve (~0.9s exit) ──
       if (phase === 'zoom') {
+        if (lastZoomFrameTime > 0) {
+          metrics.zoomDeltas.push(now - lastZoomFrameTime)
+        }
+        lastZoomFrameTime = now
         const rawT = Math.min(phaseElapsed / CONFIG.zoomDuration, 1)
         const ez = easeInZoom(rawT)
 
-        // Scale 1x → ~6x
+        // Vector Scale 1x → 6x
         const scale = 1 + ez * 5
 
-        // Fade the word's opacity toward overlay background (0 right as scale finishes)
-        const wordOpacity = Math.max(0, 1 - Math.pow(rawT, 1.2))
+        // Dissolve word color/opacity from frame 1 toward overlay cream bg (#f3f0e9)
+        const wordOpacity = Math.max(0, 1 - rawT)
 
-        // Counter fades immediately
-        const counterOpacity = Math.max(0, 1 - rawT * 5)
+        // Counter text fades out immediately at start of zoom
+        const counterOpacity = Math.max(0, 1 - rawT * 4)
 
-        if (innerRef.current) {
-          innerRef.current.style.transform = `scale(${scale.toFixed(4)})`
-          innerRef.current.style.opacity = wordOpacity.toFixed(3)
+        // Apply pure vector transform and opacity directly to SVG <g>
+        if (wordGroupRef.current) {
+          wordGroupRef.current.setAttribute(
+            'transform',
+            `translate(130, 57.5) scale(${scale.toFixed(4)}) translate(-130, -57.5)`
+          )
+          wordGroupRef.current.style.opacity = wordOpacity.toFixed(3)
         }
 
         if (counterRef.current) {
@@ -310,7 +311,7 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
           wave2Ref.current.style.transform = `translate3d(${slosh2.toFixed(2)}px, ${(FILL_Y_END + 2.5).toFixed(2)}px, 0)`
         }
 
-        // Start fading overlay background (opacity → 0, ~0.35-0.4s) overlapping last ~35% of zoom
+        // Start fading overlay background (opacity → 0) overlapping last 35% of zoom (~0.315s)
         if (rawT >= CONFIG.overlayFadeThreshold) {
           if (!hasTriggeredStartExit) {
             hasTriggeredStartExit = true
@@ -326,6 +327,31 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
 
         // Zoom & dissolve finished
         if (rawT >= 1) {
+          metrics.zoomEndTime = now
+          if (typeof window !== 'undefined') {
+            const fillDuration = (metrics.fillEndTime || now) - (metrics.fillStartTime || now)
+            const timeTo50 = (metrics.fill50Time || now) - (metrics.fillStartTime || now)
+            const holdDuration = (metrics.zoomStartTime || now) - (metrics.fillEndTime || now)
+            const zoomDuration = (metrics.zoomEndTime || now) - (metrics.zoomStartTime || now)
+            const validDeltas = metrics.zoomDeltas.slice(1) // exclude first frame delta
+            const fpsList = validDeltas.map(d => d > 0 ? 1000 / d : 60).filter(f => f < 144)
+            ;(window as any).__preloaderMetrics = {
+              initialPauseMs: (metrics.fillStartTime || now) - metrics.mountTime,
+              fillDurationMs: fillDuration,
+              timeTo50Ms: timeTo50,
+              pct50Ratio: (timeTo50 / fillDuration) * 100,
+              holdDurationMs: holdDuration,
+              zoomDurationMs: zoomDuration,
+              totalActiveMs: (metrics.zoomEndTime || now) - metrics.mountTime,
+              zoomFrameCount: metrics.zoomDeltas.length,
+              avgFps: fpsList.length ? fpsList.reduce((a, b) => a + b, 0) / fpsList.length : 60,
+              minFps: fpsList.length ? Math.min(...fpsList) : 60,
+              maxFps: fpsList.length ? Math.max(...fpsList) : 60,
+              avgDeltaMs: validDeltas.length ? validDeltas.reduce((a, b) => a + b, 0) / validDeltas.length : 16.67,
+              rawDeltas: validDeltas,
+            }
+          }
+
           if (overlayRef.current) {
             overlayRef.current.style.opacity = '0'
           }
@@ -346,8 +372,6 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
     return () => {
       isRunningRef.current = false
       cancelAnimationFrame(rafRef.current)
-      clearTimeout(pageReadyFallback)
-      window.removeEventListener('load', markPageReady)
     }
   }, []) // Empty dependency array ensures exactly ONE lifecycle execution
 
@@ -361,7 +385,7 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
       aria-hidden="true"
       aria-label="Loading portfolio"
     >
-      <div ref={innerRef} className="preloader__inner">
+      <div className="preloader__inner">
         {/* ── Responsive SVG Word ── */}
         <svg
           className="preloader__svg"
@@ -388,35 +412,38 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
             </clipPath>
           </defs>
 
-          {/* 1. Dim (unfilled) letter outline */}
-          <text
-            x="5"
-            y="98"
-            fontSize="100"
-            fontFamily="'Geologica', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
-            fontWeight="800"
-            letterSpacing="-0.04em"
-            className="preloader__text-dim"
-          >
-            Hello
-          </text>
+          {/* SVG Group scaled as pure vector during zoom exit */}
+          <g ref={wordGroupRef} className="preloader__word-group">
+            {/* 1. Dim (unfilled) letter outline */}
+            <text
+              x="5"
+              y="98"
+              fontSize="100"
+              fontFamily="'Geologica', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+              fontWeight="800"
+              letterSpacing="-0.04em"
+              className="preloader__text-dim"
+            >
+              Hello
+            </text>
 
-          {/* 2. Liquid wave body clipped by the word "Hello" */}
-          <g clipPath={`url(#${clipId})`}>
-            {/* Secondary wave behind (depth layer) */}
-            <path
-              ref={wave2Ref}
-              className="preloader__wave-2"
-              d={WAVE_PATH_D}
-              style={{ transform: 'translate3d(-30px, 108px, 0)' }}
-            />
-            {/* Primary wave in front */}
-            <path
-              ref={wave1Ref}
-              className="preloader__liquid-fill"
-              d={WAVE_PATH_D}
-              style={{ transform: 'translate3d(0px, 106px, 0)' }}
-            />
+            {/* 2. Liquid wave body clipped by the word "Hello" */}
+            <g clipPath={`url(#${clipId})`}>
+              {/* Secondary wave behind (depth layer) */}
+              <path
+                ref={wave2Ref}
+                className="preloader__wave-2"
+                d={WAVE_PATH_D}
+                style={{ transform: 'translate3d(-30px, 108px, 0)' }}
+              />
+              {/* Primary wave in front */}
+              <path
+                ref={wave1Ref}
+                className="preloader__liquid-fill"
+                d={WAVE_PATH_D}
+                style={{ transform: 'translate3d(0px, 106px, 0)' }}
+              />
+            </g>
           </g>
         </svg>
 
@@ -427,4 +454,4 @@ export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
       </div>
     </div>
   )
-}
+})
