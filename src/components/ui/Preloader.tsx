@@ -1,9 +1,6 @@
 /**
  * Preloader — "Hello" liquid-fill loader
  *
- * Stack: React 19 + Vite, framer-motion already in project.
- * Animation is done with requestAnimationFrame (no extra deps).
- *
  * ─── Timing config ────────────────────────────────────────────────
  * Tweak any of these values in the CONFIG object below.
  * ─────────────────────────────────────────────────────────────────
@@ -24,116 +21,113 @@ const CONFIG = {
   zoomDuration: 1100,
   /** ms for the final opacity fade of the overlay */
   fadeDuration: 300,
-  /** Vertical slosh cycle duration in ms */
-  sloshCycle: 1200,
+  /** Wave 1 horizontal slosh cycle duration in ms */
+  sloshCycle1: 1200,
+  /** Wave 2 horizontal slosh cycle duration in ms */
+  sloshCycle2: 1600,
+  /** Set to true to skip animation if system has reduced-motion preference */
+  respectReducedMotion: false,
 } as const
 
 // ─── Easing helpers ──────────────────────────────────────────────
-/** power2.inOut — cubic-bezier(.45,0,.55,1) */
-function easeInOut(t: number): number {
-  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
+/** power2.inOut — cubic-bezier(.45, 0, .55, 1) */
+function easeInOutPower2(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
 }
 
-/** accelerating ease-in for zoom — cubic-bezier(.7,0,.84,0) */
-function easeIn(t: number): number {
-  return t * t * (0.84 + t * (1 - 0.84)) // approximate
+/** accelerating ease-in for zoom — cubic-bezier(.7, 0, .84, 0) / power3.in */
+function easeInPower3(t: number): number {
+  return t * t * t
 }
 
-// ─── Wave path builder ───────────────────────────────────────────
-/**
- * Build an SVG path for the liquid wave.
- * The shape is wider than viewBox (200%) so horizontal scrolling
- * creates a seamless looping surface.
- *
- * @param vbW  viewBox width
- * @param vbH  viewBox height (cap height of text)
- * @param amp  wave amplitude in viewBox units
- * @param offsetX  horizontal scroll offset (0–vbW)
- * @param fillY  current top of liquid in viewBox units (descends from vbH to 0)
- */
-function buildWavePath(
-  vbW: number,
-  vbH: number,
-  amp: number,
-  offsetX: number,
-  fillY: number,
-): string {
-  // Two full wave panels side-by-side for seamless loop
-  const W = vbW * 2
-  const crests = 2 // visible crests across one panel
-
-  // Start from the left with horizontal offset applied
-  const x0 = -vbW - offsetX
-
-  // Build the wavy top edge using cubic bezier segments
-  // We split the width into (crests * 2) half-wave segments
-  const segs = crests * 2
-  const segW = W / segs
-
-  let d = `M ${x0} ${fillY}`
-
-  for (let i = 0; i < segs; i++) {
-    const x1 = x0 + i * segW
-    const x2 = x1 + segW
-    const cpOffset = segW * 0.45
-    // Alternating crest/trough
-    const sign = i % 2 === 0 ? -1 : 1
-    d += ` C ${x1 + cpOffset} ${fillY + sign * amp}, ${x2 - cpOffset} ${fillY + sign * amp}, ${x2} ${fillY}`
+// ─── Seamless Wave Path Geometry ─────────────────────────────────
+// Viewbox width is 260. Wavelength is 130 (2 full crests across viewBox).
+// We repeat cycles from x = -260 to x = 520 (6 cycles total) so horizontal
+// translation never exposes an empty side.
+const WAVE_WL = 130
+const WAVE_AMP = 4.5
+const WAVE_PATH_D = (() => {
+  const amp = WAVE_AMP
+  const wl = WAVE_WL
+  const half = wl / 2
+  const cp = half * 0.36
+  const parts = ['M -260 0']
+  for (let x = -260; x < 520; x += wl) {
+    const x0 = x
+    const x1 = x + half
+    const x2 = x + wl
+    // Crest (curves upward in SVG = negative Y)
+    parts.push(`C ${x0 + cp} ${-amp} ${x1 - cp} ${-amp} ${x1} 0`)
+    // Trough (curves downward in SVG = positive Y)
+    parts.push(`C ${x1 + cp} ${amp} ${x2 - cp} ${amp} ${x2} 0`)
   }
+  parts.push('L 520 160 L -260 160 Z')
+  return parts.join(' ')
+})()
 
-  // Close path: go down past the bottom, back left, close
-  d += ` L ${x0 + W} ${vbH + 20} L ${x0} ${vbH + 20} Z`
-  return d
-}
+// ─── Fill Level Constants ────────────────────────────────────────
+// Text baseline is at y = 98, cap height top is at y = 24.
+// Text visible height is ~74 units.
+// Below baseline: 105 (even the crest at 105 - 4.5 = 100.5 is below baseline 98)
+const FILL_Y_START = 106
+// Above cap: 18 (even the trough at 18 + 4.5 = 22.5 is above cap 24)
+const FILL_Y_END = 18
 
-// ─── Component ───────────────────────────────────────────────────
 interface PreloaderProps {
   onComplete?: () => void
 }
 
 export function Preloader({ onComplete }: PreloaderProps) {
   const [state, setState] = useState<'visible' | 'exiting' | 'hidden'>('visible')
-  const [counter, setCounter] = useState(0)
 
-  const svgRef = useRef<SVGSVGElement>(null)
   const wave1Ref = useRef<SVGPathElement>(null)
   const wave2Ref = useRef<SVGPathElement>(null)
-  const clipRectRef = useRef<SVGRectElement>(null)
+  const counterRef = useRef<HTMLSpanElement>(null)
   const innerRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
   const pageReadyRef = useRef(false)
-  const animCompleteRef = useRef(false)
-
-  // Respect prefers-reduced-motion
-  const reducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   useEffect(() => {
-    // Lock scroll
+    // 1. Lock scroll
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
 
-    // Wait for page ready (fonts + window load)
-    let pageReady = false
+    // 2. Track page readiness (window load + fonts ready)
     const markReady = () => {
-      if (pageReady) return
-      pageReady = true
       pageReadyRef.current = true
     }
 
     if (document.readyState === 'complete') {
-      // Already loaded — mark after a tick so fonts settle
-      Promise.resolve().then(() => document.fonts.ready).then(markReady)
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(markReady).catch(markReady)
+      } else {
+        markReady()
+      }
     } else {
-      window.addEventListener('load', () => {
-        document.fonts.ready.then(markReady)
-      }, { once: true })
+      window.addEventListener(
+        'load',
+        () => {
+          if (document.fonts?.ready) {
+            document.fonts.ready.then(markReady).catch(markReady)
+          } else {
+            markReady()
+          }
+        },
+        { once: true }
+      )
     }
 
-    // ── Reduced motion: quick fade ──────────────────────────────
-    if (reducedMotion) {
-      setCounter(100)
+    // Fallback safeguard: don't hold forever if assets load slowly
+    const readyTimeout = setTimeout(markReady, 3500)
+
+    // 3. Check reduced motion (if enabled in CONFIG)
+    const prefersReduced =
+      CONFIG.respectReducedMotion &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (prefersReduced) {
+      if (counterRef.current) counterRef.current.textContent = 'loading... 100 %'
       const t = setTimeout(() => {
         setState('exiting')
         const t2 = setTimeout(() => {
@@ -143,119 +137,151 @@ export function Preloader({ onComplete }: PreloaderProps) {
           onComplete?.()
         }, 400)
         return () => clearTimeout(t2)
-      }, 600)
-      return () => clearTimeout(t)
+      }, 400)
+      return () => {
+        clearTimeout(t)
+        clearTimeout(readyTimeout)
+      }
     }
 
-    // ── Full animation ──────────────────────────────────────────
-    // SVG viewBox dimensions — measured after first render via getBBox or fixed
-    // We'll use a reference size. The SVG text is absolutely positioned in the SVG
-    // and we measure it at runtime.
-    let vbW = 600
-    let vbH = 120
-    let amp = 6  // wave amplitude in viewBox units
-
-    // Start time tracking
-    let fillStart: number | null = null
+    // 4. Main animation loop driven by rAF
+    let startTime: number | null = null
     let phase: 'pause' | 'fill' | 'hold' | 'zoom' = 'pause'
-    const pauseEnd = CONFIG.initialPause
-    let fillProgress = 0
+    let phaseStartTime: number | null = null
+
+    // Initial position of waves at rest below text
+    if (wave1Ref.current) {
+      wave1Ref.current.setAttribute('transform', `translate(0, ${FILL_Y_START})`)
+    }
+    if (wave2Ref.current) {
+      wave2Ref.current.setAttribute('transform', `translate(-30, ${FILL_Y_START + 2})`)
+    }
 
     function tick(now: number) {
-      if (!fillStart) fillStart = now
+      if (startTime === null) {
+        startTime = now
+        phaseStartTime = now
+      }
 
-      const elapsed = now - fillStart
+      const phaseElapsed = now - (phaseStartTime ?? now)
 
+      // Slosh horizontal scroll (continuous loop)
+      const slosh1 = -((now % CONFIG.sloshCycle1) / CONFIG.sloshCycle1) * WAVE_WL
+      const slosh2 = -((now % CONFIG.sloshCycle2) / CONFIG.sloshCycle2) * WAVE_WL - 35
+
+      // ── PHASE 1: Initial Pause (0.7s) ──────────────────────────
       if (phase === 'pause') {
-        // Dim word visible, counter 0%
-        if (elapsed >= pauseEnd) {
+        if (wave1Ref.current) {
+          wave1Ref.current.setAttribute('transform', `translate(${slosh1.toFixed(2)}, ${FILL_Y_START})`)
+        }
+        if (wave2Ref.current) {
+          wave2Ref.current.setAttribute('transform', `translate(${slosh2.toFixed(2)}, ${FILL_Y_START + 2})`)
+        }
+        if (counterRef.current) {
+          counterRef.current.textContent = 'loading... 0 %'
+        }
+
+        if (phaseElapsed >= CONFIG.initialPause) {
           phase = 'fill'
-          fillStart = now
+          phaseStartTime = now
         }
         rafRef.current = requestAnimationFrame(tick)
         return
       }
 
+      // ── PHASE 2: Rise + Slosh + Counter (2.3s) ──────────────────
       if (phase === 'fill') {
-        const t = Math.min(elapsed / CONFIG.fillDuration, 1)
-        fillProgress = easeInOut(t)
+        const rawT = Math.min(phaseElapsed / CONFIG.fillDuration, 1)
+        const progress = easeInOutPower2(rawT)
 
-        // Hold at ~95% until page is ready
-        const clampedProgress = (!pageReadyRef.current && fillProgress > 0.95)
-          ? 0.95
-          : fillProgress
+        // Hold at 95% until window load + fonts are ready
+        const effectiveProgress = (!pageReadyRef.current && progress > 0.95) ? 0.95 : progress
 
-        // Update counter text
-        setCounter(Math.round(clampedProgress * 100))
+        // Liquid height interpolation
+        const currentFillY = FILL_Y_START - effectiveProgress * (FILL_Y_START - FILL_Y_END)
 
-        // Wave geometry
-        const svg = svgRef.current
-        const w1 = wave1Ref.current
-        const w2 = wave2Ref.current
-        const cr = clipRectRef.current
-
-        if (svg && w1 && w2 && cr) {
-          // Dynamic viewBox sizing on first valid frame
-          if (vbW === 600 && svg.viewBox.baseVal.width) {
-            vbW = svg.viewBox.baseVal.width
-            vbH = svg.viewBox.baseVal.height
-            amp = vbH * 0.055
-          }
-
-          // Rise: fillY goes from vbH+amp (below) to -amp (above cap)
-          const fillY = (vbH + amp) - clampedProgress * (vbH + amp * 2)
-
-          // Slosh horizontal offset cycles continuously
-          const sloshT = (now % CONFIG.sloshCycle) / CONFIG.sloshCycle
-          const offsetX = sloshT * vbW
-
-          const path1 = buildWavePath(vbW, vbH, amp, offsetX, fillY)
-          const path2 = buildWavePath(vbW, vbH, amp * 0.7, (offsetX + vbW * 0.4) % vbW, fillY + amp * 0.8)
-
-          w1.setAttribute('d', path1)
-          w2.setAttribute('d', path2)
-
-          // Clip rect height just needs to cover full viewBox
-          cr.setAttribute('y', String(fillY - amp - 2))
-          cr.setAttribute('height', String(vbH - fillY + amp + 200))
+        if (wave1Ref.current) {
+          wave1Ref.current.setAttribute(
+            'transform',
+            `translate(${slosh1.toFixed(2)}, ${currentFillY.toFixed(2)})`
+          )
+        }
+        if (wave2Ref.current) {
+          wave2Ref.current.setAttribute(
+            'transform',
+            `translate(${slosh2.toFixed(2)}, ${(currentFillY + 2.5).toFixed(2)})`
+          )
         }
 
-        if (t >= 1 && pageReadyRef.current) {
+        // Counter text synced with exact progress
+        if (counterRef.current) {
+          const pct = Math.min(Math.round(effectiveProgress * 100), 100)
+          counterRef.current.textContent = `loading... ${pct} %`
+        }
+
+        // When fill reaches 100% and page is ready, transition to hold
+        if (rawT >= 1 && pageReadyRef.current) {
           phase = 'hold'
-          fillStart = now
+          phaseStartTime = now
         }
 
         rafRef.current = requestAnimationFrame(tick)
         return
       }
 
+      // ── PHASE 3: Hold fully filled word (0.5s) ──────────────────
       if (phase === 'hold') {
-        if (elapsed >= CONFIG.holdDuration) {
-          phase = 'zoom'
-          fillStart = now
+        // Keep sloshing at the top filled position
+        if (wave1Ref.current) {
+          wave1Ref.current.setAttribute(
+            'transform',
+            `translate(${slosh1.toFixed(2)}, ${FILL_Y_END})`
+          )
         }
+        if (wave2Ref.current) {
+          wave2Ref.current.setAttribute(
+            'transform',
+            `translate(${slosh2.toFixed(2)}, ${(FILL_Y_END + 2).toFixed(2)})`
+          )
+        }
+        if (counterRef.current) {
+          counterRef.current.textContent = 'loading... 100 %'
+        }
+
+        if (phaseElapsed >= CONFIG.holdDuration) {
+          phase = 'zoom'
+          phaseStartTime = now
+        }
+
         rafRef.current = requestAnimationFrame(tick)
         return
       }
 
+      // ── PHASE 4: Zoom Dissolve (1.1s) ───────────────────────────
       if (phase === 'zoom') {
-        const t = Math.min(elapsed / CONFIG.zoomDuration, 1)
-        const ez = easeIn(t)
+        const rawT = Math.min(phaseElapsed / CONFIG.zoomDuration, 1)
+        const ez = easeInPower3(rawT)
 
-        // Scale word from 1 → 6 from center
+        // Scale from 1x to ~6x
         const scale = 1 + ez * 5
-        // Fade fill color toward background as it zooms
-        const opacity = 1 - ez * 0.9
+        // Dissolve opacity as it expands
+        const opacity = Math.max(0, 1 - ez * 0.95)
 
-        const inner = innerRef.current
-        if (inner) {
-          inner.style.transform = `scale(${scale})`
-          inner.style.opacity = String(opacity)
+        if (innerRef.current) {
+          innerRef.current.style.transform = `scale(${scale.toFixed(3)})`
+          innerRef.current.style.opacity = opacity.toFixed(3)
         }
 
-        if (t >= 1) {
-          // Final fade of overlay
-          animCompleteRef.current = true
+        // Keep waves moving in background of zoom
+        if (wave1Ref.current) {
+          wave1Ref.current.setAttribute(
+            'transform',
+            `translate(${slosh1.toFixed(2)}, ${FILL_Y_END})`
+          )
+        }
+
+        if (rawT >= 1) {
+          // Trigger exit fade of the overlay
           setState('exiting')
           return
         }
@@ -269,11 +295,11 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
     return () => {
       cancelAnimationFrame(rafRef.current)
+      clearTimeout(readyTimeout)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [onComplete])
 
-  // Handle the exiting → hidden transition (CSS opacity fade)
+  // Handle overlay exit fade (300ms) then unmount and restore scroll
   useEffect(() => {
     if (state !== 'exiting') return
     const timer = setTimeout(() => {
@@ -287,67 +313,36 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
   if (state === 'hidden') return null
 
-  // ── SVG layout constants ─────────────────────────────────────
-  // We use a fixed viewBox; the SVG scales via CSS to fill clamp() font-size.
-  // "Hello" in Geologica 800 at 120px ≈ 550 wide, cap height ≈ 90
-  const VBW = 590
-  const VBH = 100
-  const FONT_SIZE = 112       // within the viewBox
-  const TEXT_Y = VBH - 5      // baseline
-
-  // Clip path ID must be unique
   const CLIP_ID = 'preloader-clip-hello'
-  const CLIP2_ID = 'preloader-clip-hello-2'
 
   return (
     <div
       className="preloader"
       data-state={state}
-      data-reduced={reducedMotion ? '' : undefined}
       style={{
-        opacity: state === 'exiting' ? 0 : 1,
-        transition: state === 'exiting' ? `opacity ${CONFIG.fadeDuration}ms ease` : 'none',
+        transition: state === 'exiting' ? `opacity ${CONFIG.fadeDuration}ms ease-out` : 'none',
       }}
       aria-hidden="true"
-      aria-label="Page loading"
+      aria-label="Loading portfolio"
     >
-      <div
-        ref={innerRef}
-        className="preloader__inner"
-        style={{ transformOrigin: 'center center' }}
-      >
-        {/* ── SVG with clamp-responsive width ── */}
+      <div ref={innerRef} className="preloader__inner">
+        {/* ── Responsive SVG Word ── */}
         <svg
-          ref={svgRef}
           className="preloader__svg"
-          viewBox={`0 0 ${VBW} ${VBH}`}
+          viewBox="0 0 260 115"
           style={{
-            width: 'clamp(280px, 82vw, 860px)',
+            width: 'clamp(280px, 80vw, 860px)',
             height: 'auto',
           }}
           aria-hidden="true"
         >
           <defs>
-            {/* Clip by "Hello" text shape — for wave 1 */}
+            {/* Clip path defining letter shape of "Hello" */}
             <clipPath id={CLIP_ID}>
               <text
-                x="0"
-                y={TEXT_Y}
-                fontSize={FONT_SIZE}
-                fontFamily="'Geologica', system-ui, sans-serif"
-                fontWeight="800"
-                letterSpacing="-0.04em"
-              >
-                Hello
-              </text>
-            </clipPath>
-
-            {/* Clip by "Hello" text shape — for wave 2 */}
-            <clipPath id={CLIP2_ID}>
-              <text
-                x="0"
-                y={TEXT_Y}
-                fontSize={FONT_SIZE}
+                x="5"
+                y="98"
+                fontSize="100"
                 fontFamily="'Geologica', system-ui, sans-serif"
                 fontWeight="800"
                 letterSpacing="-0.04em"
@@ -357,11 +352,11 @@ export function Preloader({ onComplete }: PreloaderProps) {
             </clipPath>
           </defs>
 
-          {/* ── Dim (unfilled) text layer ── */}
+          {/* 1. Dim (unfilled) letter outline */}
           <text
-            x="0"
-            y={TEXT_Y}
-            fontSize={FONT_SIZE}
+            x="5"
+            y="98"
+            fontSize="100"
             fontFamily="'Geologica', system-ui, sans-serif"
             fontWeight="800"
             letterSpacing="-0.04em"
@@ -370,28 +365,18 @@ export function Preloader({ onComplete }: PreloaderProps) {
             Hello
           </text>
 
-          {/* ── Wave 2 (depth layer, lower opacity, slightly offset) ── */}
-          <g clipPath={`url(#${CLIP2_ID})`}>
-            <path
-              ref={wave2Ref}
-              className="preloader__wave-2"
-              d={`M -${VBW} ${VBH + 20} L ${VBW * 2} ${VBH + 20} Z`}
-            />
-          </g>
-
-          {/* ── Wave 1 (primary liquid) ── */}
+          {/* 2. Liquid wave body clipped by the word "Hello" */}
           <g clipPath={`url(#${CLIP_ID})`}>
-            <path
-              ref={wave1Ref}
-              className="preloader__liquid-fill"
-              d={`M -${VBW} ${VBH + 20} L ${VBW * 2} ${VBH + 20} Z`}
-            />
+            {/* Secondary wave behind (depth layer) */}
+            <path ref={wave2Ref} className="preloader__wave-2" d={WAVE_PATH_D} />
+            {/* Primary wave in front */}
+            <path ref={wave1Ref} className="preloader__liquid-fill" d={WAVE_PATH_D} />
           </g>
         </svg>
 
-        {/* ── Counter ── */}
-        <span className="preloader__counter">
-          loading... {counter} %
+        {/* ── Monospace Counter (right-aligned under the word's right edge) ── */}
+        <span ref={counterRef} className="preloader__counter">
+          loading... 0 %
         </span>
       </div>
     </div>

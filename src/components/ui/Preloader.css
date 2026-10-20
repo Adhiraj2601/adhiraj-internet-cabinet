@@ -3,7 +3,7 @@
    ========================================================================== */
 
 :root {
-  --loader-fill: #1a1a1a;        /* swap to #a8cf7c for sage accent */
+  --loader-fill: #a8cf7c;        /* sage green accent requested by user */
   --loader-bg:   var(--background, #F4F1EA);
   --loader-dim:  rgba(26, 26, 26, 0.10);
   --loader-counter-color: #6b6b6b;
@@ -18,8 +18,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Prevent interaction bleed */
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: opacity;
 }
 
 /* Visible → hidden states */
@@ -29,9 +31,10 @@
 }
 .preloader[data-state="exiting"] {
   pointer-events: none;
+  opacity: 0;
 }
 .preloader[data-state="hidden"] {
-  display: none;
+  display: none !important;
 }
 
 /* ── Word + counter wrapper ── */
@@ -39,14 +42,15 @@
   position: relative;
   display: inline-flex;
   flex-direction: column;
-  align-items: flex-end; /* counter aligned to right edge of SVG */
+  align-items: flex-end; /* counter aligned to right edge of word */
+  will-change: transform, opacity;
+  transform-origin: center center;
 }
 
 /* ── SVG word ── */
 .preloader__svg {
   display: block;
   overflow: visible;
-  /* Let font render properly */
   font-family: 'Geologica', system-ui, sans-serif;
   font-weight: 800;
   letter-spacing: -0.04em;
@@ -65,25 +69,20 @@
 /* Second wave — subtle depth */
 .preloader__wave-2 {
   fill: var(--loader-fill);
-  opacity: 0.35;
+  opacity: 0.42;
 }
 
 /* ── Counter ── */
 .preloader__counter {
   font-family: 'Space Mono', monospace;
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.08em;
   color: var(--loader-counter-color);
   line-height: 1;
-  margin-top: 10px;
+  margin-top: 14px;
   user-select: none;
-  /* Right-align under word's right edge */
   text-align: right;
-}
-
-/* ── Zoom exit ── */
-.preloader__word-group {
-  transform-origin: center center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Reduced-motion override ── */
