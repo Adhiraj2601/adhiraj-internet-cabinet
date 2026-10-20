@@ -5,6 +5,7 @@ import { SectionLabel } from '../ui/SectionLabel'
 import { PortraitFrame } from '../ui/PortraitFrame'
 import { LanyardErrorBoundary } from '../ui/LanyardErrorBoundary'
 import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
+import { usePreloaderContext } from '../../context/PreloaderContext'
 import Lanyard from '../ui/Lanyard'
 import './Hero.css'
 
@@ -53,6 +54,7 @@ export function Hero() {
   const [isInView, setIsInView] = useState(true)
   const [hasWebGL] = useState(() => checkWebGLSupport())
   const prefersReducedMotion = usePrefersReducedMotion()
+  const { heroEntered } = usePreloaderContext()
 
   const desktopTargetRef = useRef<HTMLDivElement>(null)
 
@@ -81,7 +83,7 @@ export function Hero() {
       {/* 3D Lanyard integration with ErrorBoundary & Fallback */}
       {canRenderLanyard ? (
         <LanyardErrorBoundary fallback={<PortraitFrame />}>
-          <div className="hero-lanyard-container">
+          <motion.div className="hero-lanyard-container" initial={{ opacity: 0 }} animate={heroEntered ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0.4 : 0.8, delay: prefersReducedMotion ? 0 : 0.35, ease: "easeOut" }}>
             {isInView && (
               <Suspense fallback={null}>
                 <Lanyard
@@ -92,7 +94,7 @@ export function Hero() {
                 />
               </Suspense>
             )}
-          </div>
+          </motion.div>
         </LanyardErrorBoundary>
       ) : null}
 
@@ -100,9 +102,9 @@ export function Hero() {
       <div className="container-main w-full">
         {/* Small metadata label (visible on desktop >= 768px) */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.35 }}
+          initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+          animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+          transition={{ duration: prefersReducedMotion ? 0.4 : 0.6, delay: prefersReducedMotion ? 0 : 0.05, ease: "easeOut" }}
           className="hero-meta-label mb-8 md:mb-12"
         >
           <SectionLabel>Adi's Archive / 2026</SectionLabel>
@@ -120,15 +122,15 @@ export function Hero() {
                 color: 'var(--foreground)',
               }}
             >
-              {heroLines.map((line) => (
+              {heroLines.map((line, idx) => (
                 <span key={line.text} className="block overflow-hidden">
                   <motion.span
-                    initial={{ y: '100%', opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
+                    initial={{ y: prefersReducedMotion ? 0 : 24, opacity: 0 }}
+                    animate={heroEntered ? { y: 0, opacity: 1 } : { y: prefersReducedMotion ? 0 : 24, opacity: 0 }}
                     transition={{
-                      duration: 0.75,
-                      delay: line.delay,
-                      ease: [0.76, 0, 0.24, 1],
+                      duration: prefersReducedMotion ? 0.4 : 0.7,
+                      delay: prefersReducedMotion ? 0 : 0.08 + idx * 0.08,
+                      ease: 'easeOut',
                     }}
                     className="block"
                   >
@@ -148,9 +150,9 @@ export function Hero() {
             <div className="mt-8 md:mt-10">
               {/* Line 1: Welcome message */}
               <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.9, ease: 'easeOut' }}
+                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                transition={{ duration: prefersReducedMotion ? 0.4 : 0.6, delay: prefersReducedMotion ? 0 : 0.28, ease: 'easeOut' }}
                 className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
                 style={{ color: 'var(--muted)' }}
               >
@@ -159,9 +161,9 @@ export function Hero() {
 
               {/* Line 2: What I build */}
               <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.0, ease: 'easeOut' }}
+                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                transition={{ duration: prefersReducedMotion ? 0.4 : 0.6, delay: prefersReducedMotion ? 0 : 0.36, ease: 'easeOut' }}
                 className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
                 style={{ color: 'var(--muted)' }}
               >
@@ -170,9 +172,9 @@ export function Hero() {
 
               {/* Line 3: "collect ideas" links to /blog */}
               <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.1, ease: 'easeOut' }}
+                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                transition={{ duration: prefersReducedMotion ? 0.4 : 0.6, delay: prefersReducedMotion ? 0 : 0.44, ease: 'easeOut' }}
                 className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
                 style={{ color: 'var(--muted)' }}
               >
@@ -181,9 +183,9 @@ export function Hero() {
 
               {/* Line 4: "read too many books" links to /books */}
               <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.2, ease: 'easeOut' }}
+                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                transition={{ duration: prefersReducedMotion ? 0.4 : 0.6, delay: prefersReducedMotion ? 0 : 0.52, ease: 'easeOut' }}
                 className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
                 style={{ color: 'var(--muted)' }}
               >
@@ -192,9 +194,9 @@ export function Hero() {
 
               {/* Line 5: "occasionally draw" links to /sketches */}
               <motion.p
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 1.3, ease: 'easeOut' }}
+                initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+                transition={{ duration: prefersReducedMotion ? 0.4 : 0.6, delay: prefersReducedMotion ? 0 : 0.60, ease: 'easeOut' }}
                 className="text-[1.05rem] md:text-[1.15rem] leading-relaxed"
                 style={{ color: 'var(--muted)' }}
               >
@@ -204,8 +206,8 @@ export function Hero() {
               {/* Mobile scroll hint directly below intro text */}
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 1.4 }}
+                animate={heroEntered ? { opacity: 1 } : { opacity: 0 }}
+                transition={{ duration: 0.5, delay: 0.68 }}
                 className="hero-scroll-hint-mobile mt-6 items-center gap-2"
               >
                 <motion.span
@@ -220,7 +222,7 @@ export function Hero() {
           </div>
 
           {/* Right Column: Target anchor placeholder on desktop or fallback portrait */}
-          <div className="hero-badge-desktop-column relative">
+          <motion.div className="hero-badge-desktop-column relative" initial={{ opacity: 0 }} animate={heroEntered ? { opacity: 1 } : { opacity: 0 }} transition={{ duration: prefersReducedMotion ? 0.4 : 0.8, delay: prefersReducedMotion ? 0 : 0.35, ease: "easeOut" }}>
             {canRenderLanyard ? (
               <div
                 ref={desktopTargetRef}
@@ -230,7 +232,7 @@ export function Hero() {
             ) : (
               <PortraitFrame />
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* On mobile / portrait tablet, reserve vertical space for the hanging card below the intro */}
@@ -245,8 +247,8 @@ export function Hero() {
         <div className="hero-scroll-hint hero-scroll-hint-desktop items-center justify-between">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1.4 }}
+            animate={heroEntered ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.5, delay: 0.68 }}
             className="flex items-center gap-2"
           >
             <motion.span
@@ -263,8 +265,8 @@ export function Hero() {
       {/* Bottom border rule */}
       <motion.div
         initial={{ scaleX: 0, opacity: 0 }}
-        animate={{ scaleX: 1, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 1.3, ease: [0.76, 0, 0.24, 1] }}
+        animate={heroEntered ? { scaleX: 1, opacity: 1 } : { scaleX: 0, opacity: 0 }}
+        transition={{ duration: 0.8, delay: 0.68, ease: [0.76, 0, 0.24, 1] }}
         className="absolute bottom-0 left-0 right-0 h-px origin-left"
         style={{ background: 'var(--border)' }}
         aria-hidden="true"

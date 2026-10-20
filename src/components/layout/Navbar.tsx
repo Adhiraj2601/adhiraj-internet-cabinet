@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { MobileMenu } from './MobileMenu'
+import { usePreloaderContext } from '../../context/PreloaderContext'
+import { usePrefersReducedMotion } from '../../hooks/useMediaQuery'
 
 const navLinks = [
   { label: 'ABOUT', href: '#about' },
@@ -18,6 +20,8 @@ const navLinks = [
 let pendingScrollTarget: string | null = null
 
 export function Navbar() {
+  const { heroEntered } = usePreloaderContext()
+  const prefersReducedMotion = usePrefersReducedMotion()
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
@@ -108,9 +112,13 @@ export function Navbar() {
   return (
     <>
       <motion.header
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+        initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 24 }}
+        animate={heroEntered ? { opacity: 1, y: 0 } : { opacity: 0, y: prefersReducedMotion ? 0 : 24 }}
+        transition={{
+          duration: prefersReducedMotion ? 0.4 : 0.7,
+          delay: 0,
+          ease: 'easeOut',
+        }}
         className="fixed top-0 left-0 right-0 z-50"
         style={{
           backdropFilter: scrolled ? 'blur(12px)' : 'none',

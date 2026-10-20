@@ -11,16 +11,16 @@ import './Preloader.css'
 
 // ─── Timing config — change here to adjust feel ──────────────────
 const CONFIG = {
-  /** ms before filling starts (dim word is visible, counter at 0%) */
-  initialPause: 700,
-  /** ms for progress 0 → 100 (liquid rises + counter counts up) */
-  fillDuration: 2300,
-  /** ms to hold the fully-filled word before exit zoom */
-  holdDuration: 500,
-  /** ms for the zoom-in dissolve exit */
-  zoomDuration: 1100,
-  /** ms for the final opacity fade of the overlay */
-  fadeDuration: 300,
+  /** ms to idle at 0% after dim word is visible before fill begins (~0.5s) */
+  initialPause: 500,
+  /** ms for progress 0 → 100 (wave rises + counter counts up) (~2.0s) */
+  fillDuration: 2000,
+  /** ms to hold the fully-filled word at 100% before exit (~0.4s) */
+  holdDuration: 400,
+  /** ms for the zoom dissolve exit (~1.0s) */
+  zoomDuration: 1000,
+  /** Fraction of zoom at which the overlay background starts fading out (0.65 = last 35% ~0.35s) */
+  overlayFadeThreshold: 0.65,
   /** Wave 1 horizontal slosh cycle duration in ms */
   sloshCycle1: 1200,
   /** Wave 2 horizontal slosh cycle duration in ms */
@@ -35,10 +35,20 @@ function easeInOutPower2(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
 }
 
-/** accelerating ease-in for zoom — cubic-bezier(.7, 0, .84, 0) / power3.in */
-function easeInPower3(t: number): number {
-  return t * t * t
+/** Accelerating cubic-bezier(.7, 0, .84, 0) for zoom */
+function cubicBezier(p1x: number, p1y: number, p2x: number, p2y: number) {
+  return function (t: number): number {
+    let x = t
+    for (let i = 0; i < 8; i++) {
+      const f = ((1 - 3 * p2x + 3 * p1x) * x + (3 * p2x - 6 * p1x)) * x * x + 3 * p1x * x - t
+      const df = 3 * (1 - 3 * p2x + 3 * p1x) * x * x + 2 * (3 * p2x - 6 * p1x) * x + 3 * p1x
+      if (Math.abs(df) < 1e-6) break
+      x -= f / df
+    }
+    return ((1 - 3 * p2y + 3 * p1y) * x + (3 * p2y - 6 * p1y)) * x * x + 3 * p1y * x
+  }
 }
+const easeInZoom = cubicBezier(0.7, 0.0, 0.84, 0.0)
 
 // ─── Seamless Wave Path Geometry ─────────────────────────────────
 // Viewbox width is 260. Wavelength is 130 (2 full crests across viewBox).
@@ -74,22 +84,31 @@ const FILL_Y_START = 106
 const FILL_Y_END = 18
 
 interface PreloaderProps {
+  onStartExit?: () => void
   onComplete?: () => void
 }
 
-export function Preloader({ onComplete }: PreloaderProps) {
+export function Preloader({ onStartExit, onComplete }: PreloaderProps) {
   const rawId = useId()
   const clipId = `preloader-clip-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`
 
-  const [state, setState] = useState<'visible' | 'exiting' | 'hidden'>('visible')
+  const [state, setState] = useState<'visible' | 'hidden'>('visible')
 
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
   const wave1Ref = useRef<SVGPathElement>(null)
   const wave2Ref = useRef<SVGPathElement>(null)
   const counterRef = useRef<HTMLSpanElement>(null)
-  const innerRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
   const pageReadyRef = useRef(false)
   const isRunningRef = useRef(false)
+
+  const onStartExitRef = useRef(onStartExit)
+  const onCompleteRef = useRef(onComplete)
+  useEffect(() => {
+    onStartExitRef.current = onStartExit
+    onCompleteRef.current = onComplete
+  })
 
   // 1. Remove initial static HTML shell cleanly once React mounts
   useLayoutEffect(() => {
@@ -140,7 +159,16 @@ export function Preloader({ onComplete }: PreloaderProps) {
     if (prefersReduced) {
       if (counterRef.current) counterRef.current.textContent = 'loading... 100 %'
       const rmTimer = setTimeout(() => {
-        if (isRunningRef.current) setState('exiting')
+        if (isRunningRef.current) {
+          onStartExitRef.current?.()
+          if (overlayRef.current) overlayRef.current.style.opacity = '0'
+          setTimeout(() => {
+            setState('hidden')
+            document.documentElement.style.overflow = ''
+            document.body.style.overflow = ''
+            onCompleteRef.current?.()
+          }, 400)
+        }
       }, 400)
       return () => {
         isRunningRef.current = false
@@ -154,6 +182,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
     let phaseStartTime: number | null = null
     let hasLoggedProgressStart = false
     let hasLogged100Pct = false
+    let hasTriggeredStartExit = false
 
     function tick(now: number) {
       if (!isRunningRef.current) return
@@ -168,7 +197,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
       const slosh1 = -((now % CONFIG.sloshCycle1) / CONFIG.sloshCycle1) * WAVE_WL
       const slosh2 = -((now % CONFIG.sloshCycle2) / CONFIG.sloshCycle2) * WAVE_WL - 35
 
-      // ── PHASE 1: Initial Pause (0.7s) ────────────────────────
+      // ── PHASE 1: Initial Pause (~0.5s idle after word is visible) ──
       if (phase === 'pause') {
         if (wave1Ref.current) {
           wave1Ref.current.style.transform = `translate3d(${slosh1.toFixed(2)}px, ${FILL_Y_START}px, 0)`
@@ -192,7 +221,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
         return
       }
 
-      // ── PHASE 2: Rise + Slosh + Counter (2.3s) ────────────────
+      // ── PHASE 2: Rise + Slosh + Counter (~2.0s fill) ──────────
       if (phase === 'fill') {
         const rawT = Math.min(phaseElapsed / CONFIG.fillDuration, 1)
         const progress = easeInOutPower2(rawT)
@@ -224,7 +253,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
         return
       }
 
-      // ── PHASE 3: Hold fully filled word (0.5s minimum, wait for page ready) ──
+      // ── PHASE 3: Hold fully filled word (~0.4s hold at 100%, gates exit only) ──
       if (phase === 'hold') {
         if (wave1Ref.current) {
           wave1Ref.current.style.transform = `translate3d(${slosh1.toFixed(2)}px, ${FILL_Y_END}px, 0)`
@@ -238,6 +267,11 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
         // Only exit when both holdDuration has elapsed AND page is ready
         if (phaseElapsed >= CONFIG.holdDuration && pageReadyRef.current) {
+          // Clear will-change before exit starts so edges stay razor sharp vector during zoom
+          if (innerRef.current) innerRef.current.style.willChange = 'auto'
+          if (wave1Ref.current) wave1Ref.current.style.willChange = 'auto'
+          if (wave2Ref.current) wave2Ref.current.style.willChange = 'auto'
+
           phase = 'zoom'
           phaseStartTime = now
         }
@@ -246,19 +280,27 @@ export function Preloader({ onComplete }: PreloaderProps) {
         return
       }
 
-      // ── PHASE 4: Zoom Dissolve (1.1s) ─────────────────────────
+      // ── PHASE 4: Zoom Dissolve (~1.0s, ease cubic-bezier(.7, 0, .84, 0)) ──
       if (phase === 'zoom') {
         const rawT = Math.min(phaseElapsed / CONFIG.zoomDuration, 1)
-        const ez = easeInPower3(rawT)
+        const ez = easeInZoom(rawT)
 
-        // Scale from 1x to ~6x
+        // Scale 1x → ~6x
         const scale = 1 + ez * 5
-        // Fade opacity toward background
-        const opacity = Math.max(0, 1 - ez * 0.95)
+
+        // Fade the word's opacity toward overlay background (0 right as scale finishes)
+        const wordOpacity = Math.max(0, 1 - Math.pow(rawT, 1.2))
+
+        // Counter fades immediately
+        const counterOpacity = Math.max(0, 1 - rawT * 5)
 
         if (innerRef.current) {
-          innerRef.current.style.transform = `scale(${scale.toFixed(3)})`
-          innerRef.current.style.opacity = opacity.toFixed(3)
+          innerRef.current.style.transform = `scale(${scale.toFixed(4)})`
+          innerRef.current.style.opacity = wordOpacity.toFixed(3)
+        }
+
+        if (counterRef.current) {
+          counterRef.current.style.opacity = counterOpacity.toFixed(3)
         }
 
         if (wave1Ref.current) {
@@ -268,13 +310,29 @@ export function Preloader({ onComplete }: PreloaderProps) {
           wave2Ref.current.style.transform = `translate3d(${slosh2.toFixed(2)}px, ${(FILL_Y_END + 2.5).toFixed(2)}px, 0)`
         }
 
-        if (rawT >= 1) {
-          // Remove will-change when animation finishes for performance
-          if (wave1Ref.current) wave1Ref.current.style.willChange = 'auto'
-          if (wave2Ref.current) wave2Ref.current.style.willChange = 'auto'
-          if (innerRef.current) innerRef.current.style.willChange = 'auto'
+        // Start fading overlay background (opacity → 0, ~0.35-0.4s) overlapping last ~35% of zoom
+        if (rawT >= CONFIG.overlayFadeThreshold) {
+          if (!hasTriggeredStartExit) {
+            hasTriggeredStartExit = true
+            onStartExitRef.current?.()
+          }
+          const overlayProgress =
+            (rawT - CONFIG.overlayFadeThreshold) / (1 - CONFIG.overlayFadeThreshold)
+          const overlayOpacity = Math.max(0, 1 - overlayProgress)
+          if (overlayRef.current) {
+            overlayRef.current.style.opacity = overlayOpacity.toFixed(3)
+          }
+        }
 
-          setState('exiting')
+        // Zoom & dissolve finished
+        if (rawT >= 1) {
+          if (overlayRef.current) {
+            overlayRef.current.style.opacity = '0'
+          }
+          setState('hidden')
+          document.documentElement.style.overflow = ''
+          document.body.style.overflow = ''
+          onCompleteRef.current?.()
           return
         }
 
@@ -291,29 +349,15 @@ export function Preloader({ onComplete }: PreloaderProps) {
       clearTimeout(pageReadyFallback)
       window.removeEventListener('load', markPageReady)
     }
-  }, [onComplete])
-
-  // Handle overlay exit fade (300ms) then unmount and restore scroll
-  useEffect(() => {
-    if (state !== 'exiting') return
-    const timer = setTimeout(() => {
-      setState('hidden')
-      document.documentElement.style.overflow = ''
-      document.body.style.overflow = ''
-      onComplete?.()
-    }, CONFIG.fadeDuration)
-    return () => clearTimeout(timer)
-  }, [state, onComplete])
+  }, []) // Empty dependency array ensures exactly ONE lifecycle execution
 
   if (state === 'hidden') return null
 
   return (
     <div
+      ref={overlayRef}
       className="preloader"
-      data-state={state}
-      style={{
-        transition: state === 'exiting' ? `opacity ${CONFIG.fadeDuration}ms ease-out` : 'none',
-      }}
+      data-state="visible"
       aria-hidden="true"
       aria-label="Loading portfolio"
     >
@@ -357,7 +401,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
             Hello
           </text>
 
-          {/* 2. Liquid wave body clipped by the word "Hello" — initial CSS transform is 100% EMPTY */}
+          {/* 2. Liquid wave body clipped by the word "Hello" */}
           <g clipPath={`url(#${clipId})`}>
             {/* Secondary wave behind (depth layer) */}
             <path
