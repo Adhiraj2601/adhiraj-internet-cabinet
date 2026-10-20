@@ -498,26 +498,16 @@ function Band({
         drawContain(ctxF, img, padding + 2, padding + 2, photoW - 4, photoH - 4);
         ctxF.restore();
 
-        // Bottom polaroid caption: handwriting on left, mono fig label on right
+        // Bottom polaroid caption: centered handwritten 'pull me!'
         const captionCenterY = padding + photoH + captionStripH / 2;
         ctxF.save();
-        ctxF.translate(padding + 20, captionCenterY + 12);
-        ctxF.rotate(-0.026);
-        ctxF.font = '500 52px "Caveat", cursive';
+        ctxF.translate(W / 2, captionCenterY + 10);
+        ctxF.rotate(-0.02);
+        ctxF.font = '500 54px "Caveat", cursive';
         ctxF.fillStyle = '#6E6A62';
+        ctxF.textAlign = 'center';
         ctxF.textBaseline = 'middle';
-        ctxF.fillText('welcome to my little corner', 0, 0);
-        ctxF.restore();
-
-        ctxF.save();
-        ctxF.font = '600 24px "Space Mono", monospace';
-        if ('letterSpacing' in ctxF) {
-          ctxF.letterSpacing = '4.5px';
-        }
-        ctxF.fillStyle = '#77736B';
-        ctxF.textAlign = 'right';
-        ctxF.textBaseline = 'middle';
-        ctxF.fillText('FIG. 01 / ARTIFACT', W - padding - 20, captionCenterY + 8);
+        ctxF.fillText('pull me!', 0, 0);
         ctxF.restore();
 
         // Back Face Canvas

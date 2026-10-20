@@ -12,13 +12,10 @@ export function PortraitFrame({ className = '' }: { className?: string }) {
       className={`flex flex-col justify-center w-full max-w-[420px] mx-auto ${className}`.trim()}
     >
       <div className="relative group">
-        {/* Handwritten tape note on top */}
-        <div className="flex justify-between items-center mb-2 px-1">
-          <span className="font-handwritten text-[1.1rem] text-muted rotate-[-2deg] inline-block">
-            welcome to my little corner{' '}
-          </span>
-          <span className="text-[0.65rem] tracking-[0.15em] uppercase text-muted font-medium">
-            FIG. 01 / ARTIFACT
+        {/* Handwritten note on top */}
+        <div className="flex justify-center items-center mb-2 px-1">
+          <span className="font-handwritten text-[1.2rem] text-muted rotate-[-2deg] inline-block">
+            pull me!
           </span>
         </div>
 
