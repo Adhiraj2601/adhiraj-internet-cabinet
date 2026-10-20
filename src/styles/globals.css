@@ -5,6 +5,7 @@
   --color-foreground: #171717;
   --color-muted: #77736B;
   --color-accent: #315CFF;
+  --color-sage: #a8cf7c;
 }
 
 @layer base {
@@ -14,6 +15,7 @@
     --muted: #77736B;
     --border: rgba(23, 23, 23, 0.15);
     --accent: #315CFF;
+    --sage-green: #a8cf7c;
   }
 
   * {

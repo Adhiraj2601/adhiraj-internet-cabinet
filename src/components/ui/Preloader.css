@@ -3,7 +3,8 @@
    ========================================================================== */
 
 :root {
-  --loader-fill: #1a1a1a;        /* ink color, swap to #a8cf7c if desired */
+  --sage-green: #a8cf7c;
+  --loader-fill: var(--sage-green, #a8cf7c);
   --loader-bg:   var(--background, #F4F1EA);
   --loader-dim:  rgba(26, 26, 26, 0.10);
   --loader-counter-color: #6b6b6b;
@@ -70,10 +71,10 @@ html {
   will-change: transform;
 }
 
-/* Second wave — subtle depth */
+/* Second wave — subtle depth (same green at 45% opacity) */
 .preloader__wave-2 {
   fill: var(--loader-fill);
-  opacity: 0.35;
+  opacity: 0.45;
   transform: translate3d(-30px, 108px, 0);
   will-change: transform;
 }
