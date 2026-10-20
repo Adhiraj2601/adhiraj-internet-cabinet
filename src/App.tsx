@@ -1,10 +1,11 @@
-import { useEffect, Suspense, lazy } from 'react'
+import { useEffect, Suspense, lazy, useState } from 'react'
 import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom'
 import { Navbar } from './components/layout/Navbar'
 import { Footer } from './components/layout/Footer'
 import { CustomCursor } from './components/ui/CustomCursor'
 import ConstellationBackground from './components/ConstellationBackground'
 import { Home } from './pages/Home'
+import { Preloader } from './components/ui/Preloader'
 import './styles/globals.css'
 
 const Admin = lazy(() => import('./pages/Admin').then((m) => ({ default: m.Admin })))
@@ -92,8 +93,11 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const [, setLoaderDone] = useState(false)
+
   return (
     <BrowserRouter>
+      <Preloader onComplete={() => setLoaderDone(true)} />
       <SecretAdminShortcut />
       <ScrollToTop />
       <CustomCursor />

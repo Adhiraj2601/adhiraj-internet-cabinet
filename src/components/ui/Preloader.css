@@ -1,0 +1,94 @@
+/* ==========================================================================
+   PRELOADER — Hello liquid-fill loader
+   ========================================================================== */
+
+:root {
+  --loader-fill: #1a1a1a;        /* swap to #a8cf7c for sage accent */
+  --loader-bg:   var(--background, #F4F1EA);
+  --loader-dim:  rgba(26, 26, 26, 0.10);
+  --loader-counter-color: #6b6b6b;
+}
+
+/* ── Overlay ── */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--loader-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Prevent interaction bleed */
+  overflow: hidden;
+}
+
+/* Visible → hidden states */
+.preloader[data-state="visible"] {
+  pointer-events: all;
+  opacity: 1;
+}
+.preloader[data-state="exiting"] {
+  pointer-events: none;
+}
+.preloader[data-state="hidden"] {
+  display: none;
+}
+
+/* ── Word + counter wrapper ── */
+.preloader__inner {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end; /* counter aligned to right edge of SVG */
+}
+
+/* ── SVG word ── */
+.preloader__svg {
+  display: block;
+  overflow: visible;
+  /* Let font render properly */
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+/* Dim (unfilled) text layer */
+.preloader__text-dim {
+  fill: var(--loader-dim);
+}
+
+/* Filled (liquid) text */
+.preloader__liquid-fill {
+  fill: var(--loader-fill);
+}
+
+/* Second wave — subtle depth */
+.preloader__wave-2 {
+  fill: var(--loader-fill);
+  opacity: 0.35;
+}
+
+/* ── Counter ── */
+.preloader__counter {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--loader-counter-color);
+  line-height: 1;
+  margin-top: 10px;
+  user-select: none;
+  /* Right-align under word's right edge */
+  text-align: right;
+}
+
+/* ── Zoom exit ── */
+.preloader__word-group {
+  transform-origin: center center;
+}
+
+/* ── Reduced-motion override ── */
+@media (prefers-reduced-motion: reduce) {
+  .preloader[data-reduced] {
+    transition: opacity 0.4s ease !important;
+  }
+}

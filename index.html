@@ -76,7 +76,31 @@
     </script>
   </head>
   <body>
+    <!-- ═══ Preloader stub — visible before React mounts ═══
+         React's Preloader component replaces/manages this on mount.
+         The stub just ensures the cream overlay is visible from byte 1.
+    ═══ -->
+    <div id="preloader-stub" style="
+      position:fixed;inset:0;z-index:9999;
+      background:#F4F1EA;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Geologica',system-ui,sans-serif;
+    " aria-hidden="true">
+    </div>
     <div id="root"></div>
+    <script>
+      // Remove stub the moment React's Preloader renders
+      (function(){
+        var stub = document.getElementById('preloader-stub');
+        if(stub){
+          var obs = new MutationObserver(function(){
+            var preloaderEl = document.querySelector('.preloader');
+            if(preloaderEl){ stub.remove(); obs.disconnect(); }
+          });
+          obs.observe(document.getElementById('root') || document.body, { childList:true, subtree:true });
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
