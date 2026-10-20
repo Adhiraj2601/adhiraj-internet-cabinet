@@ -3,7 +3,7 @@
    ========================================================================== */
 
 :root {
-  --loader-fill: #a8cf7c;        /* sage green accent requested by user */
+  --loader-fill: #1a1a1a;        /* ink color, swap to #a8cf7c if desired */
   --loader-bg:   var(--background, #F4F1EA);
   --loader-dim:  rgba(26, 26, 26, 0.10);
   --loader-counter-color: #6b6b6b;
@@ -47,22 +47,16 @@ html {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-end; /* counter aligned to right edge of word */
-  opacity: 0;
-  transition: opacity 300ms ease-out;
+  opacity: 1;
   will-change: transform, opacity;
   transform-origin: center center;
-}
-
-/* Fades in smoothly once font is confirmed ready */
-.preloader__inner.is-ready {
-  opacity: 1;
 }
 
 /* ── SVG word ── */
 .preloader__svg {
   display: block;
   overflow: visible;
-  font-family: 'Geologica', system-ui, sans-serif;
+  font-family: 'Geologica', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-weight: 800;
   letter-spacing: -0.04em;
   width: clamp(280px, 80vw, 860px);
@@ -77,14 +71,14 @@ html {
 /* Filled (liquid) text — CSS DEFAULT IS 100% EMPTY */
 .preloader__liquid-fill {
   fill: var(--loader-fill);
-  transform: translate3d(0, 106px, 0);
+  transform: translate3d(0px, 106px, 0);
   will-change: transform;
 }
 
 /* Second wave — subtle depth */
 .preloader__wave-2 {
   fill: var(--loader-fill);
-  opacity: 0.42;
+  opacity: 0.35;
   transform: translate3d(-30px, 108px, 0);
   will-change: transform;
 }

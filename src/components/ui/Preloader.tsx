@@ -6,7 +6,7 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useId, useRef, useState } from 'react'
 import './Preloader.css'
 
 // ─── Timing config — change here to adjust feel ──────────────────
@@ -78,8 +78,10 @@ interface PreloaderProps {
 }
 
 export function Preloader({ onComplete }: PreloaderProps) {
+  const rawId = useId()
+  const clipId = `preloader-clip-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`
+
   const [state, setState] = useState<'visible' | 'exiting' | 'hidden'>('visible')
-  const [isFontReady, setIsFontReady] = useState(false)
 
   const wave1Ref = useRef<SVGPathElement>(null)
   const wave2Ref = useRef<SVGPathElement>(null)
@@ -87,222 +89,207 @@ export function Preloader({ onComplete }: PreloaderProps) {
   const innerRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number>(0)
   const pageReadyRef = useRef(false)
+  const isRunningRef = useRef(false)
 
-  // 1. Synchronously remove initial static HTML shell once React mounts
+  // 1. Remove initial static HTML shell cleanly once React mounts
   useLayoutEffect(() => {
-    // If the pre-rendered shell exists in HTML, remove it cleanly
     const staticEl = document.getElementById('preloader-static')
     if (staticEl) {
       staticEl.remove()
     }
   }, [])
 
-  // 2. Lock scroll & coordinate font readiness + timeline
+  // 2. Lock scroll & run timeline
   useEffect(() => {
     document.documentElement.style.overflow = 'hidden'
     document.body.style.overflow = 'hidden'
 
     // Track full page readiness (window load)
     const markPageReady = () => {
-      pageReadyRef.current = true
+      if (!pageReadyRef.current) {
+        pageReadyRef.current = true
+        console.log(`[Preloader] window load at ${performance.now().toFixed(1)}ms`)
+      }
     }
+
     if (document.readyState === 'complete') {
       markPageReady()
     } else {
       window.addEventListener('load', markPageReady, { once: true })
     }
-    const pageReadyTimeout = setTimeout(markPageReady, 3500)
+    const pageReadyFallback = setTimeout(markPageReady, 3500)
 
-    // Check font readiness before revealing the word
-    const startAfterFont = () => {
-      setIsFontReady(true)
-
-      // Double rAF to guarantee the dim state is fully painted before starting the timeline
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          startTimeline()
+    // Track fonts ready
+    if (document.fonts?.ready) {
+      document.fonts.ready
+        .then(() => {
+          console.log(`[Preloader] fonts-ready at ${performance.now().toFixed(1)}ms`)
         })
-      })
+        .catch(() => {})
     }
 
-    if (document.fonts?.load) {
-      document.fonts
-        .load('800 1em Geologica')
-        .then(startAfterFont)
-        .catch(startAfterFont)
-    } else if (document.fonts?.ready) {
-      document.fonts.ready.then(startAfterFont).catch(startAfterFont)
-    } else {
-      startAfterFont()
+    // Guard: single active RAF loop
+    isRunningRef.current = true
+
+    // Check reduced motion if enabled
+    const prefersReduced =
+      CONFIG.respectReducedMotion &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (prefersReduced) {
+      if (counterRef.current) counterRef.current.textContent = 'loading... 100 %'
+      const rmTimer = setTimeout(() => {
+        if (isRunningRef.current) setState('exiting')
+      }, 400)
+      return () => {
+        isRunningRef.current = false
+        clearTimeout(rmTimer)
+        clearTimeout(pageReadyFallback)
+        window.removeEventListener('load', markPageReady)
+      }
     }
 
-    // Safety timeout in case fonts are blocked or offline
-    const fontTimeout = setTimeout(startAfterFont, 600)
+    let phase: 'pause' | 'fill' | 'hold' | 'zoom' = 'pause'
+    let phaseStartTime: number | null = null
+    let hasLoggedProgressStart = false
+    let hasLogged100Pct = false
 
-    // ── Animation timeline runner ──
-    function startTimeline() {
-      // Check reduced motion if enabled
-      const prefersReduced =
-        CONFIG.respectReducedMotion &&
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    function tick(now: number) {
+      if (!isRunningRef.current) return
 
-      if (prefersReduced) {
-        if (counterRef.current) counterRef.current.textContent = 'loading... 100 %'
-        setTimeout(() => {
-          setState('exiting')
-        }, 400)
+      if (phaseStartTime === null) {
+        phaseStartTime = now
+      }
+
+      const phaseElapsed = now - phaseStartTime
+
+      // Continuous horizontal slosh for Wave 1 and Wave 2
+      const slosh1 = -((now % CONFIG.sloshCycle1) / CONFIG.sloshCycle1) * WAVE_WL
+      const slosh2 = -((now % CONFIG.sloshCycle2) / CONFIG.sloshCycle2) * WAVE_WL - 35
+
+      // ── PHASE 1: Initial Pause (0.7s) ────────────────────────
+      if (phase === 'pause') {
+        if (wave1Ref.current) {
+          wave1Ref.current.style.transform = `translate3d(${slosh1.toFixed(2)}px, ${FILL_Y_START}px, 0)`
+        }
+        if (wave2Ref.current) {
+          wave2Ref.current.style.transform = `translate3d(${slosh2.toFixed(2)}px, ${(FILL_Y_START + 2.5).toFixed(2)}px, 0)`
+        }
+        if (counterRef.current) {
+          counterRef.current.textContent = 'loading... 0 %'
+        }
+
+        if (phaseElapsed >= CONFIG.initialPause) {
+          phase = 'fill'
+          phaseStartTime = now
+          if (!hasLoggedProgressStart) {
+            hasLoggedProgressStart = true
+            console.log(`[Preloader] progress start at ${performance.now().toFixed(1)}ms`)
+          }
+        }
+        rafRef.current = requestAnimationFrame(tick)
         return
       }
 
-      let phase: 'pause' | 'fill' | 'hold' | 'zoom' = 'pause'
-      let phaseStartTime: number | null = null
+      // ── PHASE 2: Rise + Slosh + Counter (2.3s) ────────────────
+      if (phase === 'fill') {
+        const rawT = Math.min(phaseElapsed / CONFIG.fillDuration, 1)
+        const progress = easeInOutPower2(rawT)
 
-      function tick(now: number) {
-        if (phaseStartTime === null) {
+        const currentFillY = FILL_Y_START - progress * (FILL_Y_START - FILL_Y_END)
+
+        if (wave1Ref.current) {
+          wave1Ref.current.style.transform = `translate3d(${slosh1.toFixed(2)}px, ${currentFillY.toFixed(2)}px, 0)`
+        }
+        if (wave2Ref.current) {
+          wave2Ref.current.style.transform = `translate3d(${slosh2.toFixed(2)}px, ${(currentFillY + 2.5).toFixed(2)}px, 0)`
+        }
+
+        if (counterRef.current) {
+          const pct = Math.min(Math.round(progress * 100), 100)
+          counterRef.current.textContent = `loading... ${pct} %`
+        }
+
+        if (rawT >= 1) {
+          if (!hasLogged100Pct) {
+            hasLogged100Pct = true
+            console.log(`[Preloader] 100 % reached at ${performance.now().toFixed(1)}ms`)
+          }
+          phase = 'hold'
           phaseStartTime = now
         }
 
-        const phaseElapsed = now - phaseStartTime
-
-        // Continuous horizontal slosh for Wave 1 and Wave 2
-        const slosh1 = -((now % CONFIG.sloshCycle1) / CONFIG.sloshCycle1) * WAVE_WL
-        const slosh2 = -((now % CONFIG.sloshCycle2) / CONFIG.sloshCycle2) * WAVE_WL - 35
-
-        // ── PHASE 1: Initial Pause (0.7s) ────────────────────────
-        if (phase === 'pause') {
-          if (wave1Ref.current) {
-            wave1Ref.current.setAttribute(
-              'transform',
-              `translate(${slosh1.toFixed(2)}, ${FILL_Y_START})`
-            )
-          }
-          if (wave2Ref.current) {
-            wave2Ref.current.setAttribute(
-              'transform',
-              `translate(${slosh2.toFixed(2)}, ${FILL_Y_START + 2})`
-            )
-          }
-          if (counterRef.current) {
-            counterRef.current.textContent = 'loading... 0 %'
-          }
-
-          if (phaseElapsed >= CONFIG.initialPause) {
-            phase = 'fill'
-            phaseStartTime = now
-          }
-          rafRef.current = requestAnimationFrame(tick)
-          return
-        }
-
-        // ── PHASE 2: Rise + Slosh + Counter (2.3s) ────────────────
-        if (phase === 'fill') {
-          const rawT = Math.min(phaseElapsed / CONFIG.fillDuration, 1)
-          const progress = easeInOutPower2(rawT)
-
-          // Hold at ~95% until window load + fonts are completely ready
-          const effectiveProgress = (!pageReadyRef.current && progress > 0.95) ? 0.95 : progress
-
-          const currentFillY = FILL_Y_START - effectiveProgress * (FILL_Y_START - FILL_Y_END)
-
-          if (wave1Ref.current) {
-            wave1Ref.current.setAttribute(
-              'transform',
-              `translate(${slosh1.toFixed(2)}, ${currentFillY.toFixed(2)})`
-            )
-          }
-          if (wave2Ref.current) {
-            wave2Ref.current.setAttribute(
-              'transform',
-              `translate(${slosh2.toFixed(2)}, ${(currentFillY + 2.5).toFixed(2)})`
-            )
-          }
-
-          if (counterRef.current) {
-            const pct = Math.min(Math.round(effectiveProgress * 100), 100)
-            counterRef.current.textContent = `loading... ${pct} %`
-          }
-
-          if (rawT >= 1 && pageReadyRef.current) {
-            phase = 'hold'
-            phaseStartTime = now
-          }
-
-          rafRef.current = requestAnimationFrame(tick)
-          return
-        }
-
-        // ── PHASE 3: Hold fully filled word (0.5s) ────────────────
-        if (phase === 'hold') {
-          if (wave1Ref.current) {
-            wave1Ref.current.setAttribute(
-              'transform',
-              `translate(${slosh1.toFixed(2)}, ${FILL_Y_END})`
-            )
-          }
-          if (wave2Ref.current) {
-            wave2Ref.current.setAttribute(
-              'transform',
-              `translate(${slosh2.toFixed(2)}, ${(FILL_Y_END + 2).toFixed(2)})`
-            )
-          }
-          if (counterRef.current) {
-            counterRef.current.textContent = 'loading... 100 %'
-          }
-
-          if (phaseElapsed >= CONFIG.holdDuration) {
-            phase = 'zoom'
-            phaseStartTime = now
-          }
-
-          rafRef.current = requestAnimationFrame(tick)
-          return
-        }
-
-        // ── PHASE 4: Zoom Dissolve (1.1s) ─────────────────────────
-        if (phase === 'zoom') {
-          const rawT = Math.min(phaseElapsed / CONFIG.zoomDuration, 1)
-          const ez = easeInPower3(rawT)
-
-          // Scale from 1x to ~6x
-          const scale = 1 + ez * 5
-          // Fade opacity toward background
-          const opacity = Math.max(0, 1 - ez * 0.95)
-
-          if (innerRef.current) {
-            innerRef.current.style.transform = `scale(${scale.toFixed(3)})`
-            innerRef.current.style.opacity = opacity.toFixed(3)
-          }
-
-          if (wave1Ref.current) {
-            wave1Ref.current.setAttribute(
-              'transform',
-              `translate(${slosh1.toFixed(2)}, ${FILL_Y_END})`
-            )
-          }
-
-          if (rawT >= 1) {
-            // Remove will-change when animation finishes for performance
-            if (wave1Ref.current) wave1Ref.current.style.willChange = 'auto'
-            if (wave2Ref.current) wave2Ref.current.style.willChange = 'auto'
-            if (innerRef.current) innerRef.current.style.willChange = 'auto'
-
-            setState('exiting')
-            return
-          }
-
-          rafRef.current = requestAnimationFrame(tick)
-          return
-        }
+        rafRef.current = requestAnimationFrame(tick)
+        return
       }
 
-      rafRef.current = requestAnimationFrame(tick)
+      // ── PHASE 3: Hold fully filled word (0.5s minimum, wait for page ready) ──
+      if (phase === 'hold') {
+        if (wave1Ref.current) {
+          wave1Ref.current.style.transform = `translate3d(${slosh1.toFixed(2)}px, ${FILL_Y_END}px, 0)`
+        }
+        if (wave2Ref.current) {
+          wave2Ref.current.style.transform = `translate3d(${slosh2.toFixed(2)}px, ${(FILL_Y_END + 2.5).toFixed(2)}px, 0)`
+        }
+        if (counterRef.current) {
+          counterRef.current.textContent = 'loading... 100 %'
+        }
+
+        // Only exit when both holdDuration has elapsed AND page is ready
+        if (phaseElapsed >= CONFIG.holdDuration && pageReadyRef.current) {
+          phase = 'zoom'
+          phaseStartTime = now
+        }
+
+        rafRef.current = requestAnimationFrame(tick)
+        return
+      }
+
+      // ── PHASE 4: Zoom Dissolve (1.1s) ─────────────────────────
+      if (phase === 'zoom') {
+        const rawT = Math.min(phaseElapsed / CONFIG.zoomDuration, 1)
+        const ez = easeInPower3(rawT)
+
+        // Scale from 1x to ~6x
+        const scale = 1 + ez * 5
+        // Fade opacity toward background
+        const opacity = Math.max(0, 1 - ez * 0.95)
+
+        if (innerRef.current) {
+          innerRef.current.style.transform = `scale(${scale.toFixed(3)})`
+          innerRef.current.style.opacity = opacity.toFixed(3)
+        }
+
+        if (wave1Ref.current) {
+          wave1Ref.current.style.transform = `translate3d(${slosh1.toFixed(2)}px, ${FILL_Y_END}px, 0)`
+        }
+        if (wave2Ref.current) {
+          wave2Ref.current.style.transform = `translate3d(${slosh2.toFixed(2)}px, ${(FILL_Y_END + 2.5).toFixed(2)}px, 0)`
+        }
+
+        if (rawT >= 1) {
+          // Remove will-change when animation finishes for performance
+          if (wave1Ref.current) wave1Ref.current.style.willChange = 'auto'
+          if (wave2Ref.current) wave2Ref.current.style.willChange = 'auto'
+          if (innerRef.current) innerRef.current.style.willChange = 'auto'
+
+          setState('exiting')
+          return
+        }
+
+        rafRef.current = requestAnimationFrame(tick)
+        return
+      }
     }
 
+    rafRef.current = requestAnimationFrame(tick)
+
     return () => {
+      isRunningRef.current = false
       cancelAnimationFrame(rafRef.current)
-      clearTimeout(pageReadyTimeout)
-      clearTimeout(fontTimeout)
+      clearTimeout(pageReadyFallback)
+      window.removeEventListener('load', markPageReady)
     }
   }, [onComplete])
 
@@ -320,8 +307,6 @@ export function Preloader({ onComplete }: PreloaderProps) {
 
   if (state === 'hidden') return null
 
-  const CLIP_ID = 'preloader-clip-hello'
-
   return (
     <div
       className="preloader"
@@ -332,10 +317,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
       aria-hidden="true"
       aria-label="Loading portfolio"
     >
-      <div
-        ref={innerRef}
-        className={`preloader__inner ${isFontReady ? 'is-ready' : ''}`}
-      >
+      <div ref={innerRef} className="preloader__inner">
         {/* ── Responsive SVG Word ── */}
         <svg
           className="preloader__svg"
@@ -347,13 +329,13 @@ export function Preloader({ onComplete }: PreloaderProps) {
           aria-hidden="true"
         >
           <defs>
-            {/* Clip path defining letter shape of "Hello" */}
-            <clipPath id={CLIP_ID}>
+            {/* Unique clip path per instance */}
+            <clipPath id={clipId}>
               <text
                 x="5"
                 y="98"
                 fontSize="100"
-                fontFamily="'Geologica', system-ui, sans-serif"
+                fontFamily="'Geologica', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
                 fontWeight="800"
                 letterSpacing="-0.04em"
               >
@@ -367,7 +349,7 @@ export function Preloader({ onComplete }: PreloaderProps) {
             x="5"
             y="98"
             fontSize="100"
-            fontFamily="'Geologica', system-ui, sans-serif"
+            fontFamily="'Geologica', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
             fontWeight="800"
             letterSpacing="-0.04em"
             className="preloader__text-dim"
@@ -375,14 +357,13 @@ export function Preloader({ onComplete }: PreloaderProps) {
             Hello
           </text>
 
-          {/* 2. Liquid wave body clipped by the word "Hello" — initial transform is 100% EMPTY */}
-          <g clipPath={`url(#${CLIP_ID})`}>
+          {/* 2. Liquid wave body clipped by the word "Hello" — initial CSS transform is 100% EMPTY */}
+          <g clipPath={`url(#${clipId})`}>
             {/* Secondary wave behind (depth layer) */}
             <path
               ref={wave2Ref}
               className="preloader__wave-2"
               d={WAVE_PATH_D}
-              transform="translate(-30, 108)"
               style={{ transform: 'translate3d(-30px, 108px, 0)' }}
             />
             {/* Primary wave in front */}
@@ -390,7 +371,6 @@ export function Preloader({ onComplete }: PreloaderProps) {
               ref={wave1Ref}
               className="preloader__liquid-fill"
               d={WAVE_PATH_D}
-              transform="translate(0, 106)"
               style={{ transform: 'translate3d(0px, 106px, 0)' }}
             />
           </g>
